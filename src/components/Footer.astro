@@ -1,6 +1,7 @@
 ---
 import { site } from '../data/site';
 const year = new Date().getFullYear();
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 <footer id="contact" class="foot">
   <div class="wrap foot-grid">
@@ -9,10 +10,13 @@ const year = new Date().getFullYear();
       <p>I’m open to research positions and collaborations in neuromodulation, neurophysiology and computational neuroscience in Toronto.</p>
       <a class="mail" href={`mailto:${site.email}`}>{site.email}</a>
     </div>
-    <ul class="links">
+    <div class="side">
+      <img class="avatar" src={`${base}/profile.jpg`} alt={`Portrait of ${site.name}`} width="560" height="650" loading="lazy" />
+      <ul class="links">
       {site.links.map((l) => <li><a href={l.href} rel="noopener" target="_blank">{l.label}</a></li>)}
-      <li><a href={site.cv}>CV (PDF)</a></li>
-    </ul>
+        <li><a href={site.cv}>CV (PDF)</a></li>
+      </ul>
+    </div>
   </div>
   <div class="wrap foot-base mono">
     <span>© {year} {site.name}</span>
@@ -27,6 +31,11 @@ const year = new Date().getFullYear();
   p { color: var(--on-dark-muted); max-width: 52ch; }
   .mail { color: var(--phosphor); font-size: clamp(18px, 2vw, 22px); word-break: break-all; }
   .mail:hover, .links a:hover { color: #fff; }
+  .side { display: flex; align-items: flex-end; gap: 24px; }
+  .avatar {
+    width: 128px; height: auto; border-radius: 10px; flex: none;
+    box-shadow: 0 0 0 1px var(--theatre-line);
+  }
   .links { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
   .links a { color: var(--on-dark); }
   .foot-base {
