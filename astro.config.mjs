@@ -2,5 +2,5 @@
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  site: 'https://christi-neuro.github.io',
+  site: 'https://crstn-bio.github.io',
 });
