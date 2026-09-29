@@ -5,6 +5,7 @@ const items = [
   { label: 'Research', href: `${base}/#research` },
   { label: 'Experience', href: `${base}/#experience` },
   { label: 'About', href: `${base}/#about` },
+  { label: 'Vision', href: `${base}/#vision` },
   { label: 'Contact', href: `${base}/#contact` },
 ];
 ---
@@ -29,6 +30,6 @@ const items = [
   .nav a { opacity: 0.86; } .nav a:hover { opacity: 1; }
   @media (max-width: 560px) {
     .nav { flex-direction: column; align-items: flex-start; gap: 10px; }
-    ul { gap: 16px; font-size: 11px; letter-spacing: 0.1em; }
+    ul { gap: 8px 16px; font-size: 11px; letter-spacing: 0.1em; flex-wrap: wrap; }
   }
 </style>
