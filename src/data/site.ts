@@ -13,7 +13,7 @@ export const site = {
     'My interests sit between computational neuroscience and neurotechnology — building analyses that are honest about their uncertainty, and asking how stimulation protocols translate into measurable change.',
   ],
   // TODO: 공개해도 되는 이메일 주소로 바꾸세요.
-  email: 'christine.park2@uhn.ca',
+  email: 'your.email@mail.utoronto.ca',
   links: [
     { label: 'LinkedIn', href: 'https://www.linkedin.com/in/christine-park-7ab9ab427' },
     // { label: 'GitHub', href: 'https://github.com/<아이디>' },

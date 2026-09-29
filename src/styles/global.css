@@ -1,22 +1,22 @@
 @import '@fontsource-variable/geist/wght.css';
 @import '@fontsource-variable/geist-mono/wght.css';
 
-/* 디자인 토큰: 뉴로테크 정밀함 — 흑요석 같은 어두운 배경, 백금빛 흰색, 아주 옅은 아이스 블루 */
+/* 디자인 토큰: 순수한 검정과 흰색만. 회색 단계로 깊이를 만들어요. */
 :root {
-  --theatre: #0a0d11;        /* 첫 화면·푸터·그래프 배경 */
-  --theatre-2: #131820;
-  --theatre-line: #232b35;
-  --phosphor: #e6ecf2;       /* 어두운 배경 위 강조 (백금) */
-  --pulse: #9cc2f0;          /* 포인트: 아이스 블루 (신호, 활성 전극) */
-  --paper: #f3f4f2;          /* 본문 배경 (포슬린) */
-  --paper-2: #e8eae9;
-  --ink: #0e1217;
-  --scrub: #2f5d93;          /* 밝은 배경 위 링크·포인트 */
-  --muted: #5c6670;
-  --rule: #d5d9dc;
-  --on-dark: #d6dde4;
-  --on-dark-muted: #8793a0;
-  --on-dark-faint: #56616d;
+  --theatre: #000;           /* 전체 배경 */
+  --theatre-2: #0c0c0c;
+  --theatre-line: #222;
+  --phosphor: #fff;
+  --pulse: #fff;             /* 강조도 흰색 */
+  --paper: #000;             /* 본문 배경도 검정 */
+  --paper-2: #0c0c0c;
+  --ink: #fff;
+  --scrub: #fff;             /* 링크 */
+  --muted: #8d8d8d;
+  --rule: #1f1f1f;
+  --on-dark: #e6e6e6;
+  --on-dark-muted: #8d8d8d;
+  --on-dark-faint: #5a5a5a;
 
   --sans: 'Geist Variable', 'Geist', system-ui, sans-serif;
   --mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, monospace;
@@ -24,7 +24,7 @@
   --gutter: clamp(16px, 4vw, 56px);
   --max: 1240px;
 
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -44,7 +44,7 @@ body {
 }
 
 a { color: var(--scrub); text-underline-offset: 4px; text-decoration-thickness: 1px; }
-a:hover { color: var(--ink); }
+a:hover { color: #bdbdbd; }
 :focus-visible { outline: 1.5px solid var(--pulse); outline-offset: 3px; border-radius: 2px; }
 
 h1, h2, h3 { margin: 0; font-weight: 400; line-height: 1.1; }
@@ -64,9 +64,10 @@ strong { font-weight: 560; }
   align-items: end;
 }
 .section-head h2 {
-  font-size: clamp(34px, 4.6vw, 58px);
-  font-weight: 300;
-  letter-spacing: -0.035em;
+  font-size: clamp(30px, 3.6vw, 46px);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
 }
 .section-head p { color: var(--muted); max-width: 56ch; margin: 0; }
 @media (max-width: 760px) { .section-head { grid-template-columns: 1fr; } }
@@ -75,7 +76,7 @@ strong { font-weight: 560; }
 .mono { font-family: var(--mono); font-size: 12px; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
 
 .skip {
-  position: absolute; left: -999px; top: 8px; background: var(--pulse); color: var(--ink);
+  position: absolute; left: -999px; top: 8px; background: #fff; color: #000;
   padding: 8px 12px; z-index: 10;
 }
 .skip:focus { left: 8px; }

@@ -3,101 +3,227 @@ import Nav from './Nav.astro';
 import { site } from '../data/site';
 ---
 <section class="hero" aria-labelledby="hero-name">
-  <canvas id="array" aria-hidden="true"></canvas>
+  <canvas id="brain" aria-hidden="true"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+
   <div class="hero-inner">
     <Nav />
+
+    <dl class="hud mono" aria-hidden="true">
+      <div><dt>model</dt><dd>cortical point cloud</dd></div>
+      <div><dt>points</dt><dd data-hud="points">0</dd></div>
+      <div><dt>edges</dt><dd data-hud="edges">0</dd></div>
+      <div><dt>yaw</dt><dd data-hud="yaw">0.0°</dd></div>
+      <div><dt>slice</dt><dd data-hud="slice">–</dd></div>
+      <div><dt>state</dt><dd data-hud="state">assembling</dd></div>
+    </dl>
+
     <div class="wrap hero-body">
+      <p class="eyebrow">{site.title}</p>
       <h1 id="hero-name">{site.name}</h1>
-      <p class="hero-title">{site.title}</p>
       <p class="hero-current">{site.current}. {site.location}.</p>
+      <a class="btn" href="#research">View research</a>
     </div>
 
-    <div class="wrap readout">
-      <dl class="mono">
-        <div><dt>array</dt><dd>simulated electrode grid</dd></div>
-        <div><dt>stimulus</dt><dd>θ-burst, 3 pulses at 50 Hz every 200 ms</dd></div>
-        <div><dt>playback</dt><dd>slowed 10×</dd></div>
-      </dl>
-      <p class="mono note">Illustration of the stimulation pattern in my thesis work, not recorded data.</p>
-    </div>
+    <p class="wrap caption mono">Procedural point-cloud model, rendered live in the browser. Illustration only, not patient data.</p>
   </div>
 </section>
 
 <style>
   .hero {
     position: relative;
-    background: radial-gradient(1100px 700px at 72% 42%, #111822 0%, var(--theatre) 62%);
-    color: var(--on-dark);
-    min-height: min(100svh, 940px);
+    background: #000;
+    color: #fff;
+    min-height: max(640px, min(100svh, 1000px));
     overflow: hidden;
     isolation: isolate;
   }
-  canvas {
-    position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1;
-    -webkit-mask-image: linear-gradient(90deg, transparent 28%, #000 62%);
-            mask-image: linear-gradient(90deg, transparent 28%, #000 62%);
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; }
+  .vignette {
+    position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(120% 90% at 60% 45%, transparent 55%, rgba(0, 0, 0, 0.85) 100%),
+      linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, transparent 38%);
   }
   .hero-inner { min-height: inherit; display: flex; flex-direction: column; }
-  .hero-body { padding-top: clamp(64px, 14vh, 160px); }
+
+  .hud {
+    position: absolute; bottom: 92px; right: var(--gutter);
+    display: grid; grid-template-columns: auto auto; gap: 5px 18px; margin: 0;
+    padding: 14px 0 0; border-top: 1px solid rgba(255, 255, 255, 0.22);
+    min-width: 230px;
+  }
+  .hud div { display: contents; }
+  .hud dt { color: rgba(255, 255, 255, 0.42); }
+  .hud dd { margin: 0; color: rgba(255, 255, 255, 0.86); text-align: right; font-variant-numeric: tabular-nums; }
+
+  .hero-body { margin-top: auto; padding-bottom: 20px; }
+  .eyebrow {
+    color: rgba(255, 255, 255, 0.62); font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase;
+    margin-bottom: 18px;
+  }
   h1 {
-    font-size: clamp(56px, 10.5vw, 156px);
-    font-weight: 250;
-    letter-spacing: -0.055em;
-    line-height: 0.92;
-    color: #f2f5f8;
-    max-width: 8ch;
+    font-size: clamp(40px, 6.2vw, 96px);
+    font-weight: 500;
+    letter-spacing: 0.005em;
+    line-height: 0.95;
+    text-transform: uppercase;
+    color: #fff;
   }
-  .hero-title {
-    margin-top: clamp(24px, 3vw, 36px);
-    font-size: clamp(19px, 2vw, 24px);
-    font-weight: 330;
-    letter-spacing: -0.01em;
-    color: var(--phosphor);
-  }
-  .hero-current { max-width: 46ch; color: var(--on-dark-muted); margin-top: 6px; font-weight: 330; }
+  .hero-current { max-width: 48ch; color: rgba(255, 255, 255, 0.62); margin: 22px 0 32px; font-size: 15.5px; }
 
-  .readout { margin-top: auto; padding-top: 48px; padding-bottom: 28px; }
-  dl {
-    display: flex; flex-wrap: wrap; gap: 10px 40px; margin: 0;
-    border-top: 1px solid var(--theatre-line); padding-top: 16px;
+  .btn {
+    display: inline-block; color: #fff; text-decoration: none;
+    border: 1.5px solid #fff; padding: 15px 30px;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+    transition: background 200ms, color 200ms;
   }
-  dl div { display: flex; gap: 12px; }
-  dt { color: var(--on-dark-faint); }
-  dd { margin: 0; color: var(--on-dark); }
-  .note { color: var(--on-dark-faint); margin: 10px 0 0; }
+  .btn:hover { background: #fff; color: #000; }
 
+  .caption { color: rgba(255, 255, 255, 0.36); padding-bottom: 26px; padding-top: 28px; margin-block: 0; }
+
+  @media (max-width: 1100px) {
+    .hud { display: none; }
+  }
   @media (max-width: 760px) {
-    canvas {
-      -webkit-mask-image: linear-gradient(180deg, transparent 50%, #000 64%, #000 74%, transparent 84%);
-              mask-image: linear-gradient(180deg, transparent 50%, #000 64%, #000 74%, transparent 84%);
+    .hero { min-height: max(700px, 100svh); }
+    .vignette {
+      background:
+        radial-gradient(130% 70% at 50% 30%, transparent 50%, rgba(0, 0, 0, 0.85) 100%),
+        linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.92) 34%, transparent 58%);
     }
-    h1 { max-width: none; }
-    dl { flex-direction: column; gap: 6px; }
   }
+  @media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
 </style>
 
 <script>
-  // 전극 배열처럼 보이는 점 격자. 초점(집속 초음파 목표 지점)에서
-  // 세타 버스트 펄스마다 파동이 퍼지고, 지나가는 전극이 잠시 밝아져요.
-  const canvas = document.getElementById('array') as HTMLCanvasElement | null;
+  // ──────────────────────────────────────────────────────────────
+  // 점 구름으로 만든 뇌 모델
+  // 1) 흩어진 점들이 스캔 평면이 지나갈 때마다 뇌 표면의 제자리로 모여요.
+  // 2) 조립이 끝나면 일부 점(노드)을 잇는 네트워크가 나타나고,
+  //    신호가 선을 따라 이동하며 노드를 점화시켜요.
+  // 3) 몇 초마다 단면 스캔이 한 번씩 지나가요 (MRI 슬라이스처럼).
+  // 모든 모양은 코드로 생성해요. 실제 환자 데이터가 아니에요.
+  // ──────────────────────────────────────────────────────────────
+  const canvas = document.getElementById('brain') as HTMLCanvasElement | null;
+
   if (canvas) {
     const ctx = canvas.getContext('2d')!;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const SLOW = 10;                         // 재생 속도 1/10
-    const BURST_EVERY = 0.2 * SLOW;          // 5 Hz → 실제 2초마다
-    const PULSE_GAP = 0.02 * SLOW;           // 50 Hz → 0.2초 간격
-    const SPEED = 150;                       // 파동 속도 (px/s)
-    const SIGMA = 16;
+    const hud = (k: string) => document.querySelector<HTMLElement>(`[data-hud="${k}"]`);
+    const hudEls = { points: hud('points'), edges: hud('edges'), yaw: hud('yaw'), slice: hud('slice'), state: hud('state') };
 
-    type Ripple = { t0: number; amp: number };
-    let w = 0, h = 0, dpr = 1, gap = 24;
-    let fx = 0, fy = 0;
-    let dots: { x: number; y: number; d: number; glow: number; n: number }[] = [];
-    let ripples: Ripple[] = [];
-    let start = performance.now();
-    let lastBurst = -Infinity;
-    let running = true;
+    // 재현 가능한 난수
+    function rng(seed: number) {
+      return () => {
+        seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
+        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+    const R = rng(1729);
+    const dir = () => {
+      const u = R() * 2 - 1, th = R() * Math.PI * 2, s = Math.sqrt(1 - u * u);
+      return [s * Math.cos(th), u, s * Math.sin(th)];
+    };
 
+    type Pt = { tx: number; ty: number; tz: number; sx: number; sy: number; sz: number; b: number; delay: number };
+
+    // x: 앞(+)·뒤(−), y: 위(+)·아래(−), z: 좌우
+    function cerebrum(): [number, number, number, number] | null {
+      const d = dir();
+      let x = d[0] * 1.0, y = d[1] * 0.74, z = d[2] * 0.8;
+      if (y < 0) y *= 0.6;                                   // 아래쪽은 평평하게
+      if (x < -0.55) y *= 0.93;                              // 후두엽
+      if (x > 0.45 && y < 0) y *= 0.75;                      // 안와전두
+      const lateral = Math.min(1, Math.max(0, (Math.abs(z) - 0.28) / 0.4));
+      const temporal = Math.exp(-(((x - 0.12) / 0.34) ** 2)) * lateral;
+      if (y < 0.06) y -= 0.32 * temporal;                    // 측두엽이 아래로 내려옴
+
+      if (Math.abs(z) < 0.035 && y > 0.05) return null;      // 대뇌 종렬(좌우 반구 사이 틈)
+      const yl = -0.08 - 0.375 * (x - 0.55);                  // 실비우스 열
+      if (x > -0.28 && x < 0.6 && Math.abs(z) > 0.3 && Math.abs(y - yl) < 0.024) return null;
+      if (y > 0.05 && y < 0.74) {                             // 중심고랑
+        const xc = 0.2 - (0.3 * (y - 0.05)) / 0.65;
+        if (Math.abs(x - xc) < 0.018 && y > yl) return null;
+      }
+      // 이랑과 고랑: 구불구불한 틈을 만드는 장(field)
+      const g =
+        Math.sin(9.5 * x + 3.1 * Math.sin(6.0 * y + 2.0 * z)) * Math.sin(8.5 * y + 2.7 * Math.sin(7.5 * z + 1.5 * x)) +
+        0.35 * Math.sin(13 * z + 4 * x);
+      if (Math.abs(g) < 0.075) return null;
+      const b = 0.42 + 0.58 * Math.min(1, Math.abs(g) * 1.7);
+      const k = 1 - R() * 0.018;
+      return [x * k, y * k, z * k, b];
+    }
+
+    function cerebellum(): [number, number, number, number] | null {
+      const d = dir();
+      const x = -0.56 + d[0] * 0.3, y = -0.45 + d[1] * 0.18, z = d[2] * 0.52;
+      if (y > -0.33) return null;
+      if (Math.abs(Math.sin(y * 72 + x * 9)) < 0.5) return null; // 소엽 줄무늬
+      return [x, y, z, 0.55];
+    }
+
+    function brainstem(): [number, number, number, number] {
+      const t = R(), a = R() * Math.PI * 2;
+      const cx = -0.28 + 0.1 * t, cy = -0.42 - 0.6 * t, r = 0.12 * (1 - 0.3 * t);
+      return [cx + Math.cos(a) * r * 0.8, cy, Math.sin(a) * r, 0.34];
+    }
+
+    function interior(): [number, number, number, number] {
+      for (;;) {
+        const x = R() * 2 - 1, y = R() * 2 - 1, z = R() * 2 - 1;
+        if (x * x + y * y + z * z < 1) return [x * 0.9, (y < 0 ? y * 0.45 : y * 0.66), z * 0.72, 0.13];
+      }
+    }
+
+    let pts: Pt[] = [];
+    let nodes: number[] = [];
+    let edges: [number, number][] = [];
+
+    function build(count: number) {
+      const raw: [number, number, number, number][] = [];
+      const want = { c: count * 0.7, cb: count * 0.12, bs: count * 0.05, in: count * 0.13 };
+      let guard = 0;
+      while (raw.length < want.c && guard++ < count * 40) { const p = cerebrum(); if (p) raw.push(p); }
+      let n = 0; guard = 0;
+      while (n < want.cb && guard++ < count * 40) { const p = cerebellum(); if (p) { raw.push(p); n++; } }
+      for (let i = 0; i < want.bs; i++) raw.push(brainstem());
+      for (let i = 0; i < want.in; i++) raw.push(interior());
+
+      pts = raw.map(([x, y, z, b]) => {
+        const s = dir(), r = 1.55 + R() * 0.45;               // 시작점: 구 껍질 위에 흩어짐
+        const ty = y + 0.14;
+        return {
+          tx: x, ty, tz: z, sx: s[0] * r, sy: s[1] * r, sz: s[2] * r, b,
+          delay: 0.35 + ((1 - x) / 2) * 1.9 + R() * 0.12,     // 뒤→앞 순서로 자리 잡음
+        };
+      });
+
+      // 네트워크: 표면 점 일부를 노드로 골라 가까운 노드끼리 연결
+      nodes = [];
+      const cN = Math.floor(want.c);
+      for (let i = 0; i < 240; i++) nodes.push(Math.floor(R() * cN));
+      const seen = new Set<string>();
+      edges = [];
+      for (let i = 0; i < nodes.length; i++) {
+        const a = pts[nodes[i]];
+        const near = nodes
+          .map((j, k) => ({ k, d: k === i ? 9 : Math.hypot(pts[j].tx - a.tx, pts[j].ty - a.ty, pts[j].tz - a.tz) }))
+          .sort((p, q) => p.d - q.d)
+          .slice(0, 3);
+        for (const { k, d } of near) {
+          if (d > 0.5) continue;
+          const key = i < k ? `${i}-${k}` : `${k}-${i}`;
+          if (!seen.has(key)) { seen.add(key); edges.push([i, k]); }
+        }
+      }
+    }
+
+    // 화면 배치
+    let w = 0, h = 0, dpr = 1, cx = 0, cy = 0, scale = 1, dot = 1.2;
     function layout() {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       const r = canvas!.getBoundingClientRect();
@@ -105,99 +231,188 @@ import { site } from '../data/site';
       canvas!.width = Math.round(w * dpr); canvas!.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const mobile = w < 760;
-      gap = mobile ? 20 : 24;
-      fx = mobile ? w * 0.62 : w * 0.72;
-      fy = mobile ? h * 0.69 : h * 0.44;
-      dots = [];
-      const ox = (w % gap) / 2, oy = (h % gap) / 2;
-      for (let y = oy; y <= h; y += gap) {
-        for (let x = ox; x <= w; x += gap) {
-          dots.push({ x, y, d: Math.hypot(x - fx, y - fy), glow: 0, n: Math.random() * 6.28 });
-        }
+      cx = mobile ? w * 0.5 : w * 0.67;
+      cy = mobile ? h * 0.31 : h * 0.4;
+      scale = mobile ? Math.min(w * 0.36, h * 0.22) : Math.min(w * 0.2, h * 0.29);
+      dot = mobile ? 1.1 : 1.25;
+    }
+
+    const ease = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+    const DUR = 1.5;
+    const ASSEMBLED = 0.35 + 1.9 + 0.12 + DUR;               // 모든 점이 자리 잡는 시각
+    const SWEEP_EVERY = 9, SWEEP_LEN = 3.2;
+
+    type Pulse = { e: number; dir: 1 | -1; t0: number; dur: number };
+    let pulses: Pulse[] = [];
+    let glow = new Float32Array(0);
+    let lastSpawn = 0;
+
+    // 투영 결과를 담아 둘 버퍼
+    let PX = new Float32Array(0), PY = new Float32Array(0), PZ = new Float32Array(0);
+    const BUCKETS = 10;
+
+    function frameAt(t: number) {
+      const yaw = -0.42 + 0.5 * Math.sin(t * 0.11);
+      const pitch = -0.14;
+      const cyw = Math.cos(yaw), syw = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+
+      // 스캔 평면 위치 (모델 x 좌표)
+      let slice: number | null = null;
+      if (t < ASSEMBLED) {
+        slice = 1 - ((t - 0.35 - DUR * 0.6) / 1.9) * 2;       // 조립 중: 점들이 자리 잡는 선을 따라감
+        if (slice > 1.15 || slice < -1.15) slice = null;
+      } else {
+        const k = (t - ASSEMBLED) % SWEEP_EVERY;
+        if (k < SWEEP_LEN) slice = 1.1 - (k / SWEEP_LEN) * 2.2;
       }
-    }
 
-    function spawnBurst(t: number) {
-      for (let k = 0; k < 3; k++) ripples.push({ t0: t + k * PULSE_GAP, amp: 1 });
-    }
-
-    function draw(t: number, dt: number) {
       ctx.clearRect(0, 0, w, h);
-      ripples = ripples.filter((r) => (t - r.t0) * SPEED < Math.max(w, h) * 1.1);
-      const reach = Math.max(w, h);
+      const buckets: number[][] = Array.from({ length: BUCKETS }, () => []);
+      const hot: number[] = [];
 
-      for (const p of dots) {
-        let a = 0;
-        for (const r of ripples) {
-          const age = t - r.t0;
-          if (age < 0) continue;
-          const front = age * SPEED;
-          const off = p.d - front;
-          if (off > 3 * SIGMA || off < -3 * SIGMA) continue;
-          a += Math.exp(-(off * off) / (2 * SIGMA * SIGMA)) * Math.exp(-p.d / (reach * 0.24));
-        }
-        // 초점 근처 전극은 버스트가 반복될수록 잔광이 조금씩 쌓임
-        p.glow += (a * 0.35 - p.glow) * Math.min(1, dt * 1.2);
-        const flicker = 0.04 * (1 + Math.sin(t * 0.7 + p.n));
-        const v = Math.min(1, a + p.glow + flicker);
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i];
+        const e = ease((t - p.delay) / DUR);
+        let x = p.sx + (p.tx - p.sx) * e, y = p.sy + (p.ty - p.sy) * e, z = p.sz + (p.tz - p.sz) * e;
+        // 회전
+        const x1 = x * cyw + z * syw, z1 = -x * syw + z * cyw;
+        const y2 = y * cp - z1 * sp, z2 = y * sp + z1 * cp;
+        const s = 4.2 / (4.2 - z2);
+        PX[i] = cx - x1 * scale * s;                           // 앞쪽이 화면 왼쪽을 보도록
+        PY[i] = cy - y2 * scale * s;
+        PZ[i] = z2;
 
-        const rad = 0.9 + v * 1.5;
-        if (v > 0.25) {
-          ctx.fillStyle = `rgba(156, 194, 240, ${0.12 * v})`;
-          ctx.beginPath(); ctx.arc(p.x, p.y, rad * 4, 0, 6.2832); ctx.fill();
-        }
-        const base = [30, 37, 46], hi = [196, 220, 248];
-        const c = base.map((b, i) => Math.round(b + (hi[i] - b) * v));
-        ctx.fillStyle = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
-        ctx.beginPath(); ctx.arc(p.x, p.y, rad, 0, 6.2832); ctx.fill();
+        const depth = 0.3 + 0.7 * Math.min(1, Math.max(0, (z2 + 1.1) / 2.2));
+        const settle = 0.35 + 0.65 * e;
+        let a = p.b * depth * settle;
+        if (slice !== null && e > 0.98 && Math.abs(p.tx - slice) < 0.022) { hot.push(i); continue; }
+        a = Math.min(0.999, a);
+        buckets[Math.floor(a * BUCKETS)].push(i);
       }
 
-      // 초점 표시: 얇은 원과 눈금
-      ctx.strokeStyle = 'rgba(156, 194, 240, 0.55)';
+      for (let k = 0; k < BUCKETS; k++) {
+        const list = buckets[k];
+        if (!list.length) continue;
+        ctx.fillStyle = `rgba(255,255,255,${((k + 0.5) / BUCKETS).toFixed(3)})`;
+        for (const i of list) ctx.fillRect(PX[i], PY[i], dot, dot);
+      }
+      if (hot.length) {
+        ctx.fillStyle = '#fff';
+        for (const i of hot) ctx.fillRect(PX[i] - 0.4, PY[i] - 0.4, dot + 0.9, dot + 0.9);
+      }
+
+      // 스캔 평면 윤곽
+      if (slice !== null) {
+        const corners = [[slice, 0.86, -0.86], [slice, 0.86, 0.86], [slice, -0.86, 0.86], [slice, -0.86, -0.86]].map(([x, y, z]) => {
+          const x1 = x * cyw + z * syw, z1 = -x * syw + z * cyw;
+          const y2 = y * cp - z1 * sp, z2 = y * sp + z1 * cp;
+          const s = 4.2 / (4.2 - z2);
+          return [cx - x1 * scale * s, cy - y2 * scale * s];
+        });
+        ctx.strokeStyle = 'rgba(255,255,255,0.13)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        corners.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+        ctx.closePath(); ctx.stroke();
+      }
+
+      // 네트워크 선과 신호
+      const netAlpha = Math.min(1, Math.max(0, (t - ASSEMBLED + 0.4) / 1.4));
+      if (netAlpha > 0) {
+        ctx.strokeStyle = `rgba(255,255,255,${(0.1 * netAlpha).toFixed(3)})`;
+        ctx.lineWidth = 0.7;
+        ctx.beginPath();
+        for (const [a, b] of edges) {
+          const i = nodes[a], j = nodes[b];
+          ctx.moveTo(PX[i], PY[i]); ctx.lineTo(PX[j], PY[j]);
+        }
+        ctx.stroke();
+
+        if (!reduce && t - lastSpawn > 0.16 && edges.length) {
+          lastSpawn = t;
+          pulses.push({ e: Math.floor(Math.random() * edges.length), dir: Math.random() < 0.5 ? 1 : -1, t0: t, dur: 0.55 + Math.random() * 0.5 });
+        }
+        pulses = pulses.filter((p) => t - p.t0 < p.dur);
+        for (const p of pulses) {
+          const [a, b] = edges[p.e];
+          const from = nodes[p.dir === 1 ? a : b], to = nodes[p.dir === 1 ? b : a];
+          const u = (t - p.t0) / p.dur;
+          const u0 = Math.max(0, u - 0.25);
+          const hx = PX[from] + (PX[to] - PX[from]) * u, hy = PY[from] + (PY[to] - PY[from]) * u;
+          const tx = PX[from] + (PX[to] - PX[from]) * u0, ty = PY[from] + (PY[to] - PY[from]) * u0;
+          ctx.strokeStyle = `rgba(255,255,255,${(0.75 * netAlpha).toFixed(3)})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(hx, hy); ctx.stroke();
+          if (u > 0.92) glow[p.dir === 1 ? b : a] = 1;
+        }
+        for (let n = 0; n < nodes.length; n++) {
+          const i = nodes[n];
+          const g = glow[n];
+          const depth = 0.4 + 0.6 * Math.min(1, Math.max(0, (PZ[i] + 1.1) / 2.2));
+          if (g > 0.02) {
+            ctx.fillStyle = `rgba(255,255,255,${(0.16 * g * netAlpha).toFixed(3)})`;
+            ctx.beginPath(); ctx.arc(PX[i], PY[i], 7 * g + 2, 0, 6.2832); ctx.fill();
+            glow[n] *= 0.93;
+          }
+          ctx.fillStyle = `rgba(255,255,255,${(Math.min(1, 0.55 * depth + g) * netAlpha).toFixed(3)})`;
+          ctx.fillRect(PX[i] - 1, PY[i] - 1, 2, 2);
+        }
+      }
+
+      // 조준 프레임
+      const bx = scale * 1.34, by = scale * 1.1, L = 14;
+      ctx.strokeStyle = 'rgba(255,255,255,0.32)';
       ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc(fx, fy, 26, 0, 6.2832); ctx.stroke();
-      ctx.strokeStyle = 'rgba(156, 194, 240, 0.22)';
-      ctx.beginPath(); ctx.arc(fx, fy, 64, 0, 6.2832); ctx.stroke();
       ctx.beginPath();
-      for (let i = 0; i < 4; i++) {
-        const ang = (i * Math.PI) / 2;
-        ctx.moveTo(fx + Math.cos(ang) * 34, fy + Math.sin(ang) * 34);
-        ctx.lineTo(fx + Math.cos(ang) * 46, fy + Math.sin(ang) * 46);
+      for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+        const x0 = cx + sx * bx, y0 = cy + sy * by;
+        ctx.moveTo(x0, y0 - sy * L); ctx.lineTo(x0, y0); ctx.lineTo(x0 - sx * L, y0);
       }
-      ctx.strokeStyle = 'rgba(156, 194, 240, 0.55)';
       ctx.stroke();
+
+      // HUD 수치
+      if (hudEls.points && (Math.floor(t * 8) !== lastHud)) {
+        lastHud = Math.floor(t * 8);
+        const placed = pts.reduce((n, p) => n + (t - p.delay > DUR ? 1 : 0), 0);
+        hudEls.points.textContent = placed.toLocaleString('en-US');
+        if (hudEls.edges) hudEls.edges.textContent = netAlpha > 0 ? String(edges.length) : '0';
+        if (hudEls.yaw) hudEls.yaw.textContent = `${((yaw * 180) / Math.PI).toFixed(1)}°`;
+        if (hudEls.slice) hudEls.slice.textContent = slice === null ? '–' : `x = ${slice.toFixed(2)}`;
+        if (hudEls.state) hudEls.state.textContent = t < ASSEMBLED ? 'assembling' : 'tracking signal';
+      }
+    }
+    let lastHud = -1;
+
+    function init() {
+      layout();
+      build(w < 760 ? 5200 : 9000);
+      PX = new Float32Array(pts.length); PY = new Float32Array(pts.length); PZ = new Float32Array(pts.length);
+      glow = new Float32Array(nodes.length);
     }
 
-    let prev = 0;
-    function frame(now: number) {
-      if (!running) return;
-      const t = (now - start) / 1000;
-      const dt = Math.min(0.05, t - prev); prev = t;
-      if (t - lastBurst >= BURST_EVERY) { spawnBurst(t); lastBurst = t; }
-      draw(t, dt);
-      requestAnimationFrame(frame);
-    }
-
-    layout();
+    init();
     let resizeTimer = 0;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(layout, 120);
+      resizeTimer = window.setTimeout(() => { layout(); if (reduce) frameAt(ASSEMBLED + 1); }, 150);
     });
 
     if (reduce) {
-      // 움직임 줄이기: 파동이 퍼져 있는 한 장면만 그림
-      ripples = [{ t0: 0, amp: 1 }, { t0: 0.2, amp: 1 }, { t0: 0.4, amp: 1 }];
-      draw(1.4, 1);
-      window.addEventListener('resize', () => setTimeout(() => draw(1.4, 1), 150));
+      frameAt(ASSEMBLED + 1.5);                               // 움직임 줄이기: 완성된 한 장면만
     } else {
-      // 화면 밖에 있을 때는 멈춰서 배터리 절약
+      const start = performance.now();
+      let running = true;
+      let pausedAt = 0, pausedTotal = 0;
+      const loop = (now: number) => {
+        if (!running) return;
+        frameAt((now - start - pausedTotal) / 1000);
+        requestAnimationFrame(loop);
+      };
       new IntersectionObserver(([e]) => {
-        const was = running;
-        running = e.isIntersecting;
-        if (running && !was) { prev = (performance.now() - start) / 1000; requestAnimationFrame(frame); }
+        if (e.isIntersecting && !running) { pausedTotal += performance.now() - pausedAt; running = true; requestAnimationFrame(loop); }
+        else if (!e.isIntersecting && running) { running = false; pausedAt = performance.now(); }
       }).observe(canvas);
-      requestAnimationFrame(frame);
+      requestAnimationFrame(loop);
     }
   }
 </script>
