@@ -1,0 +1,367 @@
+---
+// Vision 3단계(이식형 기기)를 뒷받침하는 두 장면. 모두 코드로 그린 그림이에요.
+// ① 기기 분해도: 배터리, 신호처리 칩, 유연 리드, 전극 배열이 떨어졌다가 조립됨
+// ② 로봇 삽입: 삽입 헤드가 유연 전극 실을 피질에 하나씩 꽂음
+---
+<section class="hw" aria-labelledby="hw-h">
+  <div class="wrap">
+    <div class="hw-head">
+      <h3 id="hw-h">What stage three asks for</h3>
+      <p>Electronics small enough to record, compute and stimulate on the device itself, and electrodes placed precisely enough to trust what they read.</p>
+    </div>
+
+    <div class="panels">
+      <figure class="panel">
+        <canvas id="hw-device" aria-hidden="true"></canvas>
+        <figcaption>
+          <strong>Device</strong>
+          <span>Battery, on-device signal processing and flexible thin-film leads, pulled apart and reassembled.</span>
+        </figcaption>
+      </figure>
+      <figure class="panel">
+        <canvas id="hw-insert" aria-hidden="true"></canvas>
+        <figcaption>
+          <strong>Implantation</strong>
+          <span>A robotic insertion head placing flexible electrode threads into cortex, one at a time.</span>
+        </figcaption>
+      </figure>
+    </div>
+    <p class="hw-note mono">Both illustrations are drawn in code. They are not a real device or procedure.</p>
+  </div>
+</section>
+
+<style>
+  .hw { background: #000; color: #fff; padding-block: clamp(64px, 9vw, 120px) clamp(72px, 10vw, 136px); }
+  .hw-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px var(--gutter); align-items: end; margin-bottom: clamp(28px, 4vw, 48px); }
+  .hw-head h3 { font-size: clamp(26px, 3vw, 38px); font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; }
+  .hw-head p { color: #b5b5b5; font-size: 17px; line-height: 1.7; max-width: 52ch; margin: 0; }
+  .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .panel { margin: 0; border: 1px solid #1f1f1f; background: #030303; }
+  .panel canvas { display: block; width: 100%; aspect-ratio: 4 / 3.3; }
+  figcaption { display: grid; gap: 4px; padding: 16px 20px 18px; border-top: 1px solid #1f1f1f; }
+  figcaption strong { font-weight: 500; font-size: 15px; }
+  figcaption span { color: #8d8d8d; font-size: 14.5px; line-height: 1.55; }
+  .hw-note { color: #5a5a5a; margin: 16px 0 0; }
+  @media (max-width: 860px) {
+    .hw-head, .panels { grid-template-columns: 1fr; }
+  }
+</style>
+
+<script>
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const MONO = '11px "Geist Mono Variable", ui-monospace, monospace';
+  const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+  const ease = (v: number) => { v = clamp01(v); return v < 0.5 ? 4 * v * v * v : 1 - (-2 * v + 2) ** 3 / 2; };
+
+  /** 캔버스 준비 + 화면에 보일 때만 그리기 */
+  function mount(id: string, draw: (ctx: CanvasRenderingContext2D, w: number, h: number, t: number) => void, still: number) {
+    const canvas = document.getElementById(id) as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+    let w = 0, h = 0;
+    const size = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const r = canvas.getBoundingClientRect();
+      w = r.width; h = r.height;
+      canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    size();
+    window.addEventListener('resize', () => { size(); if (reduce) draw(ctx, w, h, still); });
+    if (reduce) { draw(ctx, w, h, still); return; }
+    let running = false, t0 = performance.now(), pausedAt = 0;
+    const loop = (now: number) => {
+      if (!running) return;
+      draw(ctx, w, h, (now - t0) / 1000);
+      requestAnimationFrame(loop);
+    };
+    new IntersectionObserver(([e]) => {
+      if (e.isIntersecting && !running) { t0 += pausedAt ? performance.now() - pausedAt : 0; running = true; requestAnimationFrame(loop); }
+      else if (!e.isIntersecting && running) { running = false; pausedAt = performance.now(); }
+    }).observe(canvas);
+  }
+
+  function grid(ctx: CanvasRenderingContext2D, w: number, h: number) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.045)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = 16; x < w; x += 32) { ctx.moveTo(Math.round(x) + 0.5, 0); ctx.lineTo(Math.round(x) + 0.5, h); }
+    for (let y = 16; y < h; y += 32) { ctx.moveTo(0, Math.round(y) + 0.5); ctx.lineTo(w, Math.round(y) + 0.5); }
+    ctx.stroke();
+  }
+
+  /** 정사영 투영: yaw로 돌리고 pitch만큼 위에서 내려다봄 */
+  function projector(yaw: number, pitch: number, cx: number, cy: number, s: number) {
+    const cyw = Math.cos(yaw), syw = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+    return (x: number, y: number, z: number): [number, number, number] => {
+      const x1 = x * cyw - z * syw, z1 = x * syw + z * cyw;
+      return [cx + x1 * s, cy - y * cp * s + z1 * sp * s, z1];
+    };
+  }
+
+  /** 네모 이름표 + 표시 원 + 지시선 (참고 이미지의 콜아웃 스타일) */
+  function callout(ctx: CanvasRenderingContext2D, w: number, x: number, y: number, dx: number, dy: number, text: string, a: number) {
+    if (a < 0.02) return;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.font = MONO;
+    const tw = ctx.measureText(text).width, bw = tw + 16, bh = 22;
+    let bx = x + dx - (dx < 0 ? bw : 0), by = y + dy - bh / 2;
+    bx = Math.min(w - bw - 8, Math.max(8, bx));
+    by = Math.min(ctx.canvas.clientHeight - bh - 8, Math.max(8, by));
+    const ax = dx < 0 ? bx + bw : bx;
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ax, by + bh / 2); ctx.stroke();
+    ctx.fillStyle = '#000';
+    ctx.fillRect(bx, by, bw, bh); ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
+    ctx.beginPath(); ctx.arc(x, y, 4.5, 0, 6.2832); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    ctx.fillText(text, bx + 8, by + bh / 2 + 0.5);
+    ctx.restore();
+  }
+
+  // ─────────────────────────────── ① 기기 분해도 ───────────────────────────────
+  mount('hw-device', (ctx, w, h, t) => {
+    ctx.clearRect(0, 0, w, h);
+    grid(ctx, w, h);
+    const s = Math.min(w * 0.215, h * 0.26);
+    const P = projector(0.55 + 0.22 * Math.sin(t * 0.22), 0.62, w * 0.45, h * 0.56, s);
+
+    // 10초 주기: 분해 → 유지 → 조립 → 유지
+    const k = t % 10;
+    const e = k < 1.6 ? ease(k / 1.6) : k < 5 ? 1 : k < 6.6 ? 1 - ease((k - 5) / 1.6) : 0;
+    const OX = -0.75;                                           // 전체를 가운데로
+
+    const ring = (r: number, y: number, a: number, cx = OX, cz = 0, n = 72) => {
+      ctx.strokeStyle = `rgba(255,255,255,${a})`;
+      ctx.beginPath();
+      for (let i = 0; i <= n; i++) {
+        const th = (i / n) * Math.PI * 2;
+        const [x, yy] = P(cx + Math.cos(th) * r, y, cz + Math.sin(th) * r);
+        i ? ctx.lineTo(x, yy) : ctx.moveTo(x, yy);
+      }
+      ctx.stroke();
+    };
+    const dotDisc = (r0: number, r1: number, y: number, a: number) => {
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      for (let r = r0; r <= r1 + 1e-6; r += 0.07) {
+        const n = Math.max(6, Math.round(r * 60));
+        for (let i = 0; i < n; i++) {
+          const th = (i / n) * Math.PI * 2 + r * 3;
+          const [x, yy] = P(OX + Math.cos(th) * r, y, Math.sin(th) * r);
+          ctx.fillRect(x - 0.6, yy - 0.6, 1.3, 1.3);
+        }
+      }
+    };
+    const cylSides = (r: number, y0: number, y1: number, a: number) => {
+      // 정사영이라 윤곽선은 회전축 기준 좌우 끝
+      ctx.strokeStyle = `rgba(255,255,255,${a})`;
+      for (const sgn of [-1, 1]) {
+        const [xa, ya] = P(OX, y0, 0), [xb, yb] = P(OX, y1, 0);
+        ctx.beginPath(); ctx.moveTo(xa + sgn * r * s, ya); ctx.lineTo(xb + sgn * r * s, yb); ctx.stroke();
+      }
+    };
+
+    ctx.lineWidth = 1;
+
+    // 하우징 (고정)
+    ring(0.95, 0, 0.55); ring(0.95, 0.12, 0.8); cylSides(0.95, 0, 0.12, 0.55);
+
+    // 유연 리드: 하우징 가장자리에서 나와 아래로 휘어 전극 배열로
+    const T = 9;
+    const lead = (u: number, off: number): [number, number, number] => {
+      const sm = u * u * (3 - 2 * u);
+      return [OX + 0.95 + 1.35 * u, 0.04 - 0.62 * sm, off + 0.035 * Math.sin(u * 13 + off * 30)];
+    };
+    for (let j = 0; j < T; j++) {
+      const off = -0.16 + (0.32 * j) / (T - 1);
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+      ctx.beginPath();
+      for (let i = 0; i <= 40; i++) { const [x, y] = P(...lead(i / 40, off)); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+      ctx.stroke();
+      // 전극에서 칩 쪽으로 흐르는 신호
+      if (!reduce) {
+        const u = 1 - ((t * 0.45 + j * 0.137) % 1);
+        const [x, y] = P(...lead(u, off));
+        ctx.fillStyle = '#fff'; ctx.fillRect(x - 1.3, y - 1.3, 2.6, 2.6);
+      }
+    }
+    // 전극 배열
+    const ax0 = OX + 2.32, ay = -0.58;
+    const corners = [[ax0, -0.24], [ax0 + 0.72, -0.24], [ax0 + 0.72, 0.24], [ax0, 0.24]].map(([x, z]) => P(x, ay, z));
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.beginPath(); corners.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.stroke();
+    ctx.fillStyle = '#fff';
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 8; c++) {
+      const [x, y] = P(ax0 + 0.08 + c * 0.08, ay, -0.14 + r * 0.14);
+      ctx.beginPath(); ctx.arc(x, y, 1.6, 0, 6.2832); ctx.fill();
+    }
+
+    // 신호처리 칩 기판
+    const yc = 0.13 + 0.5 * e;
+    const sq = (half: number, y: number, a: number) => {
+      const pts = [[-half, -half], [half, -half], [half, half], [-half, half]].map(([x, z]) => P(OX + x, y, z));
+      ctx.strokeStyle = `rgba(255,255,255,${a})`;
+      ctx.beginPath(); pts.forEach(([x, yy], i) => (i ? ctx.lineTo(x, yy) : ctx.moveTo(x, yy))); ctx.closePath(); ctx.stroke();
+    };
+    sq(0.52, yc, 0.8);
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    for (let i = 0; i < 11; i++) for (let j = 0; j < 11; j++) {
+      const x = -0.46 + i * 0.092, z = -0.46 + j * 0.092;
+      if (Math.abs(x) < 0.3 && Math.abs(z) < 0.3) continue;
+      const [px, py] = P(OX + x, yc, z); ctx.fillRect(px - 0.5, py - 0.5, 1.1, 1.1);
+    }
+    sq(0.24, yc + 0.05, 1);
+    ctx.fillStyle = '#fff';
+    for (let i = 0; i < 7; i++) {
+      const v = -0.18 + i * 0.06;
+      for (const [x, z] of [[v, -0.3], [v, 0.3], [-0.3, v], [0.3, v]]) {
+        const [px, py] = P(OX + x, yc, z); ctx.fillRect(px - 0.9, py - 0.9, 1.8, 1.8);
+      }
+    }
+    // 칩에서 연산 중임을 보여주는 깜빡임
+    if (!reduce && Math.sin(t * 6) > 0.6) { const [px, py] = P(OX, yc + 0.05, 0); ctx.fillRect(px - 2, py - 2, 4, 4); }
+
+    // 배터리
+    const yb = 0.22 + 0.9 * e;
+    ring(0.8, yb, 0.6); ring(0.8, yb + 0.16, 0.95); cylSides(0.8, yb, yb + 0.16, 0.6);
+    ring(0.62, yb + 0.16, 0.5);
+    dotDisc(0.07, 0.56, yb + 0.16, 0.55);
+
+    // 이름표 (분해됐을 때만)
+    const la = clamp01((e - 0.55) / 0.35);
+    const [bx, by] = P(OX + 0.3, yb + 0.16, -0.2);
+    const [cx2, cy2] = P(OX + 0.24, yc + 0.05, 0.24);
+    const [lx, ly] = P(...lead(0.5, 0.16));
+    const [ex, ey] = P(ax0 + 0.36, ay, 0.24);
+    callout(ctx, w, bx, by, 90, -30, 'BATTERY', la);
+    callout(ctx, w, cx2, cy2, -80, 44, 'SIGNAL-PROCESSING CHIP', la);
+    callout(ctx, w, lx, ly, 60, -46, 'FLEXIBLE LEADS', la);
+    callout(ctx, w, ex, ey, -110, 12, 'ELECTRODE ARRAY', la);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = MONO; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText(e > 0.5 ? 'VIEW  exploded' : 'VIEW  assembled', 16, 14);
+  }, 3);
+
+  // ─────────────────────────────── ② 로봇 삽입 ───────────────────────────────
+  const targets: [number, number][] = [];
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) {
+    const cc = r % 2 ? 3 - c : c;                              // 지그재그 순서
+    targets.push([-0.66 + cc * 0.44, -0.36 + r * 0.36]);
+  }
+  const surfY = (x: number, z: number) => 0.07 * Math.sin(2.6 * x + 0.8) * Math.cos(2.2 * z) + 0.04 * Math.sin(5 * x - 3 * z);
+  const DEPTH = 0.42, HOVER = 0.62, PER = 1.45;
+  const N = targets.length, CYCLE = N * PER + 4.2;
+
+  mount('hw-insert', (ctx, w, h, t) => {
+    ctx.clearRect(0, 0, w, h);
+    grid(ctx, w, h);
+    const s = Math.min(w * 0.27, h * 0.36);
+    const P = projector(-0.42 + 0.06 * Math.sin(t * 0.2), 0.5, w * 0.47, h * 0.6, s);
+    const k = t % CYCLE;
+
+    // 피질 조각: 표면 점 + 앞쪽 단면
+    for (let i = 0; i <= 52; i++) for (let j = 0; j <= 28; j++) {
+      const x = -1.6 + (3.2 * i) / 52, z = -0.95 + (1.9 * j) / 28;
+      const [px, py, d] = P(x, surfY(x, z), z);
+      const a = 0.18 + 0.5 * clamp01((d + 1.2) / 2.4);
+      ctx.fillStyle = `rgba(255,255,255,${a.toFixed(3)})`;
+      ctx.fillRect(px - 0.6, py - 0.6, 1.3, 1.3);
+    }
+    for (const zf of [0.95]) for (let i = 0; i <= 52; i++) for (let j = 1; j <= 9; j++) {
+      const x = -1.6 + (3.2 * i) / 52, y = surfY(x, zf) - j * 0.075;
+      const [px, py] = P(x, y, zf);
+      ctx.fillStyle = `rgba(255,255,255,${(0.2 - j * 0.016).toFixed(3)})`;
+      ctx.fillRect(px - 0.5, py - 0.5, 1.1, 1.1);
+    }
+
+    // 현재 몇 번째 실을 삽입 중인지
+    const idx = Math.min(N, Math.floor(k / PER));
+    const f = k / PER - idx;                                   // 한 실 안에서의 진행도
+    const done = idx >= N;
+    const fade = done ? 1 - clamp01((k - N * PER - 3.4) / 0.8) : 1;
+
+    // 이미 꽂힌 실
+    const placed = done ? N : idx + (f > 0.55 ? 1 : 0);
+    for (let n = 0; n < placed; n++) {
+      const [x, z] = targets[n], y0 = surfY(x, z);
+      const [ax, ay] = P(x, y0, z), [bx, by] = P(x, y0 - DEPTH, z);
+      ctx.strokeStyle = `rgba(255,255,255,${(0.75 * fade).toFixed(3)})`; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+      ctx.fillStyle = `rgba(255,255,255,${fade.toFixed(3)})`;
+      for (let c = 0; c < 3; c++) { const [cx3, cy3] = P(x, y0 - DEPTH + c * 0.07, z); ctx.fillRect(cx3 - 1.5, cy3 - 1.5, 3, 3); }
+      // 전부 꽂힌 뒤: 기록된 신호가 실을 타고 올라옴
+      if (done && !reduce) {
+        const u = ((k - N * PER) * 0.9 + n * 0.23) % 1;
+        const [qx, qy] = P(x, y0 - DEPTH + DEPTH * u, z);
+        ctx.fillStyle = `rgba(255,255,255,${fade.toFixed(3)})`;
+        ctx.beginPath(); ctx.arc(qx, qy, 2.2, 0, 6.2832); ctx.fill();
+      }
+    }
+
+    // 삽입 헤드 위치
+    const cur = targets[Math.min(idx, N - 1)], prev = targets[Math.max(0, Math.min(idx, N) - 1)];
+    let hx: number, hz: number, tipY: number, state: string;
+    if (done) {
+      const home = ease((k - N * PER) / 1.2);
+      hx = cur[0] + (0.9 - cur[0]) * home; hz = cur[1] + (-0.6 - cur[1]) * home;
+      tipY = surfY(hx, hz) + HOVER + 0.3 * home; state = 'recording';
+    } else {
+      const mv = ease(f / 0.32);
+      hx = idx === 0 ? cur[0] : prev[0] + (cur[0] - prev[0]) * mv;
+      hz = idx === 0 ? cur[1] : prev[1] + (cur[1] - prev[1]) * mv;
+      const ys = surfY(hx, hz);
+      const down = ease((f - 0.34) / 0.2), up = ease((f - 0.62) / 0.25);
+      tipY = ys + HOVER - (HOVER + DEPTH) * down + (HOVER + DEPTH) * up;
+      state = f < 0.34 ? 'positioning' : f < 0.56 ? 'inserting' : f < 0.62 ? 'releasing' : 'retracting';
+    }
+
+    // 표면 조준 표시
+    if (!done) {
+      const ys = surfY(hx, hz);
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i <= 40; i++) {
+        const th = (i / 40) * Math.PI * 2;
+        const [px, py] = P(hx + Math.cos(th) * 0.1, ys, hz + Math.sin(th) * 0.1);
+        i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+      }
+      ctx.stroke();
+      for (const [ux, uz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const [a1, b1] = P(hx + ux * 0.13, ys, hz + uz * 0.13), [a2, b2] = P(hx + ux * 0.19, ys, hz + uz * 0.19);
+        ctx.beginPath(); ctx.moveTo(a1, b1); ctx.lineTo(a2, b2); ctx.stroke();
+      }
+    }
+
+    // 바늘 + 삽입 중인 실
+    const [nx, ny] = P(hx, tipY, hz), [tx, ty] = P(hx, tipY + 0.5, hz);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(nx, ny); ctx.stroke();
+
+    // 헤드 몸체 (화면 좌표로 그린 상자)
+    ctx.fillStyle = '#000'; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1;
+    ctx.fillRect(tx - 11, ty - 40, 22, 40); ctx.strokeRect(tx - 10.5, ty - 39.5, 21, 39);
+    ctx.fillStyle = '#fff'; ctx.fillRect(tx - 3, ty - 10, 6, 3);
+    ctx.beginPath(); ctx.moveTo(tx - 10.5, ty - 20); ctx.lineTo(tx + 10.5, ty - 20); ctx.stroke();
+
+    // 로봇 팔: 헤드 → 관절 → 화면 밖 기저부
+    const [jx, jy] = P(hx + 0.7, tipY + 1.35, hz - 0.35);
+    const [kx, ky] = P(2.4, 2.6, -0.8);
+    const arm = (x1: number, y1: number, x2: number, y2: number) => {
+      const L = Math.hypot(x2 - x1, y2 - y1) || 1, ox = (-(y2 - y1) / L) * 4, oy = ((x2 - x1) / L) * 4;
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      ctx.beginPath(); ctx.moveTo(x1 + ox, y1 + oy); ctx.lineTo(x2 + ox, y2 + oy); ctx.moveTo(x1 - ox, y1 - oy); ctx.lineTo(x2 - ox, y2 - oy); ctx.stroke();
+    };
+    arm(tx, ty - 40, jx, jy); arm(jx, jy, kx, ky);
+    ctx.fillStyle = '#000'; ctx.strokeStyle = '#fff';
+    for (const [px, py] of [[tx, ty - 40], [jx, jy]]) { ctx.beginPath(); ctx.arc(px, py, 6, 0, 6.2832); ctx.fill(); ctx.stroke(); }
+
+    // 계기판 글자
+    ctx.font = MONO; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.fillText('THREAD', 16, 14); ctx.fillText('STATE', 16, 32);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(`${String(done ? N : idx + 1).padStart(2, '0')} / ${N}`, 76, 14);
+    ctx.fillText(state, 76, 32);
+  }, N * PER + 1.5);
+</script>

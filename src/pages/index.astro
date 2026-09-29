@@ -5,6 +5,7 @@ import Hero from '../components/Hero.astro';
 import Footer from '../components/Footer.astro';
 import OperatingPoints from '../components/OperatingPoints.astro';
 import Vision from '../components/Vision.astro';
+import Hardware from '../components/Hardware.astro';
 import { site, experience, education, skills, honours } from '../data/site';
 
 const research = (await getCollection('research')).sort((a, b) => a.data.order - b.data.order);
@@ -111,6 +112,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       </div>
     </section>
     <Vision />
+    <Hardware />
   </main>
   <Footer />
 </Base>
