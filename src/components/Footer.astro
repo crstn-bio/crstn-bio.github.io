@@ -27,9 +27,9 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 <style>
   .foot { background: var(--theatre); color: var(--on-dark); padding-top: clamp(64px, 9vw, 112px); }
   .foot-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 40px var(--gutter); align-items: end; }
-  h2 { font-size: clamp(34px, 5vw, 64px); font-weight: 250; font-variation-settings: 'wdth' 125; letter-spacing: -0.02em; margin-bottom: 20px; color: #f2faf9; }
+  h2 { font-size: clamp(40px, 6vw, 80px); font-weight: 250; letter-spacing: -0.05em; margin-bottom: 20px; color: #f2f5f8; }
   p { color: var(--on-dark-muted); max-width: 52ch; }
-  .mail { color: var(--phosphor); font-size: clamp(18px, 2vw, 22px); word-break: break-all; }
+  .mail { color: var(--pulse); font-size: clamp(18px, 2vw, 22px); word-break: break-all; }
   .mail:hover, .links a:hover { color: #fff; }
   .side { display: flex; align-items: flex-end; gap: 24px; }
   .avatar {
@@ -40,7 +40,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   .links a { color: var(--on-dark); }
   .foot-base {
     display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px;
-    margin-top: 72px; padding-block: 22px; border-top: 1px solid var(--theatre-line); color: #5f7f80;
+    margin-top: 72px; padding-block: 22px; border-top: 1px solid var(--theatre-line); color: var(--on-dark-faint);
   }
   @media (max-width: 700px) { .foot-grid { grid-template-columns: 1fr; } }
 </style>

@@ -51,13 +51,13 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 </Base>
 
 <style>
-  .top { background: var(--theatre); color: var(--on-dark); padding-bottom: clamp(48px, 7vw, 88px); }
+  .top { background: radial-gradient(900px 420px at 78% -8%, rgba(156, 194, 240, 0.08), transparent 62%), var(--theatre); color: var(--on-dark); padding-bottom: clamp(48px, 7vw, 88px); }
   .head { padding-top: clamp(32px, 6vw, 72px); }
   .back { color: var(--on-dark-muted); font-size: 15px; }
   .back::before { content: '← '; }
   h1 {
-    margin-top: 20px; max-width: 22ch; color: #f2faf9;
-    font-size: clamp(32px, 5vw, 64px); font-weight: 250; font-variation-settings: 'wdth' 120; letter-spacing: -0.02em; line-height: 1.04;
+    margin-top: 20px; max-width: 24ch; color: #f2f5f8;
+    font-size: clamp(34px, 4.8vw, 64px); font-weight: 250; letter-spacing: -0.045em; line-height: 1.04;
   }
   .sum { margin-top: 24px; max-width: 60ch; font-size: 19px; color: var(--on-dark); }
   .meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px 24px; margin: 40px 0 0; border-top: 1px solid var(--theatre-line); padding-top: 20px; }
@@ -69,7 +69,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   .fig { margin-bottom: clamp(40px, 6vw, 72px); }
   .cols { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 48px var(--gutter); }
   @media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
-  .prose :global(h2) { font-size: 26px; font-variation-settings: 'wdth' 115; font-weight: 350; margin: 1.6em 0 0.5em; }
+  .prose :global(h2) { font-size: 26px; font-weight: 400; letter-spacing: -0.025em; margin: 1.6em 0 0.5em; }
   .prose :global(h2:first-child) { margin-top: 0; }
   .prose :global(p) { font-size: 18px; line-height: 1.7; max-width: 64ch; }
   aside { border-left: 2px solid var(--scrub); padding-left: 20px; align-self: start; }
@@ -78,7 +78,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   aside ul { margin: 0; padding-left: 18px; }
   aside li { margin-bottom: 6px; font-size: 15.5px; }
   .next { display: flex; flex-direction: column; gap: 4px; margin-top: 72px; padding-top: 28px; border-top: 1px solid var(--rule); text-decoration: none; color: var(--ink); }
-  .next-title { font-size: clamp(24px, 3vw, 34px); font-variation-settings: 'wdth' 115; font-weight: 300; }
+  .next-title { font-size: clamp(28px, 3.4vw, 42px); font-weight: 250; letter-spacing: -0.04em; }
   .next:hover .next-title { color: var(--scrub); }
   .muted { color: var(--muted); font-size: 15px; }
 </style>

@@ -3,164 +3,201 @@ import Nav from './Nav.astro';
 import { site } from '../data/site';
 ---
 <section class="hero" aria-labelledby="hero-name">
-  <Nav />
-  <div class="wrap hero-body">
-    <h1 id="hero-name">{site.name}</h1>
-    <p class="hero-title">{site.title}</p>
-    <p class="hero-current">{site.current}. {site.location}.</p>
-  </div>
-
-  <figure class="monitor wrap" aria-label="Animated sketch of a theta-burst stimulation pattern and a simulated neural response">
-    <div class="readout mono" aria-hidden="true">
-      <span><i class="dot dot-pulse"></i>stim&nbsp; θ-burst, 3 pulses at 50 Hz, every 200 ms</span>
-      <span><i class="dot dot-phos"></i>response&nbsp; simulated field potential</span>
+  <canvas id="array" aria-hidden="true"></canvas>
+  <div class="hero-inner">
+    <Nav />
+    <div class="wrap hero-body">
+      <h1 id="hero-name">{site.name}</h1>
+      <p class="hero-title">{site.title}</p>
+      <p class="hero-current">{site.current}. {site.location}.</p>
     </div>
-    <canvas id="trace" aria-hidden="true"></canvas>
-    <figcaption class="mono">Illustration of the stimulation pattern used in my thesis work. Not recorded data.</figcaption>
-  </figure>
+
+    <div class="wrap readout">
+      <dl class="mono">
+        <div><dt>array</dt><dd>simulated electrode grid</dd></div>
+        <div><dt>stimulus</dt><dd>θ-burst, 3 pulses at 50 Hz every 200 ms</dd></div>
+        <div><dt>playback</dt><dd>slowed 10×</dd></div>
+      </dl>
+      <p class="mono note">Illustration of the stimulation pattern in my thesis work, not recorded data.</p>
+    </div>
+  </div>
 </section>
 
 <style>
   .hero {
-    background:
-      radial-gradient(1200px 500px at 70% -10%, rgba(123, 227, 201, 0.07), transparent 60%),
-      var(--theatre);
+    position: relative;
+    background: radial-gradient(1100px 700px at 72% 42%, #111822 0%, var(--theatre) 62%);
     color: var(--on-dark);
-    min-height: min(100svh, 920px);
-    display: flex; flex-direction: column;
+    min-height: min(100svh, 940px);
     overflow: hidden;
+    isolation: isolate;
   }
-  .hero-body { padding-top: clamp(48px, 10vh, 120px); }
+  canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1;
+    -webkit-mask-image: linear-gradient(90deg, transparent 28%, #000 62%);
+            mask-image: linear-gradient(90deg, transparent 28%, #000 62%);
+  }
+  .hero-inner { min-height: inherit; display: flex; flex-direction: column; }
+  .hero-body { padding-top: clamp(64px, 14vh, 160px); }
   h1 {
-    font-size: clamp(52px, 11.5vw, 168px);
+    font-size: clamp(56px, 10.5vw, 156px);
     font-weight: 250;
-    font-variation-settings: 'wdth' 125;
-    letter-spacing: -0.035em;
+    letter-spacing: -0.055em;
     line-height: 0.92;
-    color: #f2faf9;
+    color: #f2f5f8;
+    max-width: 8ch;
   }
   .hero-title {
-    margin-top: clamp(20px, 3vw, 32px);
-    font-size: clamp(20px, 2.4vw, 30px);
-    font-weight: 300;
-    font-variation-settings: 'wdth' 110;
+    margin-top: clamp(24px, 3vw, 36px);
+    font-size: clamp(19px, 2vw, 24px);
+    font-weight: 330;
+    letter-spacing: -0.01em;
     color: var(--phosphor);
   }
-  .hero-current { max-width: 52ch; color: var(--on-dark-muted); margin-top: 8px; }
+  .hero-current { max-width: 46ch; color: var(--on-dark-muted); margin-top: 6px; font-weight: 330; }
 
-  .monitor { margin-top: auto; margin-bottom: 0; padding-bottom: 28px; padding-top: 40px; }
-  .readout {
-    display: flex; flex-wrap: wrap; gap: 6px 28px; color: var(--on-dark-muted);
-    border-top: 1px solid var(--theatre-line); padding-top: 14px; margin-bottom: 8px;
+  .readout { margin-top: auto; padding-top: 48px; padding-bottom: 28px; }
+  dl {
+    display: flex; flex-wrap: wrap; gap: 10px 40px; margin: 0;
+    border-top: 1px solid var(--theatre-line); padding-top: 16px;
   }
-  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
-  .dot-pulse { background: var(--pulse); }
-  .dot-phos { background: var(--phosphor); }
-  canvas { display: block; width: 100%; height: clamp(150px, 22vh, 220px); }
-  figcaption { color: #5f7f80; margin-top: 8px; }
+  dl div { display: flex; gap: 12px; }
+  dt { color: var(--on-dark-faint); }
+  dd { margin: 0; color: var(--on-dark); }
+  .note { color: var(--on-dark-faint); margin: 10px 0 0; }
+
+  @media (max-width: 760px) {
+    canvas {
+      -webkit-mask-image: linear-gradient(180deg, transparent 50%, #000 64%, #000 74%, transparent 84%);
+              mask-image: linear-gradient(180deg, transparent 50%, #000 64%, #000 74%, transparent 84%);
+    }
+    h1 { max-width: none; }
+    dl { flex-direction: column; gap: 6px; }
+  }
 </style>
 
 <script>
-  // 수술실 모니터처럼 왼쪽→오른쪽으로 쓸고 지나가는 트레이스.
-  // 위 채널: 세타 버스트 자극(5 Hz마다 50 Hz 펄스 3개)
-  // 아래 채널: 자극에 반응하는 모의 신호(노이즈 + 유발 반응)
-  const canvas = document.getElementById('trace') as HTMLCanvasElement | null;
+  // 전극 배열처럼 보이는 점 격자. 초점(집속 초음파 목표 지점)에서
+  // 세타 버스트 펄스마다 파동이 퍼지고, 지나가는 전극이 잠시 밝아져요.
+  const canvas = document.getElementById('array') as HTMLCanvasElement | null;
   if (canvas) {
     const ctx = canvas.getContext('2d')!;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const PX_PER_S = 260;           // 스윕 속도
-    const GAP = 26;                 // 스윕 앞의 지워지는 틈
-    let w = 0, h = 0, dpr = 1;
-    let x = 0, t = 0, lastStim = 0, lastResp = 0;
-    let lfp = 0, evoked = 0;
-    let last = performance.now();
+    const SLOW = 10;                         // 재생 속도 1/10
+    const BURST_EVERY = 0.2 * SLOW;          // 5 Hz → 실제 2초마다
+    const PULSE_GAP = 0.02 * SLOW;           // 50 Hz → 0.2초 간격
+    const SPEED = 150;                       // 파동 속도 (px/s)
+    const SIGMA = 16;
 
-    const pulseAt = (time: number) => {
-      const inCycle = time % 0.2;               // 5 Hz
-      for (let k = 0; k < 3; k++) {             // 3 pulses, 20 ms apart
-        const d = inCycle - k * 0.02;
-        if (d >= 0 && d < 0.004) return 1;
-      }
-      return 0;
-    };
+    type Ripple = { t0: number; amp: number };
+    let w = 0, h = 0, dpr = 1, gap = 24;
+    let fx = 0, fy = 0;
+    let dots: { x: number; y: number; d: number; glow: number; n: number }[] = [];
+    let ripples: Ripple[] = [];
+    let start = performance.now();
+    let lastBurst = -Infinity;
+    let running = true;
 
-    function resize() {
+    function layout() {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       const r = canvas!.getBoundingClientRect();
       w = r.width; h = r.height;
       canvas!.width = Math.round(w * dpr); canvas!.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, w, h);
-      drawGrid(0, w);
-      x = 0;
+      const mobile = w < 760;
+      gap = mobile ? 20 : 24;
+      fx = mobile ? w * 0.62 : w * 0.72;
+      fy = mobile ? h * 0.69 : h * 0.44;
+      dots = [];
+      const ox = (w % gap) / 2, oy = (h % gap) / 2;
+      for (let y = oy; y <= h; y += gap) {
+        for (let x = ox; x <= w; x += gap) {
+          dots.push({ x, y, d: Math.hypot(x - fx, y - fy), glow: 0, n: Math.random() * 6.28 });
+        }
+      }
     }
 
-    function drawGrid(x0: number, x1: number) {
-      ctx.strokeStyle = 'rgba(123, 227, 201, 0.06)';
+    function spawnBurst(t: number) {
+      for (let k = 0; k < 3; k++) ripples.push({ t0: t + k * PULSE_GAP, amp: 1 });
+    }
+
+    function draw(t: number, dt: number) {
+      ctx.clearRect(0, 0, w, h);
+      ripples = ripples.filter((r) => (t - r.t0) * SPEED < Math.max(w, h) * 1.1);
+      const reach = Math.max(w, h);
+
+      for (const p of dots) {
+        let a = 0;
+        for (const r of ripples) {
+          const age = t - r.t0;
+          if (age < 0) continue;
+          const front = age * SPEED;
+          const off = p.d - front;
+          if (off > 3 * SIGMA || off < -3 * SIGMA) continue;
+          a += Math.exp(-(off * off) / (2 * SIGMA * SIGMA)) * Math.exp(-p.d / (reach * 0.24));
+        }
+        // 초점 근처 전극은 버스트가 반복될수록 잔광이 조금씩 쌓임
+        p.glow += (a * 0.35 - p.glow) * Math.min(1, dt * 1.2);
+        const flicker = 0.04 * (1 + Math.sin(t * 0.7 + p.n));
+        const v = Math.min(1, a + p.glow + flicker);
+
+        const rad = 0.9 + v * 1.5;
+        if (v > 0.25) {
+          ctx.fillStyle = `rgba(156, 194, 240, ${0.12 * v})`;
+          ctx.beginPath(); ctx.arc(p.x, p.y, rad * 4, 0, 6.2832); ctx.fill();
+        }
+        const base = [30, 37, 46], hi = [196, 220, 248];
+        const c = base.map((b, i) => Math.round(b + (hi[i] - b) * v));
+        ctx.fillStyle = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, rad, 0, 6.2832); ctx.fill();
+      }
+
+      // 초점 표시: 얇은 원과 눈금
+      ctx.strokeStyle = 'rgba(156, 194, 240, 0.55)';
       ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(fx, fy, 26, 0, 6.2832); ctx.stroke();
+      ctx.strokeStyle = 'rgba(156, 194, 240, 0.22)';
+      ctx.beginPath(); ctx.arc(fx, fy, 64, 0, 6.2832); ctx.stroke();
       ctx.beginPath();
-      for (let gx = Math.ceil(x0 / 40) * 40; gx <= x1; gx += 40) { ctx.moveTo(gx + 0.5, 0); ctx.lineTo(gx + 0.5, h); }
-      for (let gy = 0; gy <= h; gy += 40) { ctx.moveTo(x0, gy + 0.5); ctx.lineTo(x1, gy + 0.5); }
+      for (let i = 0; i < 4; i++) {
+        const ang = (i * Math.PI) / 2;
+        ctx.moveTo(fx + Math.cos(ang) * 34, fy + Math.sin(ang) * 34);
+        ctx.lineTo(fx + Math.cos(ang) * 46, fy + Math.sin(ang) * 46);
+      }
+      ctx.strokeStyle = 'rgba(156, 194, 240, 0.55)';
       ctx.stroke();
     }
 
-    const stimY = () => h * 0.22;
-    const respY = () => h * 0.68;
-
-    function sample(dt: number) {
-      t += dt;
-      const p = pulseAt(t);
-      if (p) evoked += 0.9 * dt * 60;           // 각 펄스가 반응을 누적시킴
-      evoked *= Math.exp(-dt / 0.045);          // 반응 감쇠
-      lfp += (Math.random() - 0.5) * 0.9 - lfp * 0.08;
-      const stim = stimY() - p * h * 0.16;
-      const resp = respY() + lfp * h * 0.02 - Math.sin(t * 2 * Math.PI * 6) * h * 0.02 - evoked * h * 0.35;
-      return { stim, resp };
+    let prev = 0;
+    function frame(now: number) {
+      if (!running) return;
+      const t = (now - start) / 1000;
+      const dt = Math.min(0.05, t - prev); prev = t;
+      if (t - lastBurst >= BURST_EVERY) { spawnBurst(t); lastBurst = t; }
+      draw(t, dt);
+      requestAnimationFrame(frame);
     }
 
-    function step(now: number) {
-      const dt = Math.min(0.05, (now - last) / 1000);
-      last = now;
-      const dx = dt * PX_PER_S;
-      const steps = Math.max(1, Math.round(dx));
-      for (let i = 0; i < steps; i++) {
-        const nx = x + dx / steps;
-        const { stim, resp } = sample(dt / steps);
-        // 앞쪽 지우기
-        ctx.clearRect(nx, 0, GAP, h);
-        drawGrid(nx, nx + GAP);
-        if (x > 0 && nx > x) {
-          ctx.lineWidth = 1.6; ctx.lineJoin = 'round';
-          ctx.strokeStyle = '#f2b84b';
-          ctx.beginPath(); ctx.moveTo(x, lastStim); ctx.lineTo(nx, stim); ctx.stroke();
-          ctx.strokeStyle = '#7be3c9';
-          ctx.beginPath(); ctx.moveTo(x, lastResp); ctx.lineTo(nx, resp); ctx.stroke();
-        }
-        lastStim = stim; lastResp = resp; x = nx;
-        if (x > w) { x = 0; }
-      }
-      // 스윕 헤드
-      ctx.fillStyle = '#e8fff8';
-      ctx.fillRect(x - 1, lastResp - 1.5, 3, 3);
-      requestAnimationFrame(step);
-    }
+    layout();
+    let resizeTimer = 0;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(layout, 120);
+    });
 
-    resize();
-    window.addEventListener('resize', resize);
     if (reduce) {
-      // 움직임 줄이기: 한 화면만 정적으로 그림
-      const n = Math.ceil(w);
-      for (let i = 0; i < n; i++) {
-        const { stim, resp } = sample(1 / PX_PER_S);
-        if (i > 0) {
-          ctx.lineWidth = 1.6;
-          ctx.strokeStyle = '#f2b84b'; ctx.beginPath(); ctx.moveTo(i - 1, lastStim); ctx.lineTo(i, stim); ctx.stroke();
-          ctx.strokeStyle = '#7be3c9'; ctx.beginPath(); ctx.moveTo(i - 1, lastResp); ctx.lineTo(i, resp); ctx.stroke();
-        }
-        lastStim = stim; lastResp = resp;
-      }
+      // 움직임 줄이기: 파동이 퍼져 있는 한 장면만 그림
+      ripples = [{ t0: 0, amp: 1 }, { t0: 0.2, amp: 1 }, { t0: 0.4, amp: 1 }];
+      draw(1.4, 1);
+      window.addEventListener('resize', () => setTimeout(() => draw(1.4, 1), 150));
     } else {
-      requestAnimationFrame((n) => { last = n; requestAnimationFrame(step); });
+      // 화면 밖에 있을 때는 멈춰서 배터리 절약
+      new IntersectionObserver(([e]) => {
+        const was = running;
+        running = e.isIntersecting;
+        if (running && !was) { prev = (performance.now() - start) / 1000; requestAnimationFrame(frame); }
+      }).observe(canvas);
+      requestAnimationFrame(frame);
     }
   }
 </script>

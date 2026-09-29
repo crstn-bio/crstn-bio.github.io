@@ -48,11 +48,13 @@ const ticks = [0.5, 0.6, 0.7, 0.8];
 <style>
   .op {
     margin: 0; background: var(--theatre); color: var(--on-dark);
-    border-radius: 14px; padding: clamp(22px, 4vw, 44px);
+    border-radius: 16px; padding: clamp(22px, 4vw, 52px);
+    background: radial-gradient(700px 300px at 85% 0%, #121a24, var(--theatre) 70%);
+    border: 1px solid var(--theatre-line);
   }
   .op-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px 32px; align-items: flex-start; }
   figcaption { max-width: 54ch; }
-  h3 { font-size: clamp(21px, 2.3vw, 28px); font-weight: 350; font-variation-settings: 'wdth' 112; color: #f2faf9; margin-bottom: 10px; }
+  h3 { font-size: clamp(24px, 2.6vw, 32px); font-weight: 300; letter-spacing: -0.025em; color: #f2f5f8; margin-bottom: 12px; line-height: 1.15; }
   figcaption p { color: var(--on-dark-muted); margin: 0; font-size: 15px; }
 
   .toggle { display: inline-flex; border: 1px solid var(--theatre-line); border-radius: 999px; padding: 4px; }
@@ -60,20 +62,20 @@ const ticks = [0.5, 0.6, 0.7, 0.8];
     font: inherit; font-size: 14px; color: var(--on-dark-muted); background: transparent; border: 0;
     padding: 8px 16px; border-radius: 999px; cursor: pointer; white-space: nowrap;
   }
-  .toggle button[aria-pressed='true'] { background: var(--theatre-2); color: var(--phosphor); }
+  .toggle button[aria-pressed='true'] { background: var(--theatre-2); color: var(--pulse); }
   .toggle button:hover { color: #fff; }
 
   .op-plot { position: relative; margin-top: 44px; padding-top: 26px; }
-  .axis { position: absolute; top: 0; left: var(--label-w); right: 0; height: 20px; color: #5f7f80; }
+  .axis { position: absolute; top: 0; left: var(--label-w); right: 0; height: 20px; color: var(--on-dark-faint); }
   .axis span { position: absolute; transform: translateX(-50%); }
-  .axis-title { text-align: right; color: #5f7f80; margin-top: 10px; }
+  .axis-title { text-align: right; color: var(--on-dark-faint); margin-top: 10px; }
   .op-plot { --label-w: 170px; }
 
   .row { display: grid; grid-template-columns: var(--label-w) 1fr; align-items: center; min-height: 78px; }
   .row + .row { border-top: 1px solid var(--theatre-line); }
   .row-label { display: flex; flex-direction: column; line-height: 1.2; }
-  .row-label span { color: #5f7f80; }
-  .row-label strong { font-weight: 400; font-size: 28px; font-variation-settings: 'wdth' 120; color: #f2faf9; }
+  .row-label span { color: var(--on-dark-faint); }
+  .row-label strong { font-weight: 250; font-size: 36px; letter-spacing: -0.04em; color: #f2f5f8; }
 
   .track { position: relative; height: 78px; }
   .grid { position: absolute; top: 14px; bottom: 14px; width: 1px; background: var(--theatre-line); }
@@ -88,12 +90,12 @@ const ticks = [0.5, 0.6, 0.7, 0.8];
   }
   .ghost { left: var(--b); border: 1.5px solid var(--on-dark-muted); opacity: 0; transition: opacity 300ms; }
   .marker {
-    left: var(--b); background: var(--phosphor); box-shadow: 0 0 0 6px rgba(123, 227, 201, 0.14);
+    left: var(--b); background: var(--phosphor); box-shadow: 0 0 0 6px rgba(156, 194, 240, 0.16);
     transition: left 600ms cubic-bezier(.2,.7,.2,1);
   }
   .val { position: absolute; top: calc(50% + 14px); transform: translateX(-50%); color: var(--on-dark); transition: opacity 300ms; }
   .val-base { left: var(--b); }
-  .val-combo { left: var(--c); opacity: 0; color: var(--phosphor); }
+  .val-combo { left: var(--c); opacity: 0; color: var(--pulse); }
   .delta { position: absolute; bottom: calc(50% + 12px); left: calc((var(--b) + var(--c)) / 2); transform: translateX(-50%); color: var(--pulse); opacity: 0; transition: opacity 300ms 250ms; white-space: nowrap; }
 
   .op[data-state='combo'] .marker { left: var(--c); }
@@ -103,7 +105,7 @@ const ticks = [0.5, 0.6, 0.7, 0.8];
   .op[data-state='combo'] .delta { opacity: 1; }
   .op[data-state='combo'] .val-base { opacity: 0.55; }
 
-  .op-note { margin: 24px 0 0; font-size: 13.5px; color: #6e8e8f; max-width: 80ch; }
+  .op-note { margin: 24px 0 0; font-size: 13.5px; color: var(--on-dark-faint); max-width: 80ch; }
 
   @media (max-width: 640px) {
     .op-plot { --label-w: 0px; }
