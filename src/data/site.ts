@@ -74,7 +74,7 @@ export const education = {
 };
 
 export const skills = {
-  Analysis: ['R', 'Python', 'Statistical modelling', 'Cross-validation & bootstrap inference', 'Machine learning'],
+  Analysis: ['R', 'Python', 'Statistical modelling', 'Computational neuroscience', 'Machine learning'],
   Research: ['Neurophysiology', 'Neuromodulation', 'Evidence synthesis', 'Literature reviews', 'Experimental design'],
   Clinical: ['Electronic medical records', 'Vital signs', 'Perioperative preparation'],
 };
