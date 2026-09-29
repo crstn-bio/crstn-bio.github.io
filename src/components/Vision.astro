@@ -1,19 +1,14 @@
 ---
+import Pipeline from './Pipeline.astro';
+
 // 연구 비전 섹션
 // 1) 스크롤하면 한 단어씩 밝아지는 문장
-// 2) 닫힌 고리(closed loop) 도식
+// 2) 해독 → 부호화 폐루프 파이프라인 (Pipeline.astro)
 // 3) 화면에 고정된 뇌 모델 + 세 단계 (파킨슨병 → 기억 회로 → 전뇌 모델과 이식형 기기)
 const statements = [
   'A patient’s brain state is always changing.',
   'Most stimulation is still programmed in clinic and left running.',
   'I want to build systems that listen, and adapt.',
-];
-
-const loop = [
-  { label: 'Record', note: 'neural activity', x: 210, y: 70, lx: 210, ly: 30, anchor: 'middle' },
-  { label: 'Interpret', note: 'brain state', x: 320, y: 180, lx: 338, ly: 176, anchor: 'start' },
-  { label: 'Identify', note: 'pathological states', x: 210, y: 290, lx: 210, ly: 322, anchor: 'middle' },
-  { label: 'Adapt', note: 'stimulation', x: 100, y: 180, lx: 82, ly: 176, anchor: 'end' },
 ];
 
 const stages = [
@@ -27,7 +22,7 @@ const stages = [
     n: '02',
     when: 'Longer term',
     title: 'Memory circuits and Alzheimer’s disease',
-    body: 'I’m curious whether similar principles could extend to hippocampal and distributed memory circuits, potentially toward identifying and modulating memory-related representations to restore disrupted memory function in conditions such as Alzheimer’s disease.',
+    body: 'I’m curious whether similar principles could extend to hippocampal and distributed memory circuits, potentially toward decoding memory-related representations and, eventually, reconstructing and modulating them to restore disrupted memory function in conditions such as Alzheimer’s disease.',
   },
   {
     n: '03',
@@ -60,28 +55,7 @@ const stages = [
       <path class="spark s3" d="M160 0 L160 40 L120 90 L120 220" />
     </svg>
 
-    <div class="loop">
-      <div class="loop-text">
-        <h3>Closed-loop neuromodulation</h3>
-        <p>My interest is in whether we can build closed-loop systems that continuously interpret a patient’s changing brain state, identify pathological states, and adapt stimulation accordingly.</p>
-      </div>
-      <svg class="loop-fig" viewBox="0 0 420 350" role="img" aria-label="A closed loop: record neural activity, interpret brain state, identify pathological states, adapt stimulation, then record again.">
-        <circle class="ring" cx="210" cy="180" r="110" />
-        {[45, 135, 225, 315].map((a) => (
-          <path class="chev" d="M-6 -6 L0 0 L-6 6" transform={`translate(${210 + 110 * Math.cos((a * Math.PI) / 180)} ${180 + 110 * Math.sin((a * Math.PI) / 180)}) rotate(${a + 90})`} />
-        ))}
-        <g class="orbit"><circle cx="210" cy="70" r="3.5" /></g>
-        {loop.map((n, i) => (
-          <g class="node" style={`--i:${i}`}>
-            <circle class="halo" cx={n.x} cy={n.y} r="13" />
-            <circle class="dot" cx={n.x} cy={n.y} r="4.5" />
-            <text x={n.lx} y={n.ly} text-anchor={n.anchor} class="lbl">{n.label}</text>
-            <text x={n.lx} y={n.ly + 17} text-anchor={n.anchor} class="note">{n.note}</text>
-          </g>
-        ))}
-        <text x="210" y="184" text-anchor="middle" class="center">closed loop</text>
-      </svg>
-    </div>
+    <Pipeline />
   </div>
 
   <div class="scrolly">
@@ -131,35 +105,6 @@ const stages = [
     .leads .s3 { animation-delay: 2.1s; }
   }
   @keyframes spark { to { stroke-dashoffset: -300; } }
-
-  /* 2) 닫힌 고리 */
-  .loop {
-    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 32px var(--gutter); align-items: center;
-    margin-top: clamp(24px, 4vw, 48px); padding-bottom: clamp(48px, 8vw, 112px);
-  }
-  .loop h3 { font-size: clamp(26px, 3vw, 38px); font-weight: 400; letter-spacing: -0.02em; margin-bottom: 18px; }
-  .loop-text p { color: #b5b5b5; font-size: 18px; line-height: 1.7; max-width: 44ch; margin: 0; }
-  .loop-fig { width: 100%; max-width: 520px; height: auto; justify-self: center; overflow: visible; }
-  .ring { fill: none; stroke: #333; stroke-width: 1; }
-  .chev { fill: none; stroke: #8d8d8d; stroke-width: 1.3; }
-  .orbit circle { fill: #fff; }
-  .orbit { transform-box: view-box; transform-origin: 210px 180px; }
-  .node .dot { fill: #000; stroke: #fff; stroke-width: 1.4; }
-  .node .halo { fill: none; stroke: #fff; stroke-width: 1; opacity: 0; transform-box: fill-box; transform-origin: center; }
-  .lbl { fill: #fff; font-family: var(--sans); font-size: 16px; font-weight: 500; }
-  .note { fill: #8d8d8d; font-family: var(--mono); font-size: 11.5px; }
-  .center { fill: #5a5a5a; font-family: var(--mono); font-size: 11.5px; }
-  @media (prefers-reduced-motion: no-preference) {
-    .orbit { animation: orbit 8s linear infinite; }
-    .node .halo { animation: ping 8s ease-out infinite; animation-delay: calc(var(--i) * 2s); }
-  }
-  @keyframes orbit { to { transform: rotate(360deg); } }
-  @keyframes ping {
-    0% { opacity: 0.9; transform: scale(0.6); }
-    12% { opacity: 0; transform: scale(1.5); }
-    100% { opacity: 0; transform: scale(1.5); }
-  }
-  @media (max-width: 800px) { .loop { grid-template-columns: 1fr; } }
 
   /* 3) 고정된 뇌 + 단계 */
   .scrolly { position: relative; }

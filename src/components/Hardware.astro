@@ -1,7 +1,7 @@
 ---
 // Vision 3단계(이식형 기기)를 뒷받침하는 두 장면. 모두 코드로 그린 그림이에요.
 // ① 기기 분해도: 배터리, 신호처리 칩, 유연 리드, 전극 배열이 떨어졌다가 조립됨
-// ② 로봇 삽입: 삽입 헤드가 유연 전극 실을 피질에 하나씩 꽂음
+// ② 삽입: Neuropixels 2.0 (미세조작기, 384채널 뱅크 전환) 또는 유연 전극 실 (로봇 삽입 헤드)
 ---
 <section class="hw" aria-labelledby="hw-h">
   <div class="wrap">
@@ -21,12 +21,19 @@
       <figure class="panel">
         <canvas id="hw-insert" aria-hidden="true"></canvas>
         <figcaption>
-          <strong>Implantation</strong>
-          <span>A robotic insertion head placing flexible electrode threads into cortex, one at a time.</span>
+          <div class="cap-row">
+            <strong>Implantation</strong>
+            <div class="probe-toggle" role="group" aria-label="Electrode type">
+              <button type="button" data-probe="np2" aria-pressed="true">Neuropixels 2.0</button>
+              <button type="button" data-probe="threads" aria-pressed="false">Flexible threads</button>
+            </div>
+          </div>
+          <span data-probe-show="np2">A micromanipulator lowers a four-shank Neuropixels 2.0 probe, waits for the tissue to settle, then records 384 of its 5,120 sites at a time, switching banks along the shanks.</span>
+          <span data-probe-show="threads" hidden>A robotic insertion head placing flexible electrode threads into cortex, one at a time.</span>
         </figcaption>
       </figure>
     </div>
-    <p class="hw-note mono">Both illustrations are drawn in code. They are not a real device or procedure.</p>
+    <p class="hw-note mono">Drawn in code for illustration, not a real device or procedure. Neuropixels 2.0 figures follow Steinmetz et al., Science (2021).</p>
   </div>
 </section>
 
@@ -42,6 +49,12 @@
   figcaption strong { font-weight: 500; font-size: 15px; }
   figcaption span { color: #8d8d8d; font-size: 14.5px; line-height: 1.55; }
   .hw-note { color: #5a5a5a; margin: 16px 0 0; }
+  .cap-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 4px; }
+  .probe-toggle { display: inline-flex; border: 1px solid #333; padding: 2px; }
+  .probe-toggle button { font: inherit; font-size: 12.5px; color: #8d8d8d; background: transparent; border: 0; padding: 6px 11px; cursor: pointer; }
+  .probe-toggle button[aria-pressed='true'] { background: #fff; color: #000; }
+  .probe-toggle button[aria-pressed='false']:hover { color: #fff; }
+  [data-probe-show][hidden] { display: none; }
   @media (max-width: 860px) {
     .hw-head, .panels { grid-template-columns: 1fr; }
   }
@@ -67,18 +80,22 @@
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     size();
+    let lastT = still;
+    const handle = { redraw: () => draw(ctx, w, h, lastT) };
     window.addEventListener('resize', () => { size(); if (reduce) draw(ctx, w, h, still); });
-    if (reduce) { draw(ctx, w, h, still); return; }
+    if (reduce) { draw(ctx, w, h, still); return handle; }
     let running = false, t0 = performance.now(), pausedAt = 0;
     const loop = (now: number) => {
       if (!running) return;
-      draw(ctx, w, h, (now - t0) / 1000);
+      lastT = (now - t0) / 1000;
+      draw(ctx, w, h, lastT);
       requestAnimationFrame(loop);
     };
     new IntersectionObserver(([e]) => {
       if (e.isIntersecting && !running) { t0 += pausedAt ? performance.now() - pausedAt : 0; running = true; requestAnimationFrame(loop); }
       else if (!e.isIntersecting && running) { running = false; pausedAt = performance.now(); }
     }).observe(canvas);
+    return handle;
   }
 
   function grid(ctx: CanvasRenderingContext2D, w: number, h: number) {
@@ -243,45 +260,55 @@
     ctx.fillText(e > 0.5 ? 'VIEW  exploded' : 'VIEW  assembled', 16, 14);
   }, 3);
 
-  // ─────────────────────────────── ② 로봇 삽입 ───────────────────────────────
+  // ─────────────────────────────── ② 삽입 (두 가지 전극) ───────────────────────────────
+  const surfY = (x: number, z: number) => 0.07 * Math.sin(2.6 * x + 0.8) * Math.cos(2.2 * z) + 0.04 * Math.sin(5 * x - 3 * z);
+  const hash = (n: number) => { const v = Math.sin(n * 12.9898) * 43758.5453; return v - Math.floor(v); };
+  type Proj = (x: number, y: number, z: number) => [number, number, number];
+
+  /** 피질 조각: 표면 점 + 앞쪽 단면 */
+  function slab(ctx: CanvasRenderingContext2D, P: Proj, layers: number) {
+    for (let i = 0; i <= 52; i++) for (let j = 0; j <= 28; j++) {
+      const x = -1.6 + (3.2 * i) / 52, z = -0.95 + (1.9 * j) / 28;
+      const [px, py, d] = P(x, surfY(x, z), z);
+      ctx.fillStyle = `rgba(255,255,255,${(0.18 + 0.5 * clamp01((d + 1.2) / 2.4)).toFixed(3)})`;
+      ctx.fillRect(px - 0.6, py - 0.6, 1.3, 1.3);
+    }
+    for (let i = 0; i <= 52; i++) for (let j = 1; j <= layers; j++) {
+      const x = -1.6 + (3.2 * i) / 52, y = surfY(x, 0.95) - j * 0.075;
+      const [px, py] = P(x, y, 0.95);
+      ctx.fillStyle = `rgba(255,255,255,${Math.max(0.03, 0.2 - j * 0.014).toFixed(3)})`;
+      ctx.fillRect(px - 0.5, py - 0.5, 1.1, 1.1);
+    }
+  }
+
+  function hud(ctx: CanvasRenderingContext2D, rows: [string, string][]) {
+    ctx.font = MONO; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    rows.forEach(([k, v], i) => {
+      ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fillText(k, 16, 14 + i * 18);
+      ctx.fillStyle = '#fff'; ctx.fillText(v, 84, 14 + i * 18);
+    });
+  }
+
+  // ── (a) 유연 전극 실 + 로봇 삽입 헤드 ──
   const targets: [number, number][] = [];
   for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) {
     const cc = r % 2 ? 3 - c : c;                              // 지그재그 순서
     targets.push([-0.66 + cc * 0.44, -0.36 + r * 0.36]);
   }
-  const surfY = (x: number, z: number) => 0.07 * Math.sin(2.6 * x + 0.8) * Math.cos(2.2 * z) + 0.04 * Math.sin(5 * x - 3 * z);
   const DEPTH = 0.42, HOVER = 0.62, PER = 1.45;
-  const N = targets.length, CYCLE = N * PER + 4.2;
+  const N = targets.length, T_CYCLE = N * PER + 4.2;
 
-  mount('hw-insert', (ctx, w, h, t) => {
-    ctx.clearRect(0, 0, w, h);
-    grid(ctx, w, h);
+  function drawThreads(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
     const s = Math.min(w * 0.27, h * 0.36);
     const P = projector(-0.42 + 0.06 * Math.sin(t * 0.2), 0.5, w * 0.47, h * 0.6, s);
-    const k = t % CYCLE;
+    const k = t % T_CYCLE;
+    slab(ctx, P, 9);
 
-    // 피질 조각: 표면 점 + 앞쪽 단면
-    for (let i = 0; i <= 52; i++) for (let j = 0; j <= 28; j++) {
-      const x = -1.6 + (3.2 * i) / 52, z = -0.95 + (1.9 * j) / 28;
-      const [px, py, d] = P(x, surfY(x, z), z);
-      const a = 0.18 + 0.5 * clamp01((d + 1.2) / 2.4);
-      ctx.fillStyle = `rgba(255,255,255,${a.toFixed(3)})`;
-      ctx.fillRect(px - 0.6, py - 0.6, 1.3, 1.3);
-    }
-    for (const zf of [0.95]) for (let i = 0; i <= 52; i++) for (let j = 1; j <= 9; j++) {
-      const x = -1.6 + (3.2 * i) / 52, y = surfY(x, zf) - j * 0.075;
-      const [px, py] = P(x, y, zf);
-      ctx.fillStyle = `rgba(255,255,255,${(0.2 - j * 0.016).toFixed(3)})`;
-      ctx.fillRect(px - 0.5, py - 0.5, 1.1, 1.1);
-    }
-
-    // 현재 몇 번째 실을 삽입 중인지
     const idx = Math.min(N, Math.floor(k / PER));
-    const f = k / PER - idx;                                   // 한 실 안에서의 진행도
+    const f = k / PER - idx;
     const done = idx >= N;
     const fade = done ? 1 - clamp01((k - N * PER - 3.4) / 0.8) : 1;
 
-    // 이미 꽂힌 실
     const placed = done ? N : idx + (f > 0.55 ? 1 : 0);
     for (let n = 0; n < placed; n++) {
       const [x, z] = targets[n], y0 = surfY(x, z);
@@ -290,16 +317,13 @@
       ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
       ctx.fillStyle = `rgba(255,255,255,${fade.toFixed(3)})`;
       for (let c = 0; c < 3; c++) { const [cx3, cy3] = P(x, y0 - DEPTH + c * 0.07, z); ctx.fillRect(cx3 - 1.5, cy3 - 1.5, 3, 3); }
-      // 전부 꽂힌 뒤: 기록된 신호가 실을 타고 올라옴
       if (done && !reduce) {
         const u = ((k - N * PER) * 0.9 + n * 0.23) % 1;
         const [qx, qy] = P(x, y0 - DEPTH + DEPTH * u, z);
-        ctx.fillStyle = `rgba(255,255,255,${fade.toFixed(3)})`;
         ctx.beginPath(); ctx.arc(qx, qy, 2.2, 0, 6.2832); ctx.fill();
       }
     }
 
-    // 삽입 헤드 위치
     const cur = targets[Math.min(idx, N - 1)], prev = targets[Math.max(0, Math.min(idx, N) - 1)];
     let hx: number, hz: number, tipY: number, state: string;
     if (done) {
@@ -316,7 +340,6 @@
       state = f < 0.34 ? 'positioning' : f < 0.56 ? 'inserting' : f < 0.62 ? 'releasing' : 'retracting';
     }
 
-    // 표면 조준 표시
     if (!done) {
       const ys = surfY(hx, hz);
       ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1;
@@ -333,18 +356,14 @@
       }
     }
 
-    // 바늘 + 삽입 중인 실
     const [nx, ny] = P(hx, tipY, hz), [tx, ty] = P(hx, tipY + 0.5, hz);
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(nx, ny); ctx.stroke();
-
-    // 헤드 몸체 (화면 좌표로 그린 상자)
     ctx.fillStyle = '#000'; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1;
     ctx.fillRect(tx - 11, ty - 40, 22, 40); ctx.strokeRect(tx - 10.5, ty - 39.5, 21, 39);
     ctx.fillStyle = '#fff'; ctx.fillRect(tx - 3, ty - 10, 6, 3);
     ctx.beginPath(); ctx.moveTo(tx - 10.5, ty - 20); ctx.lineTo(tx + 10.5, ty - 20); ctx.stroke();
 
-    // 로봇 팔: 헤드 → 관절 → 화면 밖 기저부
     const [jx, jy] = P(hx + 0.7, tipY + 1.35, hz - 0.35);
     const [kx, ky] = P(2.4, 2.6, -0.8);
     const arm = (x1: number, y1: number, x2: number, y2: number) => {
@@ -356,12 +375,164 @@
     ctx.fillStyle = '#000'; ctx.strokeStyle = '#fff';
     for (const [px, py] of [[tx, ty - 40], [jx, jy]]) { ctx.beginPath(); ctx.arc(px, py, 6, 0, 6.2832); ctx.fill(); ctx.stroke(); }
 
-    // 계기판 글자
-    ctx.font = MONO; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-    ctx.fillStyle = 'rgba(255,255,255,0.45)';
-    ctx.fillText('THREAD', 16, 14); ctx.fillText('STATE', 16, 32);
-    ctx.fillStyle = '#fff';
-    ctx.fillText(`${String(done ? N : idx + 1).padStart(2, '0')} / ${N}`, 76, 14);
-    ctx.fillText(state, 76, 32);
-  }, N * PER + 1.5);
+    hud(ctx, [['THREAD', `${String(done ? N : idx + 1).padStart(2, '0')} / ${N}`], ['STATE', state]]);
+  }
+
+  // ── (b) Neuropixels 2.0: 4개 shank, 미세조작기로 천천히 삽입, 384채널 뱅크 전환 ──
+  // 수치는 Steinmetz et al., Science 2021 기준 (shank 4개, 기록 지점 5,120개, 동시 기록 384채널, 지점 간격 15 µm)
+  const SHANKS = [-0.15, -0.05, 0.05, 0.15];                  // 실제 간격 250 µm를 확대해서 표현
+  const NP_LEN = 0.95, NP_DEPTH = 0.62, NP_CYCLE = 20;
+  const NP_MAX_MM = 4.0;                                       // 화면에 표시할 최대 삽입 깊이 (예시)
+  const T_LOWER = [1.2, 6.4], T_SETTLE = 7.8, T_END = 18.8, BANK_DUR = 2.75;
+  const ROW = 0.016;                                            // 화면용 지점 간격
+
+  function drawNP(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
+    const small = w < 420;
+    const s = Math.min(w * 0.36, h * 0.44);                   // 프로브가 잘 보이도록 가까이
+    const P = projector(-0.42 + 0.06 * Math.sin(t * 0.2), 0.5, w * (small ? 0.66 : 0.56), h * 0.52, s);
+    const k = t % NP_CYCLE;
+    slab(ctx, P, 12);
+
+    // 삽입 깊이와 상태
+    let d: number, state: string;
+    if (k < T_LOWER[0]) { d = -0.12 + 0.12 * ease(k / T_LOWER[0]); state = 'aligning'; }
+    else if (k < T_LOWER[1]) { d = NP_DEPTH * ((k - T_LOWER[0]) / (T_LOWER[1] - T_LOWER[0])); state = 'lowering'; }
+    else if (k < T_SETTLE) { d = NP_DEPTH; state = 'settling'; }
+    else if (k < T_END) { d = NP_DEPTH; state = 'recording'; }
+    else { d = NP_DEPTH - (NP_DEPTH + 0.12) * ease((k - T_END) / (NP_CYCLE - T_END)); state = 'retracting'; }
+    const recording = state === 'recording';
+    const bank = recording ? Math.min(3, Math.floor((k - T_SETTLE) / BANK_DUR)) : -1;
+
+    const tips: [number, number][] = [], tops: [number, number][] = [];
+    SHANKS.forEach((xs, i) => {
+      const ys = surfY(xs, 0), tipY = ys - d, topY = tipY + NP_LEN;
+      const [tx, ty] = P(xs, tipY, 0), [ux, uy] = P(xs, topY, 0);
+      tips.push([tx, ty]); tops.push([ux, uy]);
+
+      // 활성 뱅크 표시
+      const bLo = tipY + 0.03 + bank * 0.15, bHi = bLo + 0.13;
+      if (bank >= 0) {
+        const [, y1] = P(xs, bLo, 0), [, y2] = P(xs, bHi, 0);
+        ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1;
+        const x = tx;
+        ctx.beginPath();
+        ctx.moveTo(x - 7, y1); ctx.lineTo(x - 9, y1); ctx.lineTo(x - 9, y2); ctx.lineTo(x - 7, y2);
+        ctx.moveTo(x + 7, y1); ctx.lineTo(x + 9, y1); ctx.lineTo(x + 9, y2); ctx.lineTo(x + 7, y2);
+        ctx.stroke();
+      }
+
+      // shank 몸체 (끝이 뾰족한 가는 실리콘 바늘)
+      ctx.fillStyle = '#000'; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(ux - 2, uy); ctx.lineTo(tx - 2, ty - 7); ctx.lineTo(tx, ty); ctx.lineTo(tx + 2, ty - 7); ctx.lineTo(ux + 2, uy);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+
+      // 기록 지점: 두 줄로 촘촘히
+      for (let r = 0; r * ROW < NP_LEN * 0.86; r++) {
+        const yy = tipY + 0.03 + r * ROW;
+        const [, py] = P(xs, yy, 0);
+        const below = yy < surfY(xs, 0);
+        const active = bank >= 0 && yy >= bLo && yy <= bHi;
+        const spike = active && !reduce && hash(Math.floor(k * 18) * 7.1 + r * 13.3 + i * 97.7) > 0.9;
+        for (const cx of [-0.9, 0.9]) {
+          if (spike && cx < 0) {
+            ctx.fillStyle = 'rgba(255,255,255,0.22)';
+            ctx.beginPath(); ctx.arc(tx + cx, py, 5, 0, 6.2832); ctx.fill();
+          }
+          ctx.fillStyle = spike ? '#fff' : active ? 'rgba(255,255,255,0.85)' : below ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.22)';
+          ctx.fillRect(tx + cx - 0.6, py - 0.6, spike ? 2 : 1.2, spike ? 2 : 1.2);
+        }
+      }
+    });
+
+    // 프로브 기저부, 유연 케이블, 헤드스테이지
+    const left = Math.min(...tops.map((p) => p[0])) - 8, right = Math.max(...tops.map((p) => p[0])) + 8;
+    const baseY = Math.min(...tops.map((p) => p[1]));
+    ctx.fillStyle = '#000'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+    ctx.fillRect(left, baseY - 18, right - left, 18); ctx.strokeRect(left + 0.5, baseY - 17.5, right - left - 1, 17);
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    for (let i = 0; i < 6; i++) ctx.fillRect(left + 5 + i * ((right - left - 12) / 5), baseY - 12, 2, 6);
+    const hsx = right + 44, hsy = baseY - 70;
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    for (const o of [-3, 0, 3]) {
+      ctx.beginPath(); ctx.moveTo(right - 6, baseY - 18 + o);
+      ctx.bezierCurveTo(right + 20, baseY - 30 + o, hsx - 30, hsy + 30 + o, hsx - 14, hsy + 12 + o); ctx.stroke();
+    }
+    ctx.fillStyle = '#000'; ctx.strokeStyle = '#fff';
+    ctx.fillRect(hsx - 16, hsy - 10, 36, 24); ctx.strokeRect(hsx - 15.5, hsy - 9.5, 35, 23);
+    ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fillRect(hsx - 9, hsy - 3, 8, 8); ctx.fillRect(hsx + 4, hsy - 3, 8, 8);
+
+    // 미세조작기: 고정된 수직 레일, 캐리지가 프로브 기저부를 잡고 내려감
+    const railX = left - 34, railTop = 0;
+    const railBot = P(0, surfY(0, 0) - NP_DEPTH + NP_LEN, 0)[1] + 6;
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(railX - 5, railTop); ctx.lineTo(railX - 5, railBot); ctx.moveTo(railX + 5, railTop); ctx.lineTo(railX + 5, railBot);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.beginPath();
+    for (let y = railTop + 4; y < railBot - 2; y += 6) { ctx.moveTo(railX - 5, y); ctx.lineTo(railX + 5, y + 2); }
+    ctx.stroke();
+    ctx.strokeStyle = '#fff';
+    ctx.beginPath(); ctx.moveTo(railX + 8, baseY - 9); ctx.lineTo(left, baseY - 9); ctx.stroke();
+    ctx.fillStyle = '#000'; ctx.fillRect(railX - 9, baseY - 18, 18, 18); ctx.strokeRect(railX - 8.5, baseY - 17.5, 17, 17);
+    ctx.beginPath(); ctx.moveTo(railX - 8.5, baseY - 9); ctx.lineTo(railX + 8.5, baseY - 9); ctx.stroke();
+
+    // 확대 보기: 지점 배열 (좁은 화면에서는 생략)
+    if (!small) {
+    const bw = small ? 64 : 84, bh = small ? 104 : 136;
+    const bx = w - bw - 14, by = small ? 52 : 58;
+    ctx.fillStyle = '#000'; ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillRect(bx, by, bw, bh); ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
+    ctx.font = MONO; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.fillText('SITES', bx, by - 5);
+    const sw = small ? 22 : 28, sx0 = bx + 12, sy0 = by + 10;
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.beginPath(); ctx.moveTo(sx0, sy0); ctx.lineTo(sx0, sy0 + bh - 34); ctx.lineTo(sx0 + sw / 2, sy0 + bh - 20); ctx.lineTo(sx0 + sw, sy0 + bh - 34); ctx.lineTo(sx0 + sw, sy0); ctx.stroke();
+    const pitch = small ? 9 : 11, sq = small ? 5 : 6;
+    const nRows = Math.floor((bh - 44) / pitch);
+    for (let r = 0; r < nRows; r++) for (const c of [0, 1]) {
+      const on = recording && !reduce && hash(Math.floor(k * 10) + r * 5.1 + c * 19.3) > 0.82;
+      ctx.fillStyle = on ? '#fff' : 'rgba(255,255,255,0.55)';
+      ctx.fillRect(sx0 + 4 + c * (sw - 8 - sq), sy0 + 6 + r * pitch, sq, sq);
+    }
+    const my = sy0 + 6;
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.beginPath(); ctx.moveTo(sx0 + sw + 6, my); ctx.lineTo(sx0 + sw + 10, my); ctx.lineTo(sx0 + sw + 10, my + pitch); ctx.lineTo(sx0 + sw + 6, my + pitch); ctx.stroke();
+    ctx.textBaseline = 'middle'; ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.fillText('15µm', sx0 + sw + 13, my + pitch / 2);
+    // 확대 상자 ↔ 마지막 shank 끝
+    const [lx, ly] = tips[tips.length - 1];
+    ctx.setLineDash([2, 3]); ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.beginPath(); ctx.moveTo(bx, by + bh); ctx.lineTo(lx + 4, ly - 12); ctx.stroke(); ctx.setLineDash([]);
+    }
+
+    // 계기판
+    const rows: [string, string][] = [['PROBE', small ? 'NP 2.0' : 'Neuropixels 2.0'], ['STATE', state]];
+    if (recording) { rows.push(['SITES', '384 of 5,120']); rows.push(['BANK', `${bank + 1} / 4`]); }
+    else rows.push(['DEPTH', `${(Math.max(0, d) / NP_DEPTH * NP_MAX_MM).toFixed(1)} mm`]);
+    hud(ctx, rows);
+  }
+
+  // ── 모드 전환 ──
+  let probe: 'np2' | 'threads' = 'np2';
+  let switchAt = 0, pending = false;
+  const STILL = { np2: T_SETTLE + BANK_DUR * 1.4, threads: N * PER + 1.5 };
+  const insert = mount('hw-insert', (ctx, w, h, t) => {
+    if (pending) { switchAt = t; pending = false; }
+    ctx.clearRect(0, 0, w, h);
+    grid(ctx, w, h);
+    const tt = reduce ? STILL[probe] : t - switchAt;
+    (probe === 'np2' ? drawNP : drawThreads)(ctx, w, h, tt);
+  }, 0);
+
+  const probeButtons = document.querySelectorAll<HTMLButtonElement>('.probe-toggle button');
+  probeButtons.forEach((b) => b.addEventListener('click', () => {
+    probe = b.dataset.probe as 'np2' | 'threads';
+    pending = true;
+    probeButtons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    document.querySelectorAll<HTMLElement>('[data-probe-show]').forEach((el) => { el.hidden = el.dataset.probeShow !== probe; });
+    insert?.redraw();
+  }));
 </script>
+
