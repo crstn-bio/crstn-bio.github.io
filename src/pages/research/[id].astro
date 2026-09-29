@@ -1,0 +1,84 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+import OperatingPoints from '../../components/OperatingPoints.astro';
+
+export async function getStaticPaths() {
+  const all = (await getCollection('research')).sort((a, b) => a.data.order - b.data.order);
+  return all.map((entry, i) => ({ params: { id: entry.id }, props: { entry, next: all[(i + 1) % all.length] } }));
+}
+const { entry, next } = Astro.props;
+const { Content } = await render(entry);
+const d = entry.data;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<Base title={d.short} description={d.summary}>
+  <header class="top">
+    <Nav />
+    <div class="wrap head">
+      <a class="back" href={`${base}/#research`}>All research</a>
+      <h1>{d.title}</h1>
+      <p class="sum">{d.summary}</p>
+      <dl class="meta">
+        <div><dt>Period</dt><dd>{d.period}</dd></div>
+        <div><dt>Role</dt><dd>{d.role}</dd></div>
+        <div><dt>Setting</dt><dd>{d.setting}</dd></div>
+        <div><dt>Status</dt><dd>{d.status === 'ongoing' ? 'In progress' : 'Complete'}</dd></div>
+      </dl>
+    </div>
+  </header>
+
+  <main id="main" class="wrap body">
+    {d.figure === 'amyloid-operating-points' && <div class="fig"><OperatingPoints /></div>}
+    <div class="cols">
+      <article class="prose"><Content /></article>
+      <aside>
+        <h2>Methods</h2>
+        <ul>{d.methods.map((m) => <li>{m}</li>)}</ul>
+        <h2>Tools</h2>
+        <ul>{d.tools.map((m) => <li>{m}</li>)}</ul>
+        {d.links.length > 0 && (<><h2>Links</h2><ul>{d.links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul></>)}
+      </aside>
+    </div>
+    <a class="next" href={`${base}/research/${next.id}/`}>
+      <span class="muted">Next project</span>
+      <span class="next-title">{next.data.short}</span>
+    </a>
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  .top { background: var(--theatre); color: var(--on-dark); padding-bottom: clamp(48px, 7vw, 88px); }
+  .head { padding-top: clamp(32px, 6vw, 72px); }
+  .back { color: var(--on-dark-muted); font-size: 15px; }
+  .back::before { content: '← '; }
+  h1 {
+    margin-top: 20px; max-width: 22ch; color: #f2faf9;
+    font-size: clamp(32px, 5vw, 64px); font-weight: 250; font-variation-settings: 'wdth' 120; letter-spacing: -0.02em; line-height: 1.04;
+  }
+  .sum { margin-top: 24px; max-width: 60ch; font-size: 19px; color: var(--on-dark); }
+  .meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px 24px; margin: 40px 0 0; border-top: 1px solid var(--theatre-line); padding-top: 20px; }
+  .meta dt { font-size: 13.5px; color: var(--on-dark-muted); }
+  .meta dd { margin: 2px 0 0; }
+  @media (max-width: 760px) { .meta { grid-template-columns: 1fr 1fr; } }
+
+  .body { padding-block: clamp(48px, 7vw, 88px); }
+  .fig { margin-bottom: clamp(40px, 6vw, 72px); }
+  .cols { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 48px var(--gutter); }
+  @media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+  .prose :global(h2) { font-size: 26px; font-variation-settings: 'wdth' 115; font-weight: 350; margin: 1.6em 0 0.5em; }
+  .prose :global(h2:first-child) { margin-top: 0; }
+  .prose :global(p) { font-size: 18px; line-height: 1.7; max-width: 64ch; }
+  aside { border-left: 2px solid var(--scrub); padding-left: 20px; align-self: start; }
+  aside h2 { font-size: 15px; color: var(--muted); font-weight: 500; margin: 0 0 8px; }
+  aside h2:not(:first-child) { margin-top: 24px; }
+  aside ul { margin: 0; padding-left: 18px; }
+  aside li { margin-bottom: 6px; font-size: 15.5px; }
+  .next { display: flex; flex-direction: column; gap: 4px; margin-top: 72px; padding-top: 28px; border-top: 1px solid var(--rule); text-decoration: none; color: var(--ink); }
+  .next-title { font-size: clamp(24px, 3vw, 34px); font-variation-settings: 'wdth' 115; font-weight: 300; }
+  .next:hover .next-title { color: var(--scrub); }
+  .muted { color: var(--muted); font-size: 15px; }
+</style>

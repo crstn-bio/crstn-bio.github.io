@@ -1,0 +1,27 @@
+---
+import '../styles/global.css';
+import { site } from '../data/site';
+
+interface Props { title?: string; description?: string; dark?: boolean }
+const { title, description = site.intro, dark = false } = Astro.props;
+const pageTitle = title ? `${title} | ${site.name}` : `${site.name} | ${site.title}`;
+const base = import.meta.env.BASE_URL;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content={site.name} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta name="theme-color" content="#0b2327" />
+    <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`.replace('//', '/')} />
+  </head>
+  <body class={dark ? 'is-dark' : ''}>
+    <a class="skip" href="#main">Skip to content</a>
+    <slot />
+  </body>
+</html>

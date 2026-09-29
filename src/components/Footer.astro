@@ -1,0 +1,37 @@
+---
+import { site } from '../data/site';
+const year = new Date().getFullYear();
+---
+<footer id="contact" class="foot">
+  <div class="wrap foot-grid">
+    <div>
+      <h2>Get in touch</h2>
+      <p>I’m open to research positions and collaborations in neuromodulation, neurophysiology and computational neuroscience in Toronto.</p>
+      <a class="mail" href={`mailto:${site.email}`}>{site.email}</a>
+    </div>
+    <ul class="links">
+      {site.links.map((l) => <li><a href={l.href} rel="noopener" target="_blank">{l.label}</a></li>)}
+      <li><a href={site.cv}>CV (PDF)</a></li>
+    </ul>
+  </div>
+  <div class="wrap foot-base mono">
+    <span>© {year} {site.name}</span>
+    <span>Built by hand with Astro. Source on GitHub.</span>
+  </div>
+</footer>
+
+<style>
+  .foot { background: var(--theatre); color: var(--on-dark); padding-top: clamp(64px, 9vw, 112px); }
+  .foot-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 40px var(--gutter); align-items: end; }
+  h2 { font-size: clamp(34px, 5vw, 64px); font-weight: 250; font-variation-settings: 'wdth' 125; letter-spacing: -0.02em; margin-bottom: 20px; color: #f2faf9; }
+  p { color: var(--on-dark-muted); max-width: 52ch; }
+  .mail { color: var(--phosphor); font-size: clamp(18px, 2vw, 22px); word-break: break-all; }
+  .mail:hover, .links a:hover { color: #fff; }
+  .links { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  .links a { color: var(--on-dark); }
+  .foot-base {
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px;
+    margin-top: 72px; padding-block: 22px; border-top: 1px solid var(--theatre-line); color: #5f7f80;
+  }
+  @media (max-width: 700px) { .foot-grid { grid-template-columns: 1fr; } }
+</style>

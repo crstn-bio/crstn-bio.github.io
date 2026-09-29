@@ -1,0 +1,166 @@
+---
+import Nav from './Nav.astro';
+import { site } from '../data/site';
+---
+<section class="hero" aria-labelledby="hero-name">
+  <Nav />
+  <div class="wrap hero-body">
+    <h1 id="hero-name">{site.name}</h1>
+    <p class="hero-title">{site.title}</p>
+    <p class="hero-current">{site.current}. {site.location}.</p>
+  </div>
+
+  <figure class="monitor wrap" aria-label="Animated sketch of a theta-burst stimulation pattern and a simulated neural response">
+    <div class="readout mono" aria-hidden="true">
+      <span><i class="dot dot-pulse"></i>stim&nbsp; θ-burst, 3 pulses at 50 Hz, every 200 ms</span>
+      <span><i class="dot dot-phos"></i>response&nbsp; simulated field potential</span>
+    </div>
+    <canvas id="trace" aria-hidden="true"></canvas>
+    <figcaption class="mono">Illustration of the stimulation pattern used in my thesis work. Not recorded data.</figcaption>
+  </figure>
+</section>
+
+<style>
+  .hero {
+    background:
+      radial-gradient(1200px 500px at 70% -10%, rgba(123, 227, 201, 0.07), transparent 60%),
+      var(--theatre);
+    color: var(--on-dark);
+    min-height: min(100svh, 920px);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .hero-body { padding-top: clamp(48px, 10vh, 120px); }
+  h1 {
+    font-size: clamp(52px, 11.5vw, 168px);
+    font-weight: 250;
+    font-variation-settings: 'wdth' 125;
+    letter-spacing: -0.035em;
+    line-height: 0.92;
+    color: #f2faf9;
+  }
+  .hero-title {
+    margin-top: clamp(20px, 3vw, 32px);
+    font-size: clamp(20px, 2.4vw, 30px);
+    font-weight: 300;
+    font-variation-settings: 'wdth' 110;
+    color: var(--phosphor);
+  }
+  .hero-current { max-width: 52ch; color: var(--on-dark-muted); margin-top: 8px; }
+
+  .monitor { margin-top: auto; margin-bottom: 0; padding-bottom: 28px; padding-top: 40px; }
+  .readout {
+    display: flex; flex-wrap: wrap; gap: 6px 28px; color: var(--on-dark-muted);
+    border-top: 1px solid var(--theatre-line); padding-top: 14px; margin-bottom: 8px;
+  }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
+  .dot-pulse { background: var(--pulse); }
+  .dot-phos { background: var(--phosphor); }
+  canvas { display: block; width: 100%; height: clamp(150px, 22vh, 220px); }
+  figcaption { color: #5f7f80; margin-top: 8px; }
+</style>
+
+<script>
+  // 수술실 모니터처럼 왼쪽→오른쪽으로 쓸고 지나가는 트레이스.
+  // 위 채널: 세타 버스트 자극(5 Hz마다 50 Hz 펄스 3개)
+  // 아래 채널: 자극에 반응하는 모의 신호(노이즈 + 유발 반응)
+  const canvas = document.getElementById('trace') as HTMLCanvasElement | null;
+  if (canvas) {
+    const ctx = canvas.getContext('2d')!;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const PX_PER_S = 260;           // 스윕 속도
+    const GAP = 26;                 // 스윕 앞의 지워지는 틈
+    let w = 0, h = 0, dpr = 1;
+    let x = 0, t = 0, lastStim = 0, lastResp = 0;
+    let lfp = 0, evoked = 0;
+    let last = performance.now();
+
+    const pulseAt = (time: number) => {
+      const inCycle = time % 0.2;               // 5 Hz
+      for (let k = 0; k < 3; k++) {             // 3 pulses, 20 ms apart
+        const d = inCycle - k * 0.02;
+        if (d >= 0 && d < 0.004) return 1;
+      }
+      return 0;
+    };
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const r = canvas!.getBoundingClientRect();
+      w = r.width; h = r.height;
+      canvas!.width = Math.round(w * dpr); canvas!.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      drawGrid(0, w);
+      x = 0;
+    }
+
+    function drawGrid(x0: number, x1: number) {
+      ctx.strokeStyle = 'rgba(123, 227, 201, 0.06)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let gx = Math.ceil(x0 / 40) * 40; gx <= x1; gx += 40) { ctx.moveTo(gx + 0.5, 0); ctx.lineTo(gx + 0.5, h); }
+      for (let gy = 0; gy <= h; gy += 40) { ctx.moveTo(x0, gy + 0.5); ctx.lineTo(x1, gy + 0.5); }
+      ctx.stroke();
+    }
+
+    const stimY = () => h * 0.22;
+    const respY = () => h * 0.68;
+
+    function sample(dt: number) {
+      t += dt;
+      const p = pulseAt(t);
+      if (p) evoked += 0.9 * dt * 60;           // 각 펄스가 반응을 누적시킴
+      evoked *= Math.exp(-dt / 0.045);          // 반응 감쇠
+      lfp += (Math.random() - 0.5) * 0.9 - lfp * 0.08;
+      const stim = stimY() - p * h * 0.16;
+      const resp = respY() + lfp * h * 0.02 - Math.sin(t * 2 * Math.PI * 6) * h * 0.02 - evoked * h * 0.35;
+      return { stim, resp };
+    }
+
+    function step(now: number) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const dx = dt * PX_PER_S;
+      const steps = Math.max(1, Math.round(dx));
+      for (let i = 0; i < steps; i++) {
+        const nx = x + dx / steps;
+        const { stim, resp } = sample(dt / steps);
+        // 앞쪽 지우기
+        ctx.clearRect(nx, 0, GAP, h);
+        drawGrid(nx, nx + GAP);
+        if (x > 0 && nx > x) {
+          ctx.lineWidth = 1.6; ctx.lineJoin = 'round';
+          ctx.strokeStyle = '#f2b84b';
+          ctx.beginPath(); ctx.moveTo(x, lastStim); ctx.lineTo(nx, stim); ctx.stroke();
+          ctx.strokeStyle = '#7be3c9';
+          ctx.beginPath(); ctx.moveTo(x, lastResp); ctx.lineTo(nx, resp); ctx.stroke();
+        }
+        lastStim = stim; lastResp = resp; x = nx;
+        if (x > w) { x = 0; }
+      }
+      // 스윕 헤드
+      ctx.fillStyle = '#e8fff8';
+      ctx.fillRect(x - 1, lastResp - 1.5, 3, 3);
+      requestAnimationFrame(step);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+    if (reduce) {
+      // 움직임 줄이기: 한 화면만 정적으로 그림
+      const n = Math.ceil(w);
+      for (let i = 0; i < n; i++) {
+        const { stim, resp } = sample(1 / PX_PER_S);
+        if (i > 0) {
+          ctx.lineWidth = 1.6;
+          ctx.strokeStyle = '#f2b84b'; ctx.beginPath(); ctx.moveTo(i - 1, lastStim); ctx.lineTo(i, stim); ctx.stroke();
+          ctx.strokeStyle = '#7be3c9'; ctx.beginPath(); ctx.moveTo(i - 1, lastResp); ctx.lineTo(i, resp); ctx.stroke();
+        }
+        lastStim = stim; lastResp = resp;
+      }
+    } else {
+      requestAnimationFrame((n) => { last = n; requestAnimationFrame(step); });
+    }
+  }
+</script>
