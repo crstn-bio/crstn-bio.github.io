@@ -3,15 +3,15 @@
 
 /* 디자인 토큰: 순수한 검정과 흰색만. 회색 단계로 깊이를 만들어요. */
 :root {
-  --theatre: #000;           /* 전체 배경 */
+  --theatre: #050505;           /* 전체 배경 */
   --theatre-2: #0c0c0c;
   --theatre-line: #222;
   --phosphor: #fff;
-  --pulse: #fff;             /* 강조도 흰색 */
-  --paper: #000;             /* 본문 배경도 검정 */
+  --pulse: #8ec5ff;             /* 강조도 흰색 */
+  --paper: #050505;             /* 본문 배경도 검정 */
   --paper-2: #0c0c0c;
-  --ink: #fff;
-  --scrub: #fff;             /* 링크 */
+  --ink: #f2f2ef;
+  --scrub: #8ec5ff;             /* 링크 */
   --muted: #8d8d8d;
   --rule: #1f1f1f;
   --on-dark: #e6e6e6;
@@ -22,7 +22,8 @@
   --mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, monospace;
 
   --gutter: clamp(16px, 4vw, 56px);
-  --max: 1240px;
+  --max: 1500px;
+  --signal: #8ec5ff;
 
   color-scheme: dark;
 }
