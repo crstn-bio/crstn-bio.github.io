@@ -1,0 +1,31 @@
+---
+// 01 · 큰 질문. 그림 없이 글자만 두어서 한 번에 읽히게 해요.
+---
+<section class="question" id="question" aria-labelledby="question-h">
+  <div class="wrap">
+    <p class="kicker mono">01 / The question</p>
+    <h2 id="question-h">Can we build a model that learns an individual brain?</h2>
+    <p class="dek">Patient-specific models that understand a person’s neural state, predict how it will respond, and guide precise intervention. Closed-loop deep brain stimulation for Parkinson’s disease is where I would start.</p>
+    <ol class="loop mono" aria-label="The loop">
+      <li>Measure</li><li>Decode</li><li>Personalize</li><li>Predict</li><li>Control</li>
+    </ol>
+  </div>
+</section>
+
+<style>
+  .question { background: #000; border-top: 1px solid var(--rule); padding-block: clamp(96px, 16vw, 200px) clamp(80px, 12vw, 150px); }
+  .kicker { color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 28px; }
+  h2 {
+    margin: 0; max-width: 17ch; color: #fff;
+    font-size: clamp(40px, 6.6vw, 96px); font-weight: 300; line-height: 1.02; letter-spacing: -0.045em;
+    text-wrap: balance;
+  }
+  .dek { max-width: 56ch; margin: clamp(28px, 4vw, 44px) 0 0; color: #a9a9a9; font-size: clamp(17px, 1.5vw, 19px); line-height: 1.65; }
+  .loop {
+    list-style: none; margin: clamp(48px, 7vw, 80px) 0 0; padding: 18px 0 0; border-top: 1px solid #222;
+    display: flex; flex-wrap: wrap; gap: 10px 0; color: #8d8d8d; letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .loop li { display: flex; align-items: center; }
+  .loop li:not(:last-child)::after { content: ''; width: clamp(18px, 4vw, 56px); height: 1px; background: #333; margin: 0 14px; }
+  .loop li:nth-child(3) { color: #fff; }
+</style>
