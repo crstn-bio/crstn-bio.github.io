@@ -4,57 +4,58 @@
 // 오른쪽에 한 문장 + 짧은 세 단계, 아래에 움직이는 방법 도식(Pipeline)이 바뀌어요.
 // 뇌 모델은 HCP S1200 집단 평균 해부 데이터(MNI152)예요. 특정 환자의 데이터는 아니고, STN은 문헌상 대략적 위치예요.
 import Pipeline from './Pipeline.astro';
+import Hardware from './Hardware.astro';
 
 const targets = [
   {
     key: 'thesis', when: 'Now', name: 'Motor cortex', target: 'M1 · a-tbTUS + FES', pipe: 'tus' as const,
     kicker: 'Now · honours thesis, Krembil Brain Institute',
-    title: 'Change motor cortex, without surgery.',
+    title: 'Primary motor cortex',
+    why: 'Prove a human circuit can be changed without surgery, and measured.',
     how: [
       ['Focused ultrasound bursts to M1', 'a-tbTUS · 5 Hz'],
       ['Stimulate the matching muscle', 'FES · same session'],
       ['Measure the change in motor output', 'pre vs post'],
     ],
-    question: 'Does pairing the two change motor cortex more than either alone?',
     note: '',
     pipeLabel: 'Thesis approach: focused ultrasound in theta bursts to primary motor cortex, functional electrical stimulation of the matching muscle in the same session, and the motor response measured before and after.',
   },
   {
-    key: 'pd', when: 'Next', name: 'Parkinson’s', target: 'STN · AI closed-loop DBS', pipe: 'aidbs' as const,
-    kicker: 'Next · the first step of the vision',
-    title: 'Personalize deep brain stimulation fast, with no new hardware.',
+    key: 'pd', when: 'Next', name: 'Parkinson’s', target: 'STN · β bursts', pipe: 'aidbs' as const,
+    kicker: 'Next · the first clinical target',
+    title: 'Subthalamic nucleus, β bursts',
+    why: 'Most DBS runs at fixed settings, tuned by hand, one patient at a time.',
     how: [
-      ['Pretrain a model on many patients’ recordings', 'deep learning · LFP'],
-      ['Adapt it to one patient from little data', 'transfer · minimal invasion'],
-      ['Stimulate only when the brain needs it', '130 Hz · closed loop on β'],
+      ['Pretrain on many patients’ recordings', 'deep learning · LFP'],
+      ['Adapt to one patient, fast', 'few-shot · personal model'],
+      ['Close the loop on the implant chip', 'β in → 130 Hz out'],
     ],
-    question: 'How little patient-specific data is enough to learn a new brain?',
-    note: 'The implanted lead both records and stimulates, so personalization needs no extra surgery.',
-    pipeLabel: 'DBS approach: pretrain a deep model on local field potentials from many patients, adapt it to one patient from little data, sense beta from the implanted lead, and deliver 130 Hz stimulation only while beta is high.',
+    note: '',
+    pipeLabel: 'DBS approach: pretrain a deep model on local field potentials from many patients, adapt it to one patient from little data, run it on the implanted chip, and deliver 130 Hz stimulation only while beta is high.',
   },
   {
-    key: 'ad', when: 'Later', name: 'Alzheimer’s', target: 'Hippocampus · engram read/write', pipe: 'engram' as const,
+    key: 'ad', when: 'Later', name: 'Alzheimer’s', target: 'Hippocampal engram cells', pipe: 'engram' as const,
     kicker: 'Later · from circuits to single memories',
-    title: 'Find the cells that hold a memory. Read them, replay them, write them back.',
+    title: 'Hippocampal engram cells',
+    why: 'In mouse models of early Alzheimer’s, memories are still stored but cannot be recalled.',
     how: [
-      ['Record hundreds of hippocampal neurons at once', 'Neuropixels 1.0 NHP Long'],
-      ['Decode the ensemble behind one memory', 'engram · not just CA1 or CA3'],
-      ['Reactivate those exact cells', 'visualize · replay · write'],
+      ['Robot-place a long probe in the hippocampus', 'Neuropixels 1.0 NHP Long'],
+      ['Decode the cells behind one memory', 'engram, not just CA1 or CA3'],
+      ['Replay it, then reactivate those cells', 'visualize · replay · write'],
     ],
-    question: 'When a memory becomes inaccessible in Alzheimer’s, can its engram be found and reactivated?',
-    note: 'In mice, reactivating engram cells recovered memories in early Alzheimer’s models. In humans this is a speculative direction.',
-    pipeLabel: 'Memory approach: record hundreds of hippocampal neurons with a long high-density probe, decode the cell ensemble active for one memory, show the same cells reactivating at recall, and target stimulation to that ensemble rather than the whole region.',
+    note: 'Reactivating engram cells restored recall in those mice. In humans this is a speculative direction.',
+    pipeLabel: 'Memory approach: a robot places a long high-density probe in the hippocampus, the cell ensemble active for one memory is decoded, the same cells are shown reactivating at recall, and stimulation targets that ensemble rather than the whole region.',
   },
   {
     key: 'goal', when: 'Goal', name: 'Whole brain', target: 'Predict before symptoms', pipe: 'goal' as const,
     kicker: 'The goal · where the three steps lead',
-    title: 'Model one person’s brain, and predict change before symptoms.',
+    title: 'One person’s whole brain',
+    why: 'Disease starts years before symptoms. Treatment starts after.',
     how: [
       ['Measure across scales', 'cortex · circuit · cell'],
       ['Learn that person’s brain dynamics', 'a model that keeps updating'],
-      ['Forecast pathology, then intervene early', 'lead time before symptoms'],
+      ['Forecast change, then intervene early', 'lead time before symptoms'],
     ],
-    question: 'Can a model of one dynamic brain see disease coming?',
     note: '',
     pipeLabel: 'Goal: combine motor cortex, deep-nucleus and hippocampal signals into one person-specific model of brain dynamics that forecasts pathological change, giving lead time before symptoms appear.',
   },
@@ -64,10 +65,10 @@ const targets = [
   <div class="wrap">
     <div class="d-head">
       <div>
-        <p class="kicker mono">02 / The approach</p>
-        <h2 id="design-h">Three steps, one model.</h2>
+        <p class="kicker mono">02 / How</p>
+        <h2 id="design-h">Three targets. One tool.</h2>
       </div>
-      <p>Each step goes deeper, from the cortex to single memories. Choose one.</p>
+      <p>Start where the signal is clearest, then go deeper: cortex, deep nucleus, single memories.</p>
     </div>
 
     <div class="tabs" role="tablist" aria-label="Stage">
@@ -100,13 +101,15 @@ const targets = [
         {targets.map((t, i) => (
           <div class="panel" role="tabpanel" id={`panel-${t.key}`} aria-labelledby={`tab-${t.key}`} hidden={i !== 0}>
             <p class="p-kicker mono">{t.kicker}</p>
+            <p class="lbl mono">Target</p>
             <h3>{t.title}</h3>
+            <div class="why"><p class="lbl mono">Why</p><p>{t.why}</p></div>
+            <p class="lbl mono">How</p>
             <ol class="how">
               {t.how.map(([a, b], j) => (
                 <li><span class="h-n mono">{String(j + 1).padStart(2, '0')}</span><span class="h-t">{a}</span><span class="h-s mono">{b}</span></li>
               ))}
             </ol>
-            <p class="q">{t.question}</p>
             {t.note && <p class="note">{t.note}</p>}
           </div>
         ))}
@@ -126,6 +129,8 @@ const targets = [
         </div>
       ))}
     </figure>
+
+    <Hardware />
 
     <div class="basis">
       <p class="mono">Research basis</p>
@@ -182,14 +187,16 @@ const targets = [
   .panel { padding-top: 4px; }
   .panel:focus-visible { outline-offset: 8px; }
   .p-kicker { color: var(--acc); letter-spacing: 0.06em; margin: 0 0 14px; }
-  .panel h3 { font-size: clamp(24px, 2.5vw, 34px); font-weight: 350; letter-spacing: -0.025em; line-height: 1.15; margin: 0 0 26px; text-wrap: balance; }
+  .panel h3 { font-size: clamp(26px, 2.7vw, 38px); font-weight: 350; letter-spacing: -0.025em; line-height: 1.1; margin: 0 0 22px; text-wrap: balance; }
+  .lbl { margin: 0 0 8px; color: #7d7d7d; letter-spacing: 0.14em; text-transform: uppercase; }
+  .why { margin: 0 0 24px; padding: 14px 0 0; border-top: 1px solid #222; }
+  .why p:last-child { margin: 0; color: #e6e6e6; font-size: 17px; line-height: 1.5; }
   .how { list-style: none; margin: 0; padding: 0; border-top: 1px solid #222; counter-reset: h; }
   .how li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 2px 10px; padding: 13px 0; border-bottom: 1px solid #1a1a1a; }
   .h-n { color: var(--acc); grid-row: span 2; padding-top: 3px; }
   .h-t { color: #f0f0f0; font-size: 16px; line-height: 1.4; }
   .h-s { color: #8a8a8a; }
-  .q { margin: 22px 0 0; color: #cfcfcf; font-size: 16px; line-height: 1.5; }
-  .note { margin: 10px 0 0; color: #8a8a8a; font-size: 14px; line-height: 1.55; border-left: 1px solid var(--acc); padding-left: 12px; }
+  .note { margin: 16px 0 0; color: #8a8a8a; font-size: 14px; line-height: 1.55; border-left: 1px solid var(--acc); padding-left: 12px; }
 
   /* 방법 도식 */
   .approach { margin: clamp(36px, 5vw, 56px) 0 0; }

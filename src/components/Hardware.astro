@@ -1,46 +1,45 @@
 ---
-// Vision 3단계(이식형 기기)를 뒷받침하는 두 장면. 모두 코드로 그린 그림이에요.
-// ① 기기 분해도: 배터리, 신호처리 칩, 유연 리드, 전극 배열이 떨어졌다가 조립됨
-// ② 삽입: Neuropixels 2.0 (미세조작기, 384채널 뱅크 전환) 또는 유연 전극 실 (로봇 삽입 헤드)
+// 만들고 싶은 도구: 칩 + 로봇 삽입. 모두 코드로 그린 그림이에요.
+// ① 칩: 배터리, 신호처리 칩, 유연 리드, 전극 배열이 떨어졌다가 조립됨
+// ② 삽입: 로봇 삽입 헤드(유연 전극 실) 또는 Neuropixels 1.0 NHP Long (45 mm, 384 / 4,416 지점)
 ---
-<section class="hw" aria-labelledby="hw-h">
-  <div class="wrap">
+<div class="hw" aria-labelledby="hw-h">
     <div class="hw-head">
-      <h3 id="hw-h">What stage three asks for</h3>
-      <p>Electronics small enough to record, compute and stimulate on the device itself, and electrodes placed precisely enough to trust what they read.</p>
+      <h3 id="hw-h"><span class="mono">The tool</span>Placed by a robot. Run by a chip.</h3>
+      <p>An implant that reads and writes its target, with the model running on the device itself.</p>
     </div>
 
     <div class="panels">
       <figure class="panel">
         <canvas id="hw-device" aria-hidden="true"></canvas>
         <figcaption>
-          <strong>Device</strong>
-          <span>Battery, on-device signal processing and flexible thin-film leads, pulled apart and reassembled.</span>
+          <strong>Chip</strong>
+          <span>Records, decodes and stimulates on the implant.</span>
         </figcaption>
       </figure>
       <figure class="panel">
         <canvas id="hw-insert" aria-hidden="true"></canvas>
         <figcaption>
           <div class="cap-row">
-            <strong>Implantation</strong>
+            <strong>Robot</strong>
             <div class="probe-toggle" role="group" aria-label="Electrode type">
-              <button type="button" data-probe="np2" aria-pressed="true">Neuropixels 2.0</button>
-              <button type="button" data-probe="threads" aria-pressed="false">Flexible threads</button>
+              <button type="button" data-probe="threads" aria-pressed="true">Robotic insertion</button>
+              <button type="button" data-probe="np2" aria-pressed="false">Neuropixels 1.0 Long</button>
             </div>
           </div>
-          <span data-probe-show="np2">A micromanipulator lowers a four-shank Neuropixels 2.0 probe, waits for the tissue to settle, then records 384 of its 5,120 sites at a time, switching banks along the shanks.</span>
-          <span data-probe-show="threads" hidden>A robotic insertion head placing flexible electrode threads into cortex, one at a time.</span>
+          <span data-probe-show="threads">Places each electrode at its target, one at a time.</span>
+          <span data-probe-show="np2" hidden>A 45 mm probe reaches deep targets and records 384 of 4,416 sites at once.</span>
         </figcaption>
       </figure>
     </div>
-    <p class="hw-note mono">Drawn in code for illustration, not a real device or procedure. Neuropixels 2.0 figures follow Steinmetz et al., Science (2021).</p>
-  </div>
-</section>
+    <p class="hw-note mono">Drawn in code for illustration, not a real device or procedure. Probe figures follow the Neuropixels 1.0 NHP Long specification.</p>
+</div>
 
 <style>
-  .hw { background: #000; color: #fff; padding-block: clamp(64px, 9vw, 120px) clamp(72px, 10vw, 136px); }
+  .hw { background: #000; color: #fff; margin-top: clamp(48px, 7vw, 88px); }
   .hw-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px var(--gutter); align-items: end; margin-bottom: clamp(28px, 4vw, 48px); }
-  .hw-head h3 { font-size: clamp(26px, 3vw, 38px); font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; }
+  .hw-head h3 { font-size: clamp(26px, 3vw, 38px); font-weight: 350; letter-spacing: -0.02em; line-height: 1.15; margin: 0; }
+  .hw-head h3 .mono { display: block; color: var(--muted); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 12px; }
   .hw-head p { color: #b5b5b5; font-size: 17px; line-height: 1.7; max-width: 52ch; margin: 0; }
   .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .panel { margin: 0; border: 1px solid #1f1f1f; background: #030303; }
@@ -62,7 +61,7 @@
 
 <script>
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const MONO = '11px "Geist Mono Variable", ui-monospace, monospace';
+  const MONO = '12px "Geist Mono Variable", ui-monospace, monospace';
   const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
   const ease = (v: number) => { v = clamp01(v); return v < 0.5 ? 4 * v * v * v : 1 - (-2 * v + 2) ** 3 / 2; };
 
@@ -378,11 +377,11 @@
     hud(ctx, [['THREAD', `${String(done ? N : idx + 1).padStart(2, '0')} / ${N}`], ['STATE', state]]);
   }
 
-  // ── (b) Neuropixels 2.0: 4개 shank, 미세조작기로 천천히 삽입, 384채널 뱅크 전환 ──
-  // 수치는 Steinmetz et al., Science 2021 기준 (shank 4개, 기록 지점 5,120개, 동시 기록 384채널, 지점 간격 15 µm)
-  const SHANKS = [-0.15, -0.05, 0.05, 0.15];                  // 실제 간격 250 µm를 확대해서 표현
+  // ── (b) Neuropixels 1.0 NHP Long: shank 1개(45 mm), 미세조작기로 천천히 삽입, 384채널 뱅크 전환 ──
+  // 수치는 제조사 사양 기준 (기록 지점 4,416개, 동시 기록 384채널, 단면 70 × 122 µm)
+  const SHANKS = [0];
+  const SHANK_MM = 45;
   const NP_LEN = 0.95, NP_DEPTH = 0.62, NP_CYCLE = 20;
-  const NP_MAX_MM = 4.0;                                       // 화면에 표시할 최대 삽입 깊이 (예시)
   const T_LOWER = [1.2, 6.4], T_SETTLE = 7.8, T_END = 18.8, BANK_DUR = 2.75;
   const ROW = 0.016;                                            // 화면용 지점 간격
 
@@ -401,7 +400,7 @@
     else if (k < T_END) { d = NP_DEPTH; state = 'recording'; }
     else { d = NP_DEPTH - (NP_DEPTH + 0.12) * ease((k - T_END) / (NP_CYCLE - T_END)); state = 'retracting'; }
     const recording = state === 'recording';
-    const bank = recording ? Math.min(3, Math.floor((k - T_SETTLE) / BANK_DUR)) : -1;
+    const bank = recording ? Math.min(3, Math.floor((k - T_SETTLE) / BANK_DUR)) : -1;   // 화면에서는 아래쪽 뱅크 4개만 차례로
 
     const tips: [number, number][] = [], tops: [number, number][] = [];
     SHANKS.forEach((xs, i) => {
@@ -424,7 +423,7 @@
       // shank 몸체 (끝이 뾰족한 가는 실리콘 바늘)
       ctx.fillStyle = '#000'; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(ux - 2, uy); ctx.lineTo(tx - 2, ty - 7); ctx.lineTo(tx, ty); ctx.lineTo(tx + 2, ty - 7); ctx.lineTo(ux + 2, uy);
+      ctx.moveTo(ux - 3, uy); ctx.lineTo(tx - 3, ty - 9); ctx.lineTo(tx, ty); ctx.lineTo(tx + 3, ty - 9); ctx.lineTo(ux + 3, uy);
       ctx.closePath(); ctx.fill(); ctx.stroke();
 
       // 기록 지점: 두 줄로 촘촘히
@@ -485,7 +484,7 @@
     ctx.fillStyle = '#000'; ctx.strokeStyle = 'rgba(255,255,255,0.6)';
     ctx.fillRect(bx, by, bw, bh); ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
     ctx.font = MONO; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.fillText('SITES', bx, by - 5);
+    ctx.fillText('SITES · 4,416', bx, by - 5);
     const sw = small ? 22 : 28, sx0 = bx + 12, sy0 = by + 10;
     ctx.strokeStyle = 'rgba(255,255,255,0.8)';
     ctx.beginPath(); ctx.moveTo(sx0, sy0); ctx.lineTo(sx0, sy0 + bh - 34); ctx.lineTo(sx0 + sw / 2, sy0 + bh - 20); ctx.lineTo(sx0 + sw, sy0 + bh - 34); ctx.lineTo(sx0 + sw, sy0); ctx.stroke();
@@ -496,11 +495,6 @@
       ctx.fillStyle = on ? '#fff' : 'rgba(255,255,255,0.55)';
       ctx.fillRect(sx0 + 4 + c * (sw - 8 - sq), sy0 + 6 + r * pitch, sq, sq);
     }
-    const my = sy0 + 6;
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-    ctx.beginPath(); ctx.moveTo(sx0 + sw + 6, my); ctx.lineTo(sx0 + sw + 10, my); ctx.lineTo(sx0 + sw + 10, my + pitch); ctx.lineTo(sx0 + sw + 6, my + pitch); ctx.stroke();
-    ctx.textBaseline = 'middle'; ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    ctx.fillText('15µm', sx0 + sw + 13, my + pitch / 2);
     // 확대 상자 ↔ 마지막 shank 끝
     const [lx, ly] = tips[tips.length - 1];
     ctx.setLineDash([2, 3]); ctx.strokeStyle = 'rgba(255,255,255,0.35)';
@@ -508,14 +502,14 @@
     }
 
     // 계기판
-    const rows: [string, string][] = [['PROBE', small ? 'NP 2.0' : 'Neuropixels 2.0'], ['STATE', state]];
-    if (recording) { rows.push(['SITES', '384 of 5,120']); rows.push(['BANK', `${bank + 1} / 4`]); }
-    else rows.push(['DEPTH', `${(Math.max(0, d) / NP_DEPTH * NP_MAX_MM).toFixed(1)} mm`]);
+    const rows: [string, string][] = [['PROBE', small ? 'NP 1.0 Long' : 'Neuropixels 1.0 NHP Long'], ['STATE', state]];
+    if (recording) rows.push(['SITES', '384 of 4,416']);
+    else rows.push(['DEPTH', `${((Math.max(0, d) / NP_LEN) * SHANK_MM).toFixed(1)} mm`]);
     hud(ctx, rows);
   }
 
   // ── 모드 전환 ──
-  let probe: 'np2' | 'threads' = 'np2';
+  let probe: 'np2' | 'threads' = 'threads';
   let switchAt = 0, pending = false;
   const STILL = { np2: T_SETTLE + BANK_DUR * 1.4, threads: N * PER + 1.5 };
   const insert = mount('hw-insert', (ctx, w, h, t) => {
