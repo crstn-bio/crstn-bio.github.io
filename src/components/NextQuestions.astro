@@ -8,6 +8,17 @@ import { questions } from '../data/questions';
     <div class="head">
       <div><p class="kicker mono">04 / Open questions</p><h2 id="next-h">What I want to test next.</h2></div>
     </div>
+    <div class="nq">
+      <p class="nq-k mono">Next question <span class="status status--question">Research question</span></p>
+      <p class="nq-q">
+        <span><span class="mono">state</span>Can we perturb the correct state,</span>
+        <span><span class="mono">time</span>at the correct time,</span>
+        <span><span class="mono">direction</span>in the correct direction?</span>
+      </p>
+      <span class="nq-ar mono" aria-hidden="true">↓</span>
+      <p class="nq-p">Closed-loop<br />representation-guided<br />hippocampal neuromodulation</p>
+    </div>
+
     <ol class="qs">
       {questions.map((q, i) => (
         <li><span class="n mono">Q{i + 1}</span><span class="q">{q}</span></li>
@@ -22,6 +33,17 @@ import { questions } from '../data/questions';
   .head { margin-bottom: clamp(24px, 4vw, 40px); }
   .kicker { color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 14px; }
   .head h2 { margin: 0; font-size: clamp(32px, 4.2vw, 56px); font-weight: 300; letter-spacing: -0.035em; line-height: 1.05; }
+  .nq { border: 1px dashed #3a4a5e; background: #04070b; padding: clamp(22px, 3.4vw, 44px); margin-bottom: clamp(28px, 4vw, 44px); display: grid; justify-items: start; }
+  .nq-k { margin: 0; display: flex; align-items: center; gap: 14px; color: #8d8d8d; letter-spacing: .14em; text-transform: uppercase; }
+  .nq-q { margin: 22px 0 0; display: grid; gap: 4px; font-size: clamp(24px, 3vw, 40px); font-weight: 300; letter-spacing: -0.025em; line-height: 1.2; color: #fff; }
+  .nq-q > span { display: grid; grid-template-columns: 100px auto; align-items: baseline; }
+  .nq-q .mono { color: var(--acc); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+  .nq-ar { margin: 16px 0 0 100px; color: var(--acc); font-size: 20px; }
+  .nq-p { margin: 12px 0 0 100px; font-family: var(--mono); font-size: clamp(14px, 1.4vw, 17px); letter-spacing: .16em; text-transform: uppercase; color: var(--acc); line-height: 1.7; }
+  @media (max-width: 560px) {
+    .nq-q > span { grid-template-columns: 1fr; }
+    .nq-ar, .nq-p { margin-left: 0; }
+  }
   .qs { list-style: none; margin: 0; padding: 0; border-top: 1px solid #262626; }
   .qs li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px 20px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid #1c1c1c; }
   .n { color: var(--acc); }

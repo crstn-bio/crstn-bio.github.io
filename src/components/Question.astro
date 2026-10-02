@@ -1,34 +1,59 @@
 ---
-// 01 · 질문: 하나의 큰 질문 → 두 질문(상태 · 정보) → 하나의 고리로 모임.
-// 제어와 기억은 따로가 아니라 같은 문제예요: 개인의 뇌를 충분히 정확하게 모델링하기.
-const loop = ['Observe', 'Infer latent state', 'Predict transition', 'Select perturbation', 'Observe response', 'Update model'];
+// 01 · 질문: 한 사람의 뇌를 예측하고 제어할 수 있을까?
+// 소프트웨어 뇌 모델이 중심, 하드웨어는 감지(뇌 → 모델)와 작용(모델 → 뇌)의 두 통로.
 ---
 <section class="question" id="question" aria-labelledby="question-h">
   <div class="wrap">
     <p class="kicker mono">01 / The question</p>
-    <h2 id="question-h">Can we build a model that learns an individual brain?</h2>
-    <p class="dek">Precise enough to infer what state it is in and what information it holds, predict how that changes, and know what intervention does to it. Because the same stimulation can produce different responses in different people.</p>
+    <h2 id="question-h">Can we predict and control an individual brain?</h2>
+    <p class="dek">The same stimulation can produce different responses in different people. The core is a software model of one brain: hardware reads from it and writes to it, and every response updates the model.</p>
 
-    <div class="two" aria-label="Two questions that converge">
-      <div class="q">
-        <p class="q-k mono">Control</p>
-        <p class="q-t">What state is this brain in?</p>
-        <p class="q-c mono">state → prediction → intervention</p>
-      </div>
-      <div class="q">
-        <p class="q-k mono">Memory</p>
-        <p class="q-t">What information does it contain?</p>
-        <p class="q-c mono">representation → retrieval → accessibility</p>
-      </div>
-      <svg class="join" viewBox="0 0 1000 70" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M250 0 C250 40 500 30 500 70 M750 0 C750 40 500 30 500 70" />
+    <figure class="arch" aria-label="Research asks what we should learn. A software brain model predicts and controls. It reads the brain through sensing hardware and writes to it through stimulation hardware. The brain's response updates the model.">
+      <svg viewBox="0 0 600 540" aria-hidden="true">
+        <defs>
+          <marker id="qa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9" fill="none" stroke="#8a8a8a" stroke-width="1.4" /></marker>
+          <marker id="qb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9" fill="none" stroke="#a8c8ff" stroke-width="1.4" /></marker>
+          <path id="q-up" d="M262 408 H130 V338 M130 256 V214 H300 V162" />
+          <path id="q-dn" d="M300 162 V214 H470 V256 M470 338 V408 H338" />
+          <path id="q-upd" d="M300 448 V500 H585 V122 H422" />
+        </defs>
+        <text class="k" x="300" y="22" text-anchor="middle">RESEARCH</text>
+        <text class="v" x="300" y="48" text-anchor="middle">What should we learn?</text>
+        <path class="ln" d="M300 58 V80" marker-end="url(#qa)" />
+
+        <rect class="m" x="180" y="82" width="240" height="80" />
+        <text class="t" x="300" y="118" text-anchor="middle">BRAIN MODEL</text>
+        <text class="k" x="300" y="144" text-anchor="middle">SOFTWARE</text>
+
+        <path class="ln" d="M300 162 V214 M130 214 H470" />
+        <text class="v" x="312" y="194">predict · control</text>
+        <path class="ln" d="M130 256 V218" marker-end="url(#qa)" />
+        <path class="ln" d="M470 214 V254" marker-end="url(#qa)" />
+        <text class="t3" x="118" y="242" text-anchor="end">READ</text>
+        <text class="t3" x="482" y="242">WRITE</text>
+
+        <rect class="b" x="40" y="256" width="180" height="82" />
+        <text class="t2" x="130" y="290" text-anchor="middle">SENSING</text>
+        <text class="s" x="130" y="316" text-anchor="middle">hardware</text>
+        <rect class="b" x="380" y="256" width="180" height="82" />
+        <text class="t2" x="470" y="290" text-anchor="middle">STIMULATE</text>
+        <text class="s" x="470" y="316" text-anchor="middle">hardware</text>
+
+        <path class="ln" d="M130 340 V408 H262" marker-start="url(#qa)" />
+        <path class="ln" d="M470 338 V408 H338" marker-end="url(#qa)" />
+        <path class="brain" d="M300 370 C276 370 262 382 262 400 C262 420 280 432 300 430 C320 432 338 420 338 400 C338 382 324 370 300 370 Z M300 372 V428 M276 390 C286 396 288 406 280 416 M324 390 C314 396 312 406 320 416" />
+        <text class="t2" x="288" y="468" text-anchor="end">BRAIN</text>
+
+        <path class="up" d="M300 432 V500 H585 V122 H424" marker-end="url(#qb)" />
+        <text class="s" x="312" y="468">response</text>
+        <text class="u" x="572" y="526" text-anchor="end">MODEL UPDATE</text>
+
+        <circle class="p" r="5"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#q-up" /></animateMotion></circle>
+        <circle class="p" r="5"><animateMotion dur="5s" begin="-2.5s" repeatCount="indefinite"><mpath href="#q-dn" /></animateMotion></circle>
+        <circle class="p" r="4"><animateMotion dur="6s" repeatCount="indefinite"><mpath href="#q-upd" /></animateMotion></circle>
       </svg>
-    </div>
-
-    <ol class="loop mono" aria-label="Shared loop">
-      {loop.map((s, i) => <li style={`--i:${i}`}>{s}</li>)}
-    </ol>
-    <p class="note">Restoring memory may be a harder form of closed-loop control: steering states that carry information, not only symptoms.</p>
+    </figure>
+    <p class="note">Control and memory are the same problem: what state is this brain in, and what information does it hold?</p>
   </div>
 </section>
 
@@ -42,28 +67,30 @@ const loop = ['Observe', 'Infer latent state', 'Predict transition', 'Select per
   }
   .dek { max-width: 54ch; margin: clamp(28px, 4vw, 40px) 0 0; color: #a9a9a9; font-size: clamp(17px, 1.5vw, 20px); line-height: 1.6; }
 
-  .two { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: clamp(48px, 7vw, 80px); border-top: 1px solid #262626; border-left: 1px solid #262626; }
-  .q { padding: clamp(18px, 2.4vw, 28px); border-right: 1px solid #262626; border-bottom: 1px solid #262626; }
-  .q-k { margin: 0; color: var(--acc); letter-spacing: 0.14em; text-transform: uppercase; }
-  .q-t { margin: 10px 0 0; color: #fff; font-size: clamp(22px, 2.4vw, 32px); font-weight: 350; letter-spacing: -0.02em; line-height: 1.2; }
-  .q-c { margin: 12px 0 0; color: #8a8a8a; }
-  .join { grid-column: 1 / -1; display: block; width: 100%; height: 56px; }
-  .join path { fill: none; stroke: #3a3a3a; stroke-width: 1.2; vector-effect: non-scaling-stroke; }
-
-  .loop {
-    list-style: none; margin: 0; padding: 16px 18px; border: 1px solid #2c3a4c; background: #04070b;
-    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 0; color: #8d8d8d; letter-spacing: 0.1em; text-transform: uppercase;
-  }
-  .loop li { display: flex; align-items: center; animation: q-step 7.2s infinite; animation-delay: calc(var(--i) * 1.2s); }
-  .loop li:not(:last-child)::after { content: '→'; color: #4a4a4a; margin: 0 12px; }
-  @keyframes q-step { 0%, 12% { color: #a8c8ff; } 18%, 100% { color: #8d8d8d; } }
+  .arch { margin: clamp(40px, 6vw, 72px) auto 0; max-width: 680px; }
+  .arch svg { display: block; width: 100%; height: auto; }
+  .arch .m { fill: #060a10; stroke: var(--acc); stroke-width: 1.4; }
+  .arch .b { fill: #050505; stroke: #bdbdbd; stroke-width: 1.1; }
+  .arch .ln { fill: none; stroke: #8a8a8a; stroke-width: 1.2; }
+  .arch .brain { fill: #050505; stroke: #d6d6d6; stroke-width: 1.3; }
+  .arch .k { fill: #7d7d7d; font: 14px var(--mono); letter-spacing: .12em; }
+  .arch .t { fill: #fff; font: 500 24px var(--mono); letter-spacing: .1em; }
+  .arch .z { fill: var(--acc); font: 22px var(--mono); }
+  .arch .t2 { fill: #fff; font: 500 19px var(--mono); letter-spacing: .1em; }
+  .arch .s { fill: #8a8a8a; font: 17px var(--mono); }
+  .arch .s2 { fill: #6a6a6a; font: 16px var(--mono); }
+  .arch .v { fill: var(--acc); font: 17px var(--mono); }
+  .arch .p { fill: var(--acc); }
+  .arch .t3 { fill: var(--acc); font: 500 16px var(--mono); letter-spacing: .14em; }
+  .arch .up { fill: none; stroke: var(--acc); stroke-width: 1.2; stroke-dasharray: 5 5; }
+  .arch .u { fill: var(--acc); font: 500 17px var(--mono); letter-spacing: .1em; }
   .note { max-width: 60ch; margin: 18px auto 0; text-align: center; color: #9a9a9a; font-size: 15.5px; line-height: 1.6; }
 
   @media (max-width: 640px) {
-    .two { grid-template-columns: 1fr; }
-    .join { display: none; }
-    .loop { margin-top: 0; justify-content: flex-start; }
     .note { text-align: left; }
+    .arch .k, .arch .s, .arch .s2, .arch .v { font-size: 20px; }
+    .arch .t2 { font-size: 22px; }
+    .arch .t3, .arch .u { font-size: 19px; }
   }
-  @media (prefers-reduced-motion: reduce) { .loop li { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .arch .p { display: none; } }
 </style>
