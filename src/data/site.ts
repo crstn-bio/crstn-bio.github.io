@@ -2,11 +2,11 @@
 export const site = {
   name: 'Christine Park',
   altName: 'Hanbi Park',
-  title: 'Neurophysiology & computational neuroscience',
+  title: 'Modelling the individual brain',
   location: 'Toronto, Ontario',
   current: 'Research assistant and thesis student at the Krembil Brain Institute, University Health Network',
   intro:
-    'I study how the brain responds when we deliberately stimulate it. My thesis work looks at pairing accelerated theta-burst transcranial focused ultrasound with functional electrical stimulation, and my analysis work lives in reproducible R pipelines.',
+    'A research program on modelling the individual brain: measure neural state, predict the response to intervention, and learn from each person. Parkinson’s is the nearer-term test of control; Alzheimer’s the longer-term test of memory. Current work: a-tbTUS with FES at the Krembil Brain Institute, UHN.',
   about: [
     'I am a final-year Honours BSc student at the University of Toronto, specialising in Human Biology, Physiology and Immunology. At UHN’s Krembil Brain Institute I work on neuromodulation and neurophysiology, which is where I spend most of my research hours.',
     'Before and alongside the lab, I have worked on the clinical side of care: preparing perioperative spaces, taking vital signs, and getting imaging records in front of physicians. It keeps me close to the patients this research is ultimately for.',

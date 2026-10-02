@@ -1,228 +1,88 @@
 ---
-// 03 · Evidence: 도구에 필요한 네 조각(고리) + 조각마다 해온 프로젝트.
-// 목록은 한 줄씩만 보여주고, 누르면 창이 열려서 단계별 도식(Pipeline)과 수치가 나와요.
-import Pipeline from './Pipeline.astro';
-const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-
-// 고리: 읽기 → 해독·예측 → 제어 → 자극 → 다시 읽기 (시계 방향, 위에서 시작)
-const pieces = [
-  { key: 'signals', name: 'Signals', verb: 'read', pos: 'top' },
-  { key: 'ai', name: 'AI & stats', verb: 'decode · predict', pos: 'right' },
-  { key: 'hardware', name: 'Hardware', verb: 'control', pos: 'bottom' },
-  { key: 'neuromod', name: 'Neuromodulation', verb: 'stimulate', pos: 'left' },
-];
-
-const projects = [
-  {
-    id: 'thesis', piece: 'neuromod', title: 'a-tbTUS + FES', line: 'Ultrasound to M1, paired with muscle stimulation', status: 'Active · UHN', kind: 'tus' as const,
-    label: 'Thesis method: accelerated theta-burst transcranial ultrasound to primary motor cortex, functional electrical stimulation of the matching muscle in the same session, and the response measured before and after.',
-    facts: [['Role', 'Honours thesis, Krembil Brain Institute'], ['Target', 'Primary motor cortex (M1)']],
-  },
-  {
-    id: 'mer', piece: 'signals', title: 'Deep-brain microelectrode recordings', line: '115 recordings · spikes → firing rate → spectra', status: 'Python', kind: 'spikes' as const,
-    label: 'Method: microelectrode recordings from four deep nuclei (Vim, STN, SNr, Rt), band-pass filtered 300 to 3000 Hz, spikes detected at minus 10 times the median absolute deviation, rasters across 115 recordings, population firing rate with a 10 ms Gaussian kernel, and LFP power spectra with Welch’s method.',
-    facts: [['Setting', 'NeuroTech coding workshop'], ['Data', 'Milosevic lab, Toronto Western Hospital (public) · LFP: Paulk et al.']],
-  },
-  {
-    id: 'eeg', piece: 'signals', title: 'EEG / EMG state analysis', line: 'Windowed FFT → band power', status: 'Python · MATLAB', kind: 'eeg' as const,
-    label: 'Method: EEG and EMG signals, windowed FFT, and power spectral density summarised as band power.',
-    facts: [['Field', 'Behavioural neuroscience']],
-  },
-  {
-    id: 'adni', piece: 'ai', title: 'Plasma biomarkers → amyloid PET', line: 'AUC .902 → .919 · +9 pp specificity', status: 'R · ADNI', kind: 'adni' as const, href: `${base}/research/plasma-abeta/`,
-    label: 'Method: plasma and amyloid-PET visits matched one-to-one within participant up to 365 days; 1,524 observations from 1,236 participants; three logistic models; participant-grouped 5-fold cross-validation repeated 5 times; 1,000 participant-level bootstrap replicates. Adding Aβ42/40 raised AUC from 0.902 to 0.919 and specificity at 90% sensitivity from 0.713 to 0.803.',
-    facts: [['Question', 'Does Aβ42/40 add to p-tau217?'], ['Cohort', '1,524 observations · 1,236 participants (ADNI, Mar 2026)'], ['Result', 'ΔAUC +0.017 (95% CI 0.010–0.026); larger in CU (+0.027) than CI (+0.012)']],
-  },
-  {
-    id: 'imu', piece: 'hardware', title: 'Motion-controlled pan–tilt', line: 'IMU tilt → servo, built on Arduino', status: 'Built', kind: 'imu' as const,
-    label: 'Build: an IMU senses tilt, the angle is mapped to a servo pulse width on an Arduino UNO R3, and two SG90 servos move the pan and tilt axes.',
-    facts: [['Parts', 'Arduino UNO R3 · 2 × SG90 servos · IMU · 3D-printed mount']],
-  },
-];
-const pieceName = Object.fromEntries(pieces.map((p) => [p.key, p.name]));
-const count = (k: string) => projects.filter((p) => p.piece === k).length;
+// 04 · Evidence: 실제로 한 일만, 그 일이 받치는 단계 옆에. 누르면 방법 상세 창.
+// 아래 띠: 만들기 경로 (Build 01 물리 제어 → Build 02 신경 제어 → 사람 데이터 닫힌 고리).
+import Status from './Status.astro';
+import ProjectDialogs from './ProjectDialogs.astro';
+import { projects, buildPath } from '../data/projects';
 ---
 <section class="builds section" id="work" aria-labelledby="build-h">
   <div class="wrap">
     <div class="build-head">
-      <div><p class="mono kicker">03 / Evidence</p><h2 id="build-h">Pieces I’ve already built.</h2></div>
-      <p>The tool needs four abilities. Each has a project behind it.</p>
+      <div><p class="mono kicker">04 / Evidence</p><h2 id="build-h">Capabilities so far.</h2></div>
+      <p>What I have actually done, next to the stage it supports.</p>
     </div>
 
-    <div class="ev">
-      <!-- 고리 -->
-      <div class="ring" aria-label="Four abilities in a closed loop: signals, AI and statistics, hardware, neuromodulation">
-        <svg viewBox="0 0 400 400" aria-hidden="true">
-          <circle class="r-track" cx="200" cy="200" r="140" />
-          {[45, 135, 225, 315].map((a) => {
-            const r = (a * Math.PI) / 180, x = 200 + 140 * Math.sin(r), y = 200 - 140 * Math.cos(r);
-            return <path class="r-arrow" d="M-5 -5 L3 0 L-5 5" transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${a})`} />;
-          })}
-          <g class="r-orbit"><circle class="r-dot" cx="200" cy="60" r="5" /></g>
-          <text class="r-c1" x="200" y="194" text-anchor="middle">closed loop</text>
-          <text class="r-c2" x="200" y="216" text-anchor="middle">read → stimulate</text>
-        </svg>
-        {pieces.map((p, i) => (
-          <button type="button" class={`node ${p.pos}`} data-piece={p.key} style={`--i:${i}`} aria-pressed="false">
-            <span class="n-name">{p.name}</span>
-            <span class="n-verb mono">{p.verb}</span>
-            <span class="n-count mono">{count(p.key)} {count(p.key) === 1 ? 'project' : 'projects'}</span>
-          </button>
-        ))}
-      </div>
-
-      <!-- 프로젝트 목록 -->
-      <ol class="plist">
-        {projects.map((x) => (
-          <li data-piece={x.piece}>
-            <button type="button" class="prow" data-open={x.id} aria-haspopup="dialog">
-              <span class="p-piece mono">{pieceName[x.piece]}</span>
-              <span class="p-title">{x.title}</span>
+    <ol class="plist">
+      {projects.map((x) => (
+        <li>
+          <button type="button" class="row" data-open={x.id} aria-haspopup="dialog">
+            <span class="p-meta mono"><span class="p-cap">{x.cap}</span><span class="p-stage">Stage {x.stage}</span></span>
+            <span class="p-main">
+              <span class="p-top"><span class="p-title">{x.title}</span><Status kind={x.status} text={x.statusText} /></span>
               <span class="p-line">{x.line}</span>
-              <span class="p-status mono">{x.status}</span>
-              <span class="p-go" aria-hidden="true">→</span>
-            </button>
+            </span>
+            <span class="p-open mono" aria-hidden="true">Method →</span>
+          </button>
+        </li>
+      ))}
+    </ol>
+
+    <div class="path" aria-label="Build path">
+      <p class="path-k mono">Build path</p>
+      <ol>
+        {buildPath.map((b) => (
+          <li>
+            <span class="b-top"><span class="b-tag mono">{b.tag}</span><Status kind={b.status} text={b.statusText} /></span>
+            <span class="b-name">{b.name}</span>
+            <span class="b-chain mono">{b.chain.join(' → ')}</span>
           </li>
         ))}
       </ol>
     </div>
-    <p class="hint mono">Select a project to see how it was done.</p>
   </div>
-
-  <!-- 상세 창 -->
-  {projects.map((x) => (
-    <dialog class="proj" id={`proj-${x.id}`} aria-labelledby={`proj-${x.id}-h`}>
-      <div class="d-top">
-        <div>
-          <p class="d-piece mono">{pieceName[x.piece]} · {x.status}</p>
-          <h3 id={`proj-${x.id}-h`}>{x.title}</h3>
-        </div>
-        <button type="button" class="d-close mono" data-close aria-label="Close">Close ✕</button>
-      </div>
-      <Pipeline kind={x.kind} label={x.label} />
-      <dl class="d-facts">
-        {x.facts.map(([k, v]) => <div><dt class="mono">{k}</dt><dd>{v}</dd></div>)}
-      </dl>
-      {x.href && <a class="d-more mono" href={x.href}>Full report →</a>}
-    </dialog>
-  ))}
+  <ProjectDialogs />
 </section>
 
 <style>
   .builds { --acc: #a8c8ff; background: #000; color: #fff; border-top: 1px solid #1f1f1f; }
-  .build-head { display: grid; grid-template-columns: 1.1fr .9fr; gap: 30px; align-items: end; margin-bottom: clamp(32px, 5vw, 56px); }
+  .build-head { display: grid; grid-template-columns: 1.1fr .9fr; gap: 30px; align-items: end; margin-bottom: clamp(28px, 4vw, 44px); }
   .kicker { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #8d8d8d; margin: 0 0 14px; }
   .build-head h2 { font-size: clamp(32px, 4.2vw, 56px); font-weight: 300; letter-spacing: -.035em; margin: 0; }
-  .build-head > p { color: #a9a9a9; font-size: 17px; max-width: 40ch; margin: 0; line-height: 1.65; }
+  .build-head > p { color: #a9a9a9; font-size: 17px; max-width: 44ch; margin: 0; line-height: 1.65; }
 
-  .ev { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(24px, 4vw, 64px); align-items: center; }
-
-  /* 고리 */
-  .ring { position: relative; width: 100%; max-width: 460px; aspect-ratio: 1; margin-inline: auto; }
-  .ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .r-track { fill: none; stroke: #333; stroke-width: 1; stroke-dasharray: 2 5; }
-  .r-arrow { fill: none; stroke: #6a6a6a; stroke-width: 1.2; }
-  .r-dot { fill: var(--acc); }
-  .r-orbit { transform-box: view-box; transform-origin: 200px 200px; animation: orbit 8s linear infinite; }
-  .r-c1 { fill: #fff; font: 18px var(--sans); }
-  .r-c2 { fill: #8a8a8a; font: 15px var(--mono); }
-  .node {
-    position: absolute; width: 33%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%;
-    display: grid; place-content: center; gap: 3px; text-align: center; padding: 6px;
-    background: #050505; border: 1px solid #3a3a3a; color: #fff; font: inherit; cursor: pointer;
-    transition: border-color .25s, background .25s; animation: node 8s infinite; animation-delay: calc(var(--i) * 2s);
-  }
-  .node.top { left: 50%; top: 15%; } .node.right { left: 85%; top: 50%; } .node.bottom { left: 50%; top: 85%; } .node.left { left: 15%; top: 50%; }
-  .node:hover, .node[aria-pressed='true'] { border-color: var(--acc); background: #0a0f17; }
-  .n-name { font-size: clamp(13.5px, 1.3vw, 16px); font-weight: 450; letter-spacing: -0.01em; }
-  .n-verb { color: var(--acc); }
-  .n-count { color: #7d7d7d; }
-  @keyframes orbit { to { transform: rotate(360deg); } }
-  @keyframes node { 0%, 10% { border-color: var(--acc); } 20%, 100% { border-color: #3a3a3a; } }
-
-  /* 목록 */
   .plist { list-style: none; margin: 0; padding: 0; border-top: 1px solid #262626; }
-  .plist li { border-bottom: 1px solid #1c1c1c; transition: opacity .25s; }
-  .plist.filtered li:not(.on) { opacity: .28; }
-  .prow {
-    width: 100%; display: grid; grid-template-columns: 128px minmax(0, 1fr) auto 18px; grid-template-rows: auto auto; gap: 4px 16px;
-    align-items: baseline; text-align: left; background: none; border: 0; color: inherit; font: inherit; padding: 18px 4px; cursor: pointer;
-  }
-  .prow:hover .p-title, .prow:focus-visible .p-title { color: var(--acc); }
-  .prow:hover .p-go { transform: translateX(4px); color: var(--acc); }
-  .p-piece { grid-row: span 2; color: #8d8d8d; letter-spacing: .1em; text-transform: uppercase; padding-top: 4px; }
-  .p-title { font-size: clamp(17px, 1.6vw, 20px); font-weight: 400; letter-spacing: -0.015em; transition: color .2s; }
-  .p-line { grid-column: 2; color: #9a9a9a; font-size: 14.5px; }
-  .p-status { grid-column: 3; grid-row: 1; color: #7d7d7d; letter-spacing: .06em; text-transform: uppercase; }
-  .p-go { grid-column: 4; grid-row: 1; color: #6a6a6a; transition: transform .2s, color .2s; }
-  .hint { margin: 18px 0 0; color: #5f5f5f; }
+  .row { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; grid-template-columns: 210px minmax(0, 1fr) auto; gap: 8px 24px; align-items: center; padding: 16px 0; border-bottom: 1px solid #1c1c1c; }
+  .row:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+  .p-meta { display: grid; gap: 4px; }
+  .p-cap { color: #e6e6e6; letter-spacing: .1em; text-transform: uppercase; }
+  .p-stage { color: #6a6a6a; }
+  .p-main { display: grid; gap: 4px; }
+  .p-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+  .p-title { font-size: clamp(17px, 1.6vw, 20px); font-weight: 400; letter-spacing: -0.015em; }
+  .p-line { color: #9a9a9a; font-size: 15px; line-height: 1.5; }
+  .p-open { color: #8d8d8d; letter-spacing: .08em; text-transform: uppercase; border: 1px solid #333; padding: 8px 12px; transition: color .2s, border-color .2s; }
+  .row:hover .p-open, .row:focus-visible .p-open { color: var(--acc); border-color: var(--acc); }
+  .row:hover .p-title { color: var(--acc); }
 
-  /* 상세 창 */
-  .proj { width: min(1120px, calc(100% - 32px)); max-height: calc(100% - 48px); padding: clamp(18px, 2.5vw, 30px); background: #050505; color: #fff; border: 1px solid #2c2c2c; }
-  .proj::backdrop { background: rgba(0, 0, 0, .72); backdrop-filter: blur(3px); }
-  .proj[open] { animation: d-in .28s ease-out; }
-  @keyframes d-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-  .d-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 18px; }
-  .d-piece { margin: 0 0 8px; color: var(--acc); letter-spacing: .1em; text-transform: uppercase; }
-  .proj h3 { margin: 0; font-size: clamp(22px, 2.4vw, 30px); font-weight: 350; letter-spacing: -0.02em; }
-  .d-close { background: none; border: 1px solid #333; color: #cfcfcf; padding: 8px 12px; cursor: pointer; letter-spacing: .08em; text-transform: uppercase; flex: none; }
-  .d-close:hover { border-color: #fff; color: #fff; }
-  .d-facts { margin: 18px 0 0; }
-  .d-facts div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-top: 1px solid #1c1c1c; }
-  .d-facts dt { color: #7d7d7d; letter-spacing: .1em; text-transform: uppercase; padding-top: 2px; }
-  .d-facts dd { margin: 0; color: #d6d6d6; font-size: 15px; line-height: 1.5; }
-  .d-more { display: inline-block; margin-top: 14px; color: var(--acc); text-decoration: none; letter-spacing: .06em; }
+  .path { margin-top: clamp(28px, 4vw, 44px); }
+  .path-k { margin: 0 0 12px; color: #6a6a6a; letter-spacing: .14em; text-transform: uppercase; }
+  .path ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
+  .path li { display: grid; gap: 8px; align-content: start; padding: 16px 18px; border: 1px solid #262626; position: relative; }
+  .path li + li { border-left: 0; }
+  .path li:not(:first-child) { border-style: dashed; border-color: #3a4a5e; }
+  .path li + li::before { content: '→'; position: absolute; left: -9px; top: 16px; color: #5a5a5a; background: #000; line-height: 1; }
+  .b-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+  .b-tag { color: #8d8d8d; letter-spacing: .12em; text-transform: uppercase; }
+  .b-name { font-size: 18px; letter-spacing: -0.01em; }
+  .b-chain { color: var(--acc); line-height: 1.6; }
 
   @media (max-width: 900px) {
-    .build-head, .ev { grid-template-columns: 1fr; }
-    .ring { max-width: 380px; }
-  }
-  @media (max-width: 560px) {
-    .prow { grid-template-columns: minmax(0, 1fr) 18px; gap: 4px 10px; }
-    .p-piece { grid-row: auto; grid-column: 1; color: var(--acc); padding: 0; }
-    .p-title, .p-line { grid-column: 1; }
-    .p-status { grid-column: 1; grid-row: auto; }
-    .p-go { grid-column: 2; grid-row: 1 / span 4; align-self: center; }
-    .d-facts div { grid-template-columns: 1fr; gap: 2px; }
-    .n-name { font-size: 12.5px; }
-    .node { padding: 4px; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .r-orbit, .node, .proj[open] { animation: none; }
+    .build-head { grid-template-columns: 1fr; }
+    .row { grid-template-columns: minmax(0, 1fr); }
+    .p-meta { grid-auto-flow: column; justify-content: start; gap: 12px; }
+    .p-open { justify-self: start; }
+    .path ol { grid-template-columns: 1fr; }
+    .path li + li { border-left: 1px dashed #3a4a5e; border-top: 0; }
+    .path li + li::before { content: '↓'; left: 18px; top: -9px; }
   }
 </style>
-
-<script>
-  const sec = document.getElementById('work');
-  if (sec) {
-    const list = sec.querySelector<HTMLElement>('.plist');
-    const nodes = [...sec.querySelectorAll<HTMLButtonElement>('.node')];
-    const rows = [...sec.querySelectorAll<HTMLLIElement>('.plist li')];
-
-    // 조각을 누르면 그 조각의 프로젝트만 또렷하게 (다시 누르면 해제)
-    let current = '';
-    const filter = (k: string) => {
-      current = current === k ? '' : k;
-      nodes.forEach((n) => n.setAttribute('aria-pressed', String(n.dataset.piece === current)));
-      rows.forEach((r) => r.classList.toggle('on', r.dataset.piece === current));
-      list?.classList.toggle('filtered', !!current);
-    };
-    nodes.forEach((n) => n.addEventListener('click', () => filter(n.dataset.piece || '')));
-
-    // 프로젝트를 누르면 상세 창
-    sec.querySelectorAll<HTMLButtonElement>('[data-open]').forEach((b) => {
-      b.addEventListener('click', () => {
-        const d = document.getElementById(`proj-${b.dataset.open}`) as HTMLDialogElement | null;
-        d?.showModal();
-      });
-    });
-    sec.querySelectorAll<HTMLDialogElement>('dialog.proj').forEach((d) => {
-      d.querySelector('[data-close]')?.addEventListener('click', () => d.close());
-      // 바깥(어두운 배경)을 누르면 닫기
-      d.addEventListener('click', (e) => {
-        const r = d.getBoundingClientRect();
-        if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) d.close();
-      });
-    });
-  }
-</script>

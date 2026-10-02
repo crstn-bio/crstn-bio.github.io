@@ -1,0 +1,191 @@
+---
+// 02 · 왜 중요한가: 두 임상 개척지 (숫자는 출처가 있는 값만)
+//   Parkinson’s: 2050년 2,520만 명 (2021년 1,190만 명의 두 배 이상) — BMJ 2025, GBD 2021 모델
+//   Dementia: 2021년 5,700만 명, 알츠하이머가 60–70% — WHO 치매 팩트시트
+// 알츠하이머는 사람에게서 확립된 사실처럼 쓰지 않고 질문으로 둬요.
+// 끝에 실제 해부 데이터 뇌 위의 세 표적 (지금 M1 · 파킨슨 STN · 알츠하이머 해마).
+import Anatomy from './Design.astro';
+let seed = 7;
+const rnd = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+// 기억 표상: 대부분 흐려지지만 일부(파란 점)는 남아 있을 수 있다는 질문을 그림으로
+const dots = Array.from({ length: 60 }, (_, i) => ({ x: 14 + (i % 15) * 19, y: 14 + Math.floor(i / 15) * 19, e: [7, 19, 22, 36, 41, 53].includes(i), d: (rnd() * 3).toFixed(2) }));
+// 2021 → 2050: 1,190만 → 2,520만
+const px = (yr: number) => 8 + ((yr - 2021) / 29) * 284;
+const py = (m: number) => 72 - ((m - 10) / 16) * 64;
+// 같은 자극에 대한 여러 사람의 반응 (모양만 보여주는 도식)
+const resp = (A: number, L: number, wd: number) => 'M' + Array.from({ length: 106 }, (_, i) => {
+  const x = 70 + i * 4, u = (x - 90 - L) / wd;
+  return `${x} ${(118 - (u > 0 ? A * u * Math.exp(1 - u) : 0)).toFixed(1)}`;
+}).join(' L');
+const people = [[78, 10, 40], [52, 30, 55], [30, 0, 35], [64, 60, 70], [18, 20, 50], [44, 45, 45]];
+const meanA = people.reduce((s, p) => s + p[0], 0) / people.length;
+// 두 출처 값(2021, 2050)만 이어요. 중간 모양을 지어내지 않도록 직선.
+const curve = `M${px(2021).toFixed(1)} ${py(11.9).toFixed(1)} L${px(2050).toFixed(1)} ${py(25.2).toFixed(1)}`;
+---
+<section class="why-sec" id="why" aria-labelledby="why-h">
+  <div class="wrap">
+    <div class="head">
+      <div><p class="kicker mono">02 / Why it matters</p><h2 id="why-h">Two clinical frontiers.</h2></div>
+      <p>Parkinson’s is the nearer-term test of control. Alzheimer’s is the longer-term test of memory.</p>
+    </div>
+
+    <div class="avg">
+      <div class="avg-t">
+        <p class="kicker2 mono">The problem</p>
+        <p class="big">The same stimulation can produce different responses in different people.</p>
+        <p class="mech mono">one setting → many brains → a population average can hide the individual</p>
+      </div>
+      <figure class="avg-f">
+        <svg viewBox="0 0 520 140" aria-hidden="true">
+          <path class="ax" d="M20 118 H510" />
+          <rect class="stim" x="26" y="70" width="8" height="48" />
+          {people.map(([A, L, wd], i) => <path class="ind" style={`--d:${(i * 0.25).toFixed(2)}s`} pathLength="1" d={resp(A, L, wd)} />)}
+          <path class="mean" d={resp(meanA, 28, 50)} />
+        </svg>
+        <figcaption class="mono"><span class="k1">▮ same stimulation</span><span class="k2">— individual responses</span><span class="k3">- - population mean</span><span class="k4">schematic</span></figcaption>
+      </figure>
+    </div>
+
+    <div class="cases">
+      <article class="case">
+        <div class="c-top mono"><span class="c-axis">Control</span><span>Nearer-term · testbed</span></div>
+        <h3>Parkinson’s disease</h3>
+        <p class="c-num"><span data-count="25.2" data-dec="1">25.2</span>M</p>
+        <p class="c-sub">people by 2050, more than double 2021</p>
+        <svg class="c-viz" viewBox="0 0 300 80" aria-hidden="true">
+          <path class="ax" d="M8 78 H292" />
+          <path class="ln draw" pathLength="1" d={curve} />
+          <circle class="pt" cx={px(2021)} cy={py(11.9)} r="3.5" />
+          <circle class="pt acc pulse" cx={px(2050)} cy={py(25.2)} r="4" />
+        </svg>
+        <div class="c-ax mono"><span>2021 · 11.9M</span><span>2050 · 25.2M</span></div>
+        <dl class="c-dl">
+          <div><dt class="mono">State</dt><dd>Pathological motor states</dd></div>
+          <div><dt class="mono">Today</dt><dd>Most deep brain stimulation runs at fixed settings, tuned by hand.</dd></div>
+          <div><dt class="mono">Aim</dt><dd class="t">Adaptive neuromodulation, learned per patient</dd></div>
+        </dl>
+      </article>
+
+      <article class="case">
+        <div class="c-top mono"><span class="c-axis">Memory</span><span>Long-term · frontier</span></div>
+        <h3>Alzheimer’s disease</h3>
+        <p class="c-num"><span data-count="57" data-dec="0">57</span>M</p>
+        <p class="c-sub">people living with dementia in 2021, 60–70% of it Alzheimer’s</p>
+        <svg class="c-viz" viewBox="0 0 300 80" aria-hidden="true">
+          {dots.map((d) => <circle class={d.e ? 'eng' : 'mem'} cx={d.x} cy={d.y} r={d.e ? 4 : 3.2} style={`--d:${d.d}s`} />)}
+        </svg>
+        <ol class="chain mono" aria-label="Memory: encode, store, consolidate, retrieve">
+          <li>Encode</li><li>Store</li><li>Consolidate</li><li class="fail">Retrieve</li>
+        </ol>
+        <dl class="c-dl">
+          <div><dt class="mono">State</dt><dd>Memory accessibility</dd></div>
+          <div><dt class="mono">Today</dt><dd>Current drugs ease symptoms or modestly slow early decline. None restores lost memory.</dd></div>
+          <div><dt class="mono">Question</dt><dd class="t">Can a memory stay detectable when natural retrieval fails?</dd></div>
+        </dl>
+      </article>
+    </div>
+
+    <p class="src mono">
+      <a href="https://bmjgroup.com/cases-of-parkinsons-disease-set-to-reach-25-million-worldwide-by-2050/" target="_blank" rel="noreferrer">BMJ 2025 · GBD 2021 projections ↗</a>
+      <a href="https://www.who.int/news-room/fact-sheets/detail/dementia" target="_blank" rel="noreferrer">WHO · dementia fact sheet ↗</a>
+    </p>
+
+    <div class="targets"><Anatomy title="Three targets on one brain" /></div>
+  </div>
+</section>
+
+<style>
+  .targets { margin-top: clamp(48px, 7vw, 88px); }
+  .why-sec { --acc: #a8c8ff; background: #000; color: #fff; border-top: 1px solid var(--rule); padding-block: clamp(80px, 11vw, 140px); }
+  .head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px var(--gutter); align-items: end; }
+  .kicker { color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 14px; }
+  .head h2 { margin: 0; font-size: clamp(32px, 4.2vw, 56px); font-weight: 300; letter-spacing: -0.035em; line-height: 1.05; }
+  .head > p { margin: 0; color: #a9a9a9; font-size: 17px; line-height: 1.65; max-width: 40ch; }
+
+  .cases { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: clamp(36px, 5vw, 56px); border-top: 1px solid #262626; border-left: 1px solid #262626; }
+  .case { padding: clamp(20px, 2.6vw, 32px); border-right: 1px solid #262626; border-bottom: 1px solid #262626; display: flex; flex-direction: column; background-image: linear-gradient(#0c0c0c 1px, transparent 1px), linear-gradient(90deg, #0c0c0c 1px, transparent 1px); background-size: 24px 24px; }
+  .c-top { display: flex; justify-content: space-between; gap: 12px; color: #7d7d7d; letter-spacing: 0.12em; text-transform: uppercase; }
+  .c-axis { color: var(--acc); }
+  .case h3 { margin: 18px 0 0; font-size: clamp(20px, 1.9vw, 24px); font-weight: 400; letter-spacing: -0.015em; }
+  .c-num { margin: 10px 0 0; color: #fff; font-size: clamp(60px, 7.4vw, 104px); font-weight: 250; letter-spacing: -0.05em; line-height: 0.95; font-variant-numeric: tabular-nums; }
+  .c-sub { margin: 10px 0 0; color: #a9a9a9; font-size: 15.5px; }
+  .c-viz { display: block; width: 100%; height: auto; margin: 24px 0 8px; overflow: visible; }
+  .c-viz .ax { fill: none; stroke: #333; }
+  .c-viz .ln { fill: none; stroke: #e6e6e6; stroke-width: 1.5; }
+  .c-viz .pt { fill: #e6e6e6; }
+  .c-viz .pt.acc { fill: var(--acc); }
+  .c-viz .mem { fill: #8a8a8a; }
+  .c-viz .eng { fill: var(--acc); }
+  .c-ax { display: flex; justify-content: space-between; color: #8a8a8a; }
+  .chain { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 0; color: #bdbdbd; letter-spacing: 0.08em; text-transform: uppercase; }
+  .chain li { display: flex; align-items: center; }
+  .chain li:not(:last-child)::after { content: ''; width: clamp(12px, 2vw, 26px); height: 1px; background: #444; margin: 0 8px; }
+  .chain li:nth-child(3)::after { background: repeating-linear-gradient(90deg, #a8c8ff 0 3px, transparent 3px 6px); }
+  .chain .fail { color: var(--acc); }
+  .chain .fail::after { content: '?'; margin-left: 6px; color: var(--acc); }
+  .c-dl { margin: auto 0 0; padding-top: 20px; }
+  .c-dl div { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 12px; padding: 11px 0; border-top: 1px solid #1f1f1f; }
+  .c-dl dt { color: #7d7d7d; letter-spacing: 0.1em; text-transform: uppercase; padding-top: 3px; }
+  .c-dl dd { margin: 0; color: #d6d6d6; font-size: 15.5px; line-height: 1.45; }
+  .c-dl dd.t { color: #fff; }
+  .c-dl dd.t::before { content: '→ '; color: var(--acc); }
+  .avg { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 20px clamp(24px, 4vw, 56px); align-items: center; margin-top: clamp(36px, 5vw, 56px); padding: clamp(18px, 2.4vw, 28px); border: 1px solid #262626; }
+  .kicker2 { margin: 0; color: var(--acc); letter-spacing: 0.14em; text-transform: uppercase; }
+  .big { margin: 10px 0 0; font-size: clamp(20px, 2.1vw, 28px); font-weight: 350; letter-spacing: -0.02em; line-height: 1.25; color: #fff; }
+  .mech { margin: 12px 0 0; color: #8a8a8a; }
+  .avg-f { margin: 0; }
+  .avg-f svg { display: block; width: 100%; height: auto; }
+  .avg-f .ax { stroke: #333; }
+  .avg-f .stim { fill: var(--acc); }
+  .avg-f .ind { fill: none; stroke: #d6d6d6; stroke-width: 1.3; opacity: .8; }
+  .avg-f .mean { fill: none; stroke: var(--acc); stroke-width: 2; stroke-dasharray: 6 5; }
+  .avg-f figcaption { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 8px; color: #8a8a8a; }
+  .avg-f .k1, .avg-f .k3 { color: var(--acc); }
+  .avg-f .k4 { color: #5a5a5a; }
+  .src { display: flex; flex-wrap: wrap; gap: 6px 24px; margin: 10px 0 0; }
+  .src a { color: #6a6a6a; text-decoration: none; }
+  .src a:hover { color: #fff; }
+
+  /* 움직임: 곡선이 그려지고, 기억 점들은 흐려지지만 일부는 남음 */
+  .run .draw { stroke-dasharray: 1; animation: w-draw 2.4s ease-out both; }
+  .run .pulse { transform-box: fill-box; transform-origin: center; animation: w-pulse 1.8s ease-out infinite 2.2s; }
+  .run .mem { animation: w-fade 6s ease-in-out infinite; animation-delay: var(--d); }
+  .run .eng { animation: w-eng 3s ease-in-out infinite; }
+  @keyframes w-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+  @keyframes w-pulse { 0% { transform: scale(1); opacity: 1; } 60%, 100% { transform: scale(2.2); opacity: .2; } }
+  @keyframes w-fade { 0%, 15% { opacity: 1; } 50%, 70% { opacity: .1; } 100% { opacity: 1; } }
+  @keyframes w-eng { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+
+  .run2 .ind { stroke-dasharray: 1; animation: w-draw 1.6s ease-out both; animation-delay: var(--d); }
+  @media (max-width: 760px) {
+    .head, .cases, .avg { grid-template-columns: 1fr; }
+    .c-dl div { grid-template-columns: 1fr; gap: 4px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .run .draw, .run .pulse, .run .mem, .run .eng, .run2 .ind { animation: none; }
+  }
+</style>
+
+<script>
+  // 화면에 들어오면: 숫자가 0부터 올라가고 그림이 움직이기 시작
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll<HTMLElement>('.why-sec .avg').forEach((el) => {
+    new IntersectionObserver(([e]) => { if (e.isIntersecting) el.classList.add('run2'); }, { threshold: 0.3 }).observe(el);
+  });
+  document.querySelectorAll<HTMLElement>('.why-sec .case').forEach((card) => {
+    const num = card.querySelector<HTMLElement>('[data-count]');
+    let done = false;
+    new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting || done) return;
+      done = true; card.classList.add('run');
+      if (!num || reduce) return;
+      const to = Number(num.dataset.count), dec = Number(num.dataset.dec || 0), t0 = performance.now();
+      const tick = (now: number) => {
+        const u = Math.min(1, (now - t0) / 1400), v = to * (1 - (1 - u) ** 3);
+        num.textContent = v.toFixed(dec);
+        if (u < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, { threshold: 0.35 }).observe(card);
+  });
+</script>

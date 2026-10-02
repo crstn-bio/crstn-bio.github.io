@@ -1,0 +1,198 @@
+---
+// 하이라이트 장면: 인출이 실패했을 때, 정확히 무엇이 실패했나?
+// 인출 실패 → 신경 관측 → 개인 모델 → (A 없음? · B 손상? · C 접근 불가?) → E 후보 개입 → 예측된 상태 변화 → 개입 → 인출?
+// 연구 틀(framework)이지 지금 존재하는 시스템이 아니에요.
+const P = [[0, 0], [14, 10], [30, -6], [42, 12], [58, 2], [72, -10], [84, 8]];
+const pat = (x0: number, y0: number, s = 1) => P.map(([x, y]) => [x0 + x * s, y0 + y * s]);
+const raster = (x0: number, y0: number, w: number, rows: number, gap: number) => {
+  let seed = 5;
+  const rnd = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+  const out: string[] = [];
+  for (let r = 0; r < rows; r++) for (let x = x0 + rnd() * 10; x < x0 + w; x += 8 + rnd() * 26) out.push(`M${x.toFixed(1)} ${y0 + r * gap} v${gap - 3}`);
+  return out.join(' ');
+};
+---
+<figure class="rf" aria-label="Research framework: when retrieval fails, neural observations update an individual model, which asks whether the representation is absent, degraded or inaccessible. If it may be inaccessible, the model ranks candidate perturbations by their predicted state changes, an intervention is delivered, and retrieval is tested again. This is a framework, not an existing system.">
+  <!-- 가로 -->
+  <svg class="h" viewBox="0 0 1000 490" aria-hidden="true">
+    <defs>
+      <marker id="rf-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9" fill="none" stroke="#8a8a8a" stroke-width="1.4" /></marker>
+      <path id="rf-p" d="M160 80 H830 V160 H840 V325 H160 V405 H860" />
+    </defs>
+
+    <!-- 1행 -->
+    <rect class="box" x="20" y="24" width="280" height="112" />
+    <text class="lbl" x="34" y="48">RETRIEVAL FAILS</text>
+    {pat(40, 96).map(([x, y]) => <circle class="rep dim" cx={x} cy={y} r="4" />)}
+    <path class="brk" d="M196 96 H140" /><text class="qm" x="168" y="88" text-anchor="middle">?</text>
+    <path class="cue" d="M282 96 H210" /><path class="cuef" d="M212 90 L202 96 L212 102 Z" />
+    <text class="sub" x="282" y="126" text-anchor="end">cue</text>
+    <path class="ln" d="M300 80 H344" marker-end="url(#rf-a)" />
+
+    <rect class="box" x="350" y="24" width="280" height="112" />
+    <text class="lbl" x="364" y="48">NEURAL OBSERVATIONS</text>
+    <path class="tk" d={raster(366, 62, 248, 8, 8.5)} />
+    <path class="ln" d="M630 80 H674" marker-end="url(#rf-a)" />
+
+    <rect class="box model" x="680" y="24" width="300" height="112" />
+    <text class="lbl" x="694" y="48">INDIVIDUAL MODEL</text>
+    <text class="z" x="964" y="52" text-anchor="end">z(t)</text>
+    <path class="trj" d="M708 112 C760 70 820 120 870 84 S940 72 960 100" />
+
+    <!-- 가설 -->
+    <path class="ln" d="M830 136 V160 M160 160 H840 M160 160 V184 M500 160 V184 M840 160 V184" />
+    <text class="dq" x="500" y="152" text-anchor="middle">D · can measurements tell these apart?</text>
+
+    <rect class="box hyp hA" x="30" y="190" width="260" height="110" />
+    <text class="lbl" x="44" y="214">A · ABSENT?</text><text class="sub" x="44" y="290">never adequately encoded</text>
+    {pat(110, 252).map(([x, y]) => <circle class="ghost" cx={x} cy={y} r="4" />)}
+
+    <rect class="box hyp hB" x="370" y="190" width="260" height="110" />
+    <text class="lbl" x="384" y="214">B · DEGRADED?</text><text class="sub" x="384" y="290">encoded, then lost</text>
+    {pat(450, 252).map(([x, y], i) => <circle class={i % 3 === 1 ? 'ghost' : 'rep dim'} cx={x} cy={y} r="4" />)}
+
+    <rect class="box hyp hC" x="710" y="190" width="260" height="110" />
+    <text class="lbl a" x="724" y="214">C · INACCESSIBLE?</text><text class="sub" x="724" y="290">present, not retrievable</text>
+    {pat(790, 252).map(([x, y]) => <circle class="rep" cx={x} cy={y} r="4" />)}
+    <path class="wall" d="M770 228 V276" />
+
+    <!-- 3행 -->
+    <path class="ln" d="M840 300 V325 H160 V344" marker-end="url(#rf-a)" />
+    <rect class="box" x="30" y="350" width="260" height="110" />
+    <text class="lbl" x="44" y="374">E · CANDIDATE PERTURBATIONS</text>
+    {[0, 1, 2].map((r) => <><text class="sub" x="44" y={402 + r * 20}>{`u${'₁₂₃'[r]}`}</text><path class="pul" d={Array.from({ length: 9 }, (_, j) => `M${84 + j * (12 + r * 4)} ${404 + r * 20} v-10`).join(' ')} /></>)}
+    <path class="ln" d="M290 405 H364" marker-end="url(#rf-a)" />
+
+    <rect class="box" x="370" y="350" width="260" height="110" />
+    <text class="lbl" x="384" y="374">PREDICTED STATE CHANGES</text>
+    <circle class="tgt" cx="590" cy="400" r="16" />
+    <path class="pr" d="M400 436 C440 430 470 444 520 446" /><path class="pr" d="M400 436 C440 420 480 420 540 420" />
+    <path class="pr best" pathLength="1" d="M400 436 C450 410 520 396 584 400" />
+    <circle class="now" cx="400" cy="436" r="4.5" />
+    <path class="ln" d="M630 405 H704" marker-end="url(#rf-a)" />
+
+    <rect class="box model" x="710" y="350" width="260" height="110" />
+    <text class="lbl" x="724" y="374">INTERVENE → RETRIEVAL?</text>
+    {pat(740, 420).map(([x, y]) => <circle class="rep" cx={x} cy={y} r="4" />)}
+    <path class="cue" d="M950 420 H850" /><path class="cuef" d="M852 414 L842 420 L852 426 Z" />
+    <text class="qm big" x="900" y="408" text-anchor="middle">?</text>
+
+    <circle class="mv" r="4.5"><animateMotion dur="9s" repeatCount="indefinite"><mpath href="#rf-p" /></animateMotion></circle>
+  </svg>
+
+  <!-- 세로 (좁은 화면) -->
+  <svg class="v" viewBox="0 0 400 1200" aria-hidden="true">
+    <defs>
+      <marker id="rf-av" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9" fill="none" stroke="#8a8a8a" stroke-width="1.4" /></marker>
+    </defs>
+    <rect class="box" x="20" y="10" width="360" height="100" />
+    <text class="lbl" x="34" y="36">RETRIEVAL FAILS</text>
+    {pat(40, 78).map(([x, y]) => <circle class="rep dim" cx={x} cy={y} r="4" />)}
+    <path class="brk" d="M240 78 H140" /><text class="qm" x="190" y="70" text-anchor="middle">?</text>
+    <path class="cue" d="M360 78 H254" /><path class="cuef" d="M256 72 L246 78 L256 84 Z" />
+    <path class="ln" d="M200 110 V134" marker-end="url(#rf-av)" />
+
+    <rect class="box" x="20" y="140" width="360" height="100" />
+    <text class="lbl" x="34" y="166">NEURAL OBSERVATIONS</text>
+    <path class="tk" d={raster(34, 178, 330, 6, 8.5)} />
+    <path class="ln" d="M200 240 V264" marker-end="url(#rf-av)" />
+
+    <rect class="box model" x="20" y="270" width="360" height="100" />
+    <text class="lbl" x="34" y="296">INDIVIDUAL MODEL</text><text class="z" x="364" y="300" text-anchor="end">z(t)</text>
+    <path class="trj" d="M40 352 C100 312 170 360 230 326 S330 316 360 344" />
+    <path class="ln" d="M200 370 V396" />
+    <text class="dq" x="200" y="414" text-anchor="middle">D · can measurements</text>
+    <text class="dq" x="200" y="434" text-anchor="middle">tell these apart?</text>
+    <path class="ln" d="M200 442 V456" marker-end="url(#rf-av)" />
+
+    <rect class="box hyp hA" x="20" y="462" width="360" height="84" />
+    <text class="lbl" x="34" y="488">A · ABSENT?</text><text class="sub" x="34" y="532">never adequately encoded</text>
+    {pat(262, 506).map(([x, y]) => <circle class="ghost" cx={x} cy={y} r="4" />)}
+    <rect class="box hyp hB" x="20" y="556" width="360" height="84" />
+    <text class="lbl" x="34" y="582">B · DEGRADED?</text><text class="sub" x="34" y="626">encoded, then lost</text>
+    {pat(262, 600).map(([x, y], i) => <circle class={i % 3 === 1 ? 'ghost' : 'rep dim'} cx={x} cy={y} r="4" />)}
+    <rect class="box hyp hC" x="20" y="650" width="360" height="84" />
+    <text class="lbl a" x="34" y="676">C · INACCESSIBLE?</text><text class="sub" x="34" y="720">present, not retrievable</text>
+    {pat(262, 694).map(([x, y]) => <circle class="rep" cx={x} cy={y} r="4" />)}
+    <path class="wall" d="M250 670 V704" />
+    <path class="ln" d="M200 734 V764" marker-end="url(#rf-av)" />
+
+    <rect class="box" x="20" y="770" width="360" height="110" />
+    <text class="lbl" x="34" y="796">E · CANDIDATE PERTURBATIONS</text>
+    {[0, 1, 2].map((r) => <><text class="sub" x="34" y={826 + r * 20}>{`u${'₁₂₃'[r]}`}</text><path class="pul" d={Array.from({ length: 12 }, (_, j) => `M${76 + j * (14 + r * 5)} ${828 + r * 20} v-10`).join(' ')} /></>)}
+    <path class="ln" d="M200 880 V904" marker-end="url(#rf-av)" />
+
+    <rect class="box" x="20" y="910" width="360" height="110" />
+    <text class="lbl" x="34" y="936">PREDICTED STATE CHANGES</text>
+    <circle class="tgt" cx="330" cy="972" r="18" />
+    <path class="pr" d="M50 1004 C110 998 160 1010 230 1012" /><path class="pr" d="M50 1004 C110 986 170 986 250 984" />
+    <path class="pr best" pathLength="1" d="M50 1004 C120 978 240 966 324 972" />
+    <circle class="now" cx="50" cy="1004" r="4.5" />
+    <path class="ln" d="M200 1020 V1044" marker-end="url(#rf-av)" />
+
+    <rect class="box model" x="20" y="1050" width="360" height="110" />
+    <text class="lbl" x="34" y="1076">INTERVENE → RETRIEVAL?</text>
+    {pat(40, 1122).map(([x, y]) => <circle class="rep" cx={x} cy={y} r="4" />)}
+    <path class="cue" d="M360 1122 H150" /><path class="cuef" d="M152 1116 L142 1122 L152 1128 Z" />
+    <text class="qm big" x="250" y="1112" text-anchor="middle">?</text>
+  </svg>
+  <figcaption class="mono">A research framework, not an existing system. Letters A–E are open questions.</figcaption>
+</figure>
+
+<style>
+  .rf { --acc: #a8c8ff; margin: 0; border: 1px solid #1f1f1f; background-color: #030303; background-image: linear-gradient(#0d0d0d 1px, transparent 1px), linear-gradient(90deg, #0d0d0d 1px, transparent 1px); background-size: 20px 20px; padding: clamp(12px, 2vw, 24px); }
+  .rf svg { display: block; width: 100%; height: auto; }
+  .rf .v { display: none; }
+  .rf figcaption { margin: 10px 0 0; color: #6a6a6a; }
+  .box { fill: #050505; stroke: #5a5a5a; stroke-width: 1.1; }
+  .box.model { stroke: var(--acc); fill: #060a10; }
+  .lbl { fill: #fff; font: 500 14px var(--mono); letter-spacing: 0.08em; }
+  .lbl.a { fill: var(--acc); }
+  .sub { fill: #8a8a8a; font: 13px var(--mono); }
+  .dq { fill: var(--acc); font: 14px var(--mono); }
+  .z { fill: var(--acc); font: 22px var(--mono); }
+  .ln { fill: none; stroke: #8a8a8a; stroke-width: 1.2; }
+  .rep { fill: var(--acc); } .rep.dim { opacity: .35; }
+  .ghost { fill: none; stroke: #6a6a6a; stroke-dasharray: 2 2; }
+  .brk { stroke: #8a8a8a; stroke-width: 1.4; stroke-dasharray: 4 5; }
+  .cue { stroke: var(--acc); stroke-width: 1.6; } .cuef { fill: var(--acc); }
+  .qm { fill: var(--acc); font: 22px var(--mono); } .qm.big { font-size: 28px; }
+  .tk { stroke: #bdbdbd; stroke-width: 1.2; }
+  .trj { fill: none; stroke: rgba(168, 200, 255, .55); stroke-width: 1.3; }
+  .wall { stroke: #e6e6e6; stroke-width: 2; stroke-dasharray: 4 3; }
+  .pul { stroke: var(--acc); stroke-width: 1.4; }
+  .tgt { fill: rgba(168, 200, 255, .07); stroke: #6a6a6a; stroke-dasharray: 3 3; }
+  .pr { fill: none; stroke: #6a6a6a; stroke-width: 1.3; stroke-dasharray: 4 4; }
+  .pr.best { stroke: var(--acc); stroke-dasharray: none; stroke-width: 2; }
+  .now { fill: #fff; }
+  .mv { fill: var(--acc); }
+
+  /* 가설 상자가 차례로 밝아지고(A→B→C), 가장 좋은 예측이 그려지고, 마지막 물음표가 깜빡임 */
+  .run .hyp { animation: rf-hyp 9s infinite; }
+  .run .hA { animation-delay: 2.4s; } .run .hB { animation-delay: 3s; } .run .hC { animation-delay: 3.6s; }
+  .run .best { stroke-dasharray: 1; animation: rf-draw 9s infinite; }
+  .run .qm.big { animation: rf-q 1.6s ease-in-out infinite; }
+  @keyframes rf-hyp { 0%, 4% { stroke: #a8c8ff; } 10%, 100% { stroke: #5a5a5a; } }
+  @keyframes rf-draw { 0%, 62% { stroke-dashoffset: 1; } 78%, 100% { stroke-dashoffset: 0; } }
+  @keyframes rf-q { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+  @media (max-width: 760px) {
+    .rf .h { display: none; }
+    .rf .v { display: block; }
+    .rf .v .sub { font-size: 15px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .run .hyp, .run .best, .run .qm.big { animation: none; }
+    .rf .mv { display: none; }
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.rf').forEach((el) => {
+    const svgs = [...el.querySelectorAll<SVGSVGElement>('svg')];
+    new IntersectionObserver(([e]) => {
+      el.classList.toggle('run', e.isIntersecting);
+      svgs.forEach((s) => (e.isIntersecting ? s.unpauseAnimations() : s.pauseAnimations()));
+    }, { threshold: 0.15 }).observe(el);
+  });
+</script>

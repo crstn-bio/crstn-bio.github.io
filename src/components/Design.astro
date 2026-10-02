@@ -1,178 +1,99 @@
 ---
-// 02 · 접근법: 궁극적 질문으로 가는 세 단계 + 목표
-// 탭을 누르면 실제 해부 데이터로 그린 뇌가 표적 쪽으로 돌아가고 (src/scripts/hcpBrain.ts),
-// 오른쪽에 한 문장 + 짧은 세 단계, 아래에 움직이는 방법 도식(Pipeline)이 바뀌어요.
-// 뇌 모델은 HCP S1200 집단 평균 해부 데이터(MNI152)예요. 특정 환자의 데이터는 아니고, STN은 문헌상 대략적 위치예요.
-import Pipeline from './Pipeline.astro';
-import Hardware from './Hardware.astro';
+// INTERFACE · 해부학: 인터페이스가 실제 해부 구조와 만나는 곳 세 군데.
+// 실제 집단 평균 해부 데이터로 그린 뇌(HCP S1200, MNI152; src/scripts/hcpBrain.ts)에서
+// 탭을 누르면 해당 표적으로 돌아가요. 특정 환자의 데이터는 아니고, STN은 문헌상 대략적 위치예요.
+import Status, { type StatusKind } from './Status.astro';
+interface Props { title?: string }
+const { title = 'Where interfaces meet anatomy' } = Astro.props;
 
-const targets = [
+const targets: { key: string; when: string; name: string; target: string; status: StatusKind; statusText?: string; title: string; line: string; spec: [string, string][] }[] = [
   {
-    key: 'thesis', when: 'Now', name: 'Motor cortex', target: 'M1 · a-tbTUS + FES', pipe: 'tus' as const,
-    kicker: 'Now · honours thesis, Krembil Brain Institute',
+    key: 'thesis', when: 'Now · current work', name: 'Motor cortex', target: 'M1 · focused ultrasound', status: 'current',
     title: 'Primary motor cortex',
-    why: 'Prove a human circuit can be changed without surgery, and measured.',
-    how: [
-      ['Focused ultrasound bursts to M1', 'a-tbTUS · 5 Hz'],
-      ['Stimulate the matching muscle', 'FES · same session'],
-      ['Measure the change in motor output', 'pre vs post'],
-    ],
-    note: '',
-    pipeLabel: 'Thesis approach: focused ultrasound in theta bursts to primary motor cortex, functional electrical stimulation of the matching muscle in the same session, and the motor response measured before and after.',
+    line: 'Where my current work intervenes: focused ultrasound delivered from the scalp.',
+    spec: [['Modality', 'a-tbTUS, paired with FES'], ['Depth', 'cortical surface, about 1–2 cm under the scalp']],
   },
   {
-    key: 'pd', when: 'Next', name: 'Parkinson’s', target: 'STN · β bursts', pipe: 'aidbs' as const,
-    kicker: 'Next · the first clinical target',
-    title: 'Subthalamic nucleus, β bursts',
-    why: 'Most DBS runs at fixed settings, tuned by hand, one patient at a time.',
-    how: [
-      ['Pretrain on many patients’ recordings', 'deep learning · LFP'],
-      ['Adapt to one patient, fast', 'few-shot · personal model'],
-      ['Close the loop on the implant chip', 'β in → 130 Hz out'],
-    ],
-    note: '',
-    pipeLabel: 'DBS approach: pretrain a deep model on local field potentials from many patients, adapt it to one patient from little data, run it on the implanted chip, and deliver 130 Hz stimulation only while beta is high.',
+    key: 'pd', when: 'Parkinson’s · control', name: 'Deep nucleus', target: 'STN · DBS lead', status: 'question', statusText: 'Translational testbed',
+    title: 'Subthalamic nucleus',
+    line: 'A clinical DBS lead can both record local field potentials and stimulate: the testbed for adaptive control.',
+    spec: [['Device', 'lead Ø 1.27 mm, 4 contacts, drawn to scale'], ['Signal', 'β bursts, 13–30 Hz']],
   },
   {
-    key: 'ad', when: 'Later', name: 'Alzheimer’s', target: 'Hippocampal engram cells', pipe: 'engram' as const,
-    kicker: 'Later · from circuits to single memories',
-    title: 'Hippocampal engram cells',
-    why: 'In mouse models of early Alzheimer’s, memories are still stored but cannot be recalled.',
-    how: [
-      ['Robot-place a long probe in the hippocampus', 'Neuropixels 1.0 NHP Long'],
-      ['Decode the cells behind one memory', 'engram, not just CA1 or CA3'],
-      ['Replay it, then reactivate those cells', 'visualize · replay · write'],
-    ],
-    note: 'Reactivating engram cells restored recall in those mice. In humans this is a speculative direction.',
-    pipeLabel: 'Memory approach: a robot places a long high-density probe in the hippocampus, the cell ensemble active for one memory is decoded, the same cells are shown reactivating at recall, and stimulation targets that ensemble rather than the whole region.',
-  },
-  {
-    key: 'goal', when: 'Goal', name: 'Whole brain', target: 'Predict before symptoms', pipe: 'goal' as const,
-    kicker: 'The goal · where the three steps lead',
-    title: 'One person’s whole brain',
-    why: 'Disease starts years before symptoms. Treatment starts after.',
-    how: [
-      ['Measure across scales', 'cortex · circuit · cell'],
-      ['Learn that person’s brain dynamics', 'a model that keeps updating'],
-      ['Forecast change, then intervene early', 'lead time before symptoms'],
-    ],
-    note: '',
-    pipeLabel: 'Goal: combine motor cortex, deep-nucleus and hippocampal signals into one person-specific model of brain dynamics that forecasts pathological change, giving lead time before symptoms appear.',
+    key: 'ad', when: 'Alzheimer’s · memory', name: 'Hippocampus', target: 'long-axis probe', status: 'frontier',
+    title: 'Hippocampus',
+    line: 'A long high-density probe could sample many cells along the hippocampal axis. A long-term concept, not current work.',
+    spec: [['Probe', 'Neuropixels 1.0 NHP Long · 45 mm · 384 of 4,416 sites'], ['Role', 'discovery, not a chronic implant']],
   },
 ];
 ---
-<section class="design" id="design" aria-labelledby="design-h">
-  <div class="wrap">
-    <div class="d-head">
-      <div>
-        <p class="kicker mono">02 / How</p>
-        <h2 id="design-h">Three targets. One tool.</h2>
-      </div>
-      <p>Start where the signal is clearest, then go deeper: cortex, deep nucleus, single memories.</p>
+<div class="design" id="anatomy">
+  <div class="a-head">
+    <h3>{title}</h3>
+    <p class="mono">Group-average anatomy · HCP S1200 · MNI152 · drag to rotate</p>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Interface site">
+    {targets.map((t, i) => (
+      <button type="button" role="tab" id={`tab-${t.key}`} aria-controls={`panel-${t.key}`} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} data-target={t.key}>
+        <span class="t-when mono">{t.when}</span>
+        <span class="t-name">{t.name}</span>
+        <span class="t-target mono">{t.target}</span>
+      </button>
+    ))}
+  </div>
+
+  <div class="stage">
+    <div class="viewport">
+      <canvas id="design-brain" aria-hidden="true"></canvas>
+      <canvas id="design-overlay" aria-hidden="true"></canvas>
+      <dl class="hud mono" aria-hidden="true">
+        <div><dt>View</dt><dd data-hud="view">left anterolateral</dd></div>
+        <div><dt>Target</dt><dd data-hud="target">M1 · area 4, left</dd></div>
+        <div><dt>MNI mm</dt><dd data-hud="mni">−39, −22, 58</dd></div>
+        <div><dt>Device</dt><dd data-hud="device">transducer · schematic</dd></div>
+        <div><dt>Az · El</dt><dd data-hud="az">34° · 5°</dd></div>
+      </dl>
+      <p class="status-l mono" data-status role="status">Loading HCP S1200 surface · 1.5 MB</p>
+      <p class="src mono" aria-hidden="true">HCP S1200 · MNI152 · orthographic</p>
+      <p class="hint mono" aria-hidden="true">Drag to rotate</p>
     </div>
 
-    <div class="tabs" role="tablist" aria-label="Stage">
+    <div class="panels">
       {targets.map((t, i) => (
-        <button type="button" role="tab" id={`tab-${t.key}`} aria-controls={`panel-${t.key}`} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} data-target={t.key}>
-          <span class="t-when mono">{t.key === 'goal' ? '∞' : String(i + 1).padStart(2, '0')} · {t.when}</span>
-          <span class="t-name">{t.name}</span>
-          <span class="t-target mono">{t.target}</span>
-        </button>
-      ))}
-    </div>
-
-    <div class="stage">
-      <div class="viewport">
-        <canvas id="design-brain" aria-hidden="true"></canvas>
-        <canvas id="design-overlay" aria-hidden="true"></canvas>
-        <dl class="hud mono" aria-hidden="true">
-          <div><dt>View</dt><dd data-hud="view">left anterolateral</dd></div>
-          <div><dt>Target</dt><dd data-hud="target">M1 · area 4, left</dd></div>
-          <div><dt>MNI mm</dt><dd data-hud="mni">−39, −22, 58</dd></div>
-          <div><dt>Device</dt><dd data-hud="device">transducer · schematic</dd></div>
-          <div><dt>Az · El</dt><dd data-hud="az">34° · 5°</dd></div>
-        </dl>
-        <p class="status mono" data-status role="status">Loading HCP S1200 surface · 1.5 MB</p>
-        <p class="src mono" aria-hidden="true">HCP S1200 · MNI152 · orthographic</p>
-        <p class="hint mono" aria-hidden="true">Drag to rotate</p>
-      </div>
-
-      <div class="panels">
-        {targets.map((t, i) => (
-          <div class="panel" role="tabpanel" id={`panel-${t.key}`} aria-labelledby={`tab-${t.key}`} hidden={i !== 0}>
-            <p class="p-kicker mono">{t.kicker}</p>
-            <p class="lbl mono">Target</p>
-            <h3>{t.title}</h3>
-            <div class="why"><p class="lbl mono">Why</p><p>{t.why}</p></div>
-            <p class="lbl mono">How</p>
-            <ol class="how">
-              {t.how.map(([a, b], j) => (
-                <li><span class="h-n mono">{String(j + 1).padStart(2, '0')}</span><span class="h-t">{a}</span><span class="h-s mono">{b}</span></li>
-              ))}
-            </ol>
-            {t.note && <p class="note">{t.note}</p>}
-          </div>
-        ))}
-      </div>
-    </div>
-
-    <!-- 방법 도식: 탭마다 하나 -->
-    <figure class="approach">
-      <div class="a-bar mono">
-        <span>Approach</span>
-        <span data-a-id>{targets[0].target}</span>
-        <span>Animated schematic</span>
-      </div>
-      {targets.map((t, i) => (
-        <div class="a-pipe" data-approach={t.key} hidden={i !== 0}>
-          <Pipeline kind={t.pipe} label={t.pipeLabel} />
+        <div class="panel" role="tabpanel" id={`panel-${t.key}`} aria-labelledby={`tab-${t.key}`} hidden={i !== 0}>
+          <Status kind={t.status} text={t.statusText} />
+          <h3>{t.title}</h3>
+          <p class="line">{t.line}</p>
+          <dl class="spec">{t.spec.map(([k, v]) => <div><dt class="mono">{k}</dt><dd>{v}</dd></div>)}</dl>
         </div>
       ))}
-    </figure>
-
-    <Hardware />
-
-    <div class="basis">
-      <p class="mono">Research basis</p>
-      <div>
-        <a href="https://onlinelibrary.wiley.com/doi/10.1002/ana.23951" target="_blank" rel="noreferrer">Little et al., Ann Neurol 2013 · adaptive DBS driven by beta ↗</a>
-        <a href="https://www.science.org/doi/10.1126/science.aaw4325" target="_blank" rel="noreferrer">Josselyn &amp; Tonegawa, Science 2020 · memory engrams ↗</a>
-        <a href="https://www.nature.com/articles/nature17172" target="_blank" rel="noreferrer">Roy et al., Nature 2016 · engram reactivation in Alzheimer’s mouse models ↗</a>
-        <a href="https://www.nature.com/articles/s41586-025-08993-1" target="_blank" rel="noreferrer">Ko et al., Nature 2025 · engram circuitry reorganizes over time ↗</a>
-        <a href="https://www.neuropixels.org/probe-1-0-nhp-long" target="_blank" rel="noreferrer">Neuropixels 1.0 NHP Long · high-density deep recording ↗</a>
-        <a href="https://www.nature.com/articles/nature18933" target="_blank" rel="noreferrer">Glasser et al., Nature 2016 · HCP-MMP1.0 cortical parcellation ↗</a>
-      </div>
-      <p class="mono">Brain model</p>
-      <p class="ack">Group-average anatomy in MNI152 space (HCP S1200 cortex, HCP-MMP1.0 area 4, HCP subcortical atlas); the STN is placed at approximate literature coordinates, and devices are representative, not a surgical plan. Data were provided by the Human Connectome Project, WU-Minn Consortium (Principal Investigators: David Van Essen and Kamil Ugurbil; 1U54MH091657) funded by the 16 NIH Institutes and Centers that support the NIH Blueprint for Neuroscience Research; and by the McDonnell Center for Systems Neuroscience at Washington University. Point cloud built with <a href="https://github.com/crstn-bio/crstn-bio.github.io/tree/main/tools/brain-data" target="_blank" rel="noreferrer">tools/brain-data ↗</a></p>
     </div>
   </div>
-</section>
+  <p class="ack mono">Brain model: data provided by the Human Connectome Project, WU-Minn Consortium (Principal Investigators: David Van Essen and Kamil Ugurbil; 1U54MH091657) funded by the 16 NIH Institutes and Centers that support the NIH Blueprint for Neuroscience Research; and by the McDonnell Center for Systems Neuroscience at Washington University. HCP-MMP1.0 area 4 (Glasser et al., 2016); STN at approximate literature coordinates. Built with <a href="https://github.com/crstn-bio/crstn-bio.github.io/tree/main/tools/brain-data" target="_blank" rel="noreferrer">tools/brain-data ↗</a></p>
+</div>
 
 <style>
-  .design { --acc: #a8c8ff; background: #000; border-top: 1px solid var(--rule); padding-block: clamp(80px, 11vw, 140px); color: #fff; }
-  .kicker { color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 14px; }
-  .d-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px var(--gutter); align-items: end; }
-  .d-head h2 { margin: 0; font-size: clamp(32px, 4.2vw, 56px); font-weight: 300; letter-spacing: -0.035em; line-height: 1.05; }
-  .d-head > p { margin: 0; color: #a9a9a9; font-size: 17px; line-height: 1.65; max-width: 46ch; }
+  .design { --acc: #a8c8ff; color: #fff; margin-top: clamp(36px, 5vw, 56px); }
+  .a-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 24px; }
+  .a-head h3 { margin: 0; font-size: clamp(19px, 1.8vw, 23px); font-weight: 400; letter-spacing: -0.015em; }
+  .a-head p { margin: 0; color: #6a6a6a; }
 
-  /* 탭 */
-  .tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: clamp(36px, 5vw, 56px); border-bottom: 1px solid #222; }
+  .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 18px; border-bottom: 1px solid #222; }
   .tabs button {
     font: inherit; text-align: left; color: #8d8d8d; background: none; border: 0; border-top: 1px solid #333;
-    padding: 18px 20px 20px 0; cursor: pointer; display: grid; gap: 6px; position: relative; transition: color 200ms;
+    padding: 16px 16px 18px 0; cursor: pointer; display: grid; gap: 5px; position: relative; transition: color 200ms;
   }
   .tabs button::before { content: ''; position: absolute; left: 0; top: -1px; height: 2px; width: 0; background: #fff; transition: width 500ms cubic-bezier(.2,.7,.2,1); }
   .tabs button[aria-selected='true'] { color: #fff; }
   .tabs button[aria-selected='true']::before { width: 100%; }
   .tabs button:hover { color: #fff; }
-  .tabs button[data-target='goal'] .t-when { color: var(--acc); }
   .t-when { letter-spacing: 0.12em; text-transform: uppercase; color: inherit; opacity: 0.8; }
-  .t-name { font-size: clamp(19px, 1.9vw, 25px); font-weight: 400; letter-spacing: -0.02em; }
+  .t-name { font-size: clamp(18px, 1.7vw, 22px); font-weight: 400; letter-spacing: -0.02em; }
   .t-target { color: #8d8d8d; }
   .tabs button[aria-selected='true'] .t-target { color: var(--acc); }
 
-  /* 뇌 + 설명 */
-  .stage { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 0 clamp(24px, 4vw, 56px); margin-top: 28px; }
+  .stage { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.9fr); gap: 0 clamp(24px, 4vw, 48px); margin-top: 22px; }
   .viewport { position: relative; aspect-ratio: 5 / 4; border: 1px solid #1c1c1c; background: radial-gradient(80% 70% at 50% 50%, #0b0b0b, #000); touch-action: pan-y; cursor: grab; }
   .viewport:active { cursor: grabbing; }
   .viewport canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -182,51 +103,31 @@ const targets = [
   .hud dd { margin: 0; color: #d9d9d9; }
   .hint { position: absolute; right: 16px; bottom: 12px; margin: 0; color: #5f5f5f; pointer-events: none; }
   .src { position: absolute; left: 16px; bottom: 12px; margin: 0; color: #5f5f5f; pointer-events: none; }
-  .status { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; color: #6a6a6a; letter-spacing: 0.04em; white-space: nowrap; pointer-events: none; }
+  .status-l { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; color: #6a6a6a; letter-spacing: 0.04em; white-space: nowrap; pointer-events: none; }
 
   .panel { padding-top: 4px; }
-  .panel:focus-visible { outline-offset: 8px; }
-  .p-kicker { color: var(--acc); letter-spacing: 0.06em; margin: 0 0 14px; }
-  .panel h3 { font-size: clamp(26px, 2.7vw, 38px); font-weight: 350; letter-spacing: -0.025em; line-height: 1.1; margin: 0 0 22px; text-wrap: balance; }
-  .lbl { margin: 0 0 8px; color: #7d7d7d; letter-spacing: 0.14em; text-transform: uppercase; }
-  .why { margin: 0 0 24px; padding: 14px 0 0; border-top: 1px solid #222; }
-  .why p:last-child { margin: 0; color: #e6e6e6; font-size: 17px; line-height: 1.5; }
-  .how { list-style: none; margin: 0; padding: 0; border-top: 1px solid #222; counter-reset: h; }
-  .how li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 2px 10px; padding: 13px 0; border-bottom: 1px solid #1a1a1a; }
-  .h-n { color: var(--acc); grid-row: span 2; padding-top: 3px; }
-  .h-t { color: #f0f0f0; font-size: 16px; line-height: 1.4; }
-  .h-s { color: #8a8a8a; }
-  .note { margin: 16px 0 0; color: #8a8a8a; font-size: 14px; line-height: 1.55; border-left: 1px solid var(--acc); padding-left: 12px; }
-
-  /* 방법 도식 */
-  .approach { margin: clamp(36px, 5vw, 56px) 0 0; }
-  .a-bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; padding: 0 0 12px; color: #7d7d7d; text-transform: uppercase; letter-spacing: 0.08em; }
-  .a-bar [data-a-id] { color: #fff; text-transform: none; letter-spacing: 0.04em; }
-  .a-pipe[hidden] { display: none; }
-
-  .basis { display: grid; grid-template-columns: 170px 1fr; gap: 12px 24px; margin-top: 36px; padding-top: 20px; border-top: 1px solid #1a1a1a; }
-  .basis > p { margin: 0; color: #6a6a6a; letter-spacing: 0.1em; text-transform: uppercase; }
-  .basis > div { display: flex; flex-wrap: wrap; gap: 8px 24px; }
-  .basis a { color: #8d8d8d; text-decoration: none; font-size: 13.5px; line-height: 1.5; }
-  .basis a:hover { color: #fff; }
-  .basis .ack { margin: 0; color: #6a6a6a; font-size: 12.5px; line-height: 1.6; max-width: 92ch; text-transform: none; letter-spacing: 0; }
-  .basis .ack a { font-size: inherit; color: #8d8d8d; }
+  .panel h3 { font-size: clamp(24px, 2.4vw, 32px); font-weight: 350; letter-spacing: -0.025em; line-height: 1.12; margin: 16px 0 12px; }
+  .line { margin: 0; color: #cfcfcf; font-size: 16px; line-height: 1.55; }
+  .spec { margin: 18px 0 0; border-top: 1px solid #222; }
+  .spec div { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; padding: 11px 0; border-bottom: 1px solid #1a1a1a; }
+  .spec dt { color: #7d7d7d; letter-spacing: 0.1em; text-transform: uppercase; padding-top: 2px; }
+  .spec dd { margin: 0; color: #d6d6d6; font-size: 14.5px; line-height: 1.5; }
+  .ack { margin: 14px 0 0; color: #5a5a5a; line-height: 1.6; max-width: 110ch; }
+  .ack a { color: #8a8a8a; }
 
   @media (max-width: 960px) {
-    .d-head, .stage { grid-template-columns: 1fr; }
-    .panels { margin-top: 24px; }
-    .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .stage { grid-template-columns: 1fr; }
+    .panels { margin-top: 20px; }
   }
   @media (max-width: 600px) {
-    .tabs button { padding: 14px 12px 14px 0; }
-    .tabs button .t-target { font-size: 12px; }
+    .tabs button { padding: 12px 8px 12px 0; }
+    .tabs button .t-target { display: none; }
     .viewport { aspect-ratio: 1 / 1.05; }
     .hud { left: 12px; top: 12px; }
     .hud div:nth-child(1), .hud div:nth-child(5) { display: none; }
     .hint { display: none; }
     .src { left: 12px; bottom: 10px; }
-    .a-bar span:last-child { display: none; }
-    .basis { grid-template-columns: 1fr; }
+    .spec div { grid-template-columns: 1fr; gap: 2px; }
   }
   @media (prefers-reduced-motion: reduce) { .tabs button::before { transition: none; } }
 </style>

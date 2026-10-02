@@ -1,0 +1,57 @@
+---
+// RESTORE: 기억 복원이 실제 개입이 되기 전에 과학적으로 풀려야 할 일곱 조건.
+// 계단의 마지막(복원)은 앞의 여섯이 풀린 뒤에만 시도할 수 있다는 뜻으로 점선 처리했어요.
+import Status from './Status.astro';
+const reqs = [
+  ['Measure', 'signals at enough spatial and temporal resolution'],
+  ['Decode', 'activity tied to specific memory states and processes'],
+  ['Track', 'how representations change across encoding, consolidation and retrieval'],
+  ['Model', 'participant-specific links between state, behaviour, context and intervention'],
+  ['Distinguish', 'absent, degraded or inaccessible'],
+  ['Intervene', 'does precisely timed perturbation change retrieval probability?'],
+  ['Restore', 'only then: can useful function be recovered, reproducibly?'],
+];
+---
+<div class="rs">
+  <ol class="ladder" aria-label="Seven requirements, in order">
+    {reqs.map(([k, v], i) => (
+      <li style={`--i:${i}`} class={i === reqs.length - 1 ? 'last' : ''}>
+        <span class="r-n mono">{String(i + 1).padStart(2, '0')}</span>
+        <span class="r-k">{k}</span>
+        <span class="r-v">{v}</span>
+      </li>
+    ))}
+  </ol>
+  <div class="front">
+    <div class="f-top"><span class="mono">Clinical frontier</span><Status kind="frontier" /></div>
+    <p class="f-name">Alzheimer’s disease</p>
+    <p class="f-fact">In mouse models of early Alzheimer’s, directly activating memory engram cells restored recall (Roy et al., <i>Nature</i> 2016). Whether anything comparable holds in people is unknown.</p>
+    <p class="f-beyond mono">Beyond neurodegeneration · reconsolidation · trauma · disordered memory</p>
+  </div>
+</div>
+
+<style>
+  .rs { --acc: #a8c8ff; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr); gap: clamp(20px, 3vw, 40px); align-items: end; }
+  .ladder { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .ladder li {
+    display: grid; grid-template-columns: 34px 130px minmax(0, 1fr); gap: 12px; align-items: baseline;
+    padding: 12px 14px; border: 1px solid #262626; background: #050505;
+    margin-left: calc(var(--i) * clamp(6px, 2.2vw, 28px));
+  }
+  .ladder li.last { border: 1px dotted #6a6a6a; background: transparent; }
+  .r-n { color: #6a6a6a; }
+  .r-k { color: #fff; font-size: 16px; }
+  .ladder li.last .r-k { color: var(--acc); }
+  .r-v { color: #9a9a9a; font-size: 14.5px; line-height: 1.45; }
+  .front { border: 1px dotted #555; padding: 16px 18px; }
+  .f-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .f-top > .mono { color: #7d7d7d; letter-spacing: 0.12em; text-transform: uppercase; }
+  .f-name { margin: 12px 0 0; font-size: 20px; color: #fff; }
+  .f-fact { margin: 8px 0 0; color: #9a9a9a; font-size: 14.5px; line-height: 1.6; }
+  .f-beyond { margin: 12px 0 0; color: #6a6a6a; line-height: 1.6; }
+  @media (max-width: 900px) { .rs { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) {
+    .ladder li { grid-template-columns: 28px minmax(0, 1fr); margin-left: calc(var(--i) * 4px); }
+    .r-v { grid-column: 2; }
+  }
+</style>

@@ -5,8 +5,8 @@
 ---
 <div class="hw" aria-labelledby="hw-h">
     <div class="hw-head">
-      <h3 id="hw-h"><span class="mono">The tool</span>Placed by a robot. Run by a chip.</h3>
-      <p>An implant that reads and writes its target, with the model running on the device itself.</p>
+      <h3 id="hw-h"><span class="status status--concept">Translational concept</span>If the answer is “implant”.</h3>
+      <p>A robot places only the sites the model needs; a chip runs the model on the device. A direction, not something I have built.</p>
     </div>
 
     <div class="panels">
@@ -14,7 +14,7 @@
         <canvas id="hw-device" aria-hidden="true"></canvas>
         <figcaption>
           <strong>Chip</strong>
-          <span>Records, decodes and stimulates on the implant.</span>
+          <span>Would record, decode and stimulate on the implant.</span>
         </figcaption>
       </figure>
       <figure class="panel">
@@ -27,7 +27,7 @@
               <button type="button" data-probe="np2" aria-pressed="false">Neuropixels 1.0 Long</button>
             </div>
           </div>
-          <span data-probe-show="threads">Places each electrode at its target, one at a time.</span>
+          <span data-probe-show="threads">Would place each electrode at its target, one at a time.</span>
           <span data-probe-show="np2" hidden>A 45 mm probe reaches deep targets and records 384 of 4,416 sites at once.</span>
         </figcaption>
       </figure>
@@ -39,7 +39,7 @@
   .hw { background: #000; color: #fff; margin-top: clamp(48px, 7vw, 88px); }
   .hw-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px var(--gutter); align-items: end; margin-bottom: clamp(28px, 4vw, 48px); }
   .hw-head h3 { font-size: clamp(26px, 3vw, 38px); font-weight: 350; letter-spacing: -0.02em; line-height: 1.15; margin: 0; }
-  .hw-head h3 .mono { display: block; color: var(--muted); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 12px; }
+  .hw-head h3 .status { display: table; margin-bottom: 14px; font-weight: 400; letter-spacing: 0.1em; }
   .hw-head p { color: #b5b5b5; font-size: 17px; line-height: 1.7; max-width: 52ch; margin: 0; }
   .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .panel { margin: 0; border: 1px solid #1f1f1f; background: #030303; }

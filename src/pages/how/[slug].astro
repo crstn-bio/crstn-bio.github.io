@@ -1,0 +1,105 @@
+---
+// 연구 단계 페이지: 질문 하나 · 기전 한 줄 · 주석 한 줄 · 도안. 앞뒤 단계로 이동.
+import Base from '../../layouts/Base.astro';
+import Nav from '../../components/Nav.astro';
+import StageRail from '../../components/StageRail.astro';
+import StageFigure from '../../components/StageFigure.astro';
+import Status from '../../components/Status.astro';
+import ProjectDialogs from '../../components/ProjectDialogs.astro';
+import { stages, groupOf, type Stage } from '../../data/program';
+
+export function getStaticPaths() {
+  return stages.map((s, i) => ({ params: { slug: s.slug }, props: { s, prev: stages[i - 1], next: stages[i + 1] } }));
+}
+const { s, prev, next } = Astro.props as { s: Stage; prev?: Stage; next?: Stage };
+const g = groupOf(s.slug);
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<Base title={`${s.n} ${s.verb}`} description={`${s.q} ${s.mech}`} dark>
+  <div class="page">
+    <Nav />
+    <div class="wrap top">
+      <StageRail current={s.slug} />
+    </div>
+
+    <main id="main" class="wrap">
+      <header class="hd">
+        <div class="id">
+          <p class="mono kick"><a href={`${base}/#how`}>How</a><span>/</span>{g.label}<span>/</span>{s.n} {s.verb}</p>
+          <Status kind={s.status} text={s.statusText} />
+        </div>
+        <h1>{s.q}</h1>
+        <div class="side">
+          <p class="mech mono">{s.mech}</p>
+          <p class="note">{s.note}</p>
+          {s.evidence && (
+            <p class="ev mono"><span>Evidence</span>{s.evidence.map((e) => <button type="button" data-open={e.open} aria-haspopup="dialog">{e.label} →</button>)}</p>
+          )}
+        </div>
+      </header>
+
+      <div class="fig"><StageFigure slug={s.slug} /></div>
+
+      {s.sources && (
+        <div class="src">
+          <p class="mono">Sources</p>
+          <div>{s.sources.map((x) => <a href={x.href} target="_blank" rel="noreferrer">{x.label} ↗</a>)}</div>
+        </div>
+      )}
+
+      <nav class="pn" aria-label="Previous and next stage">
+        {prev ? <a class="p" href={`${base}/how/${prev.slug}/`}><span class="mono">← {prev.n}</span>{prev.verb}</a> : <a class="p" href={`${base}/#how`}><span class="mono">←</span>Overview</a>}
+        <a class="all mono" href={`${base}/#how`}>All stages</a>
+        {next ? <a class="n" href={`${base}/how/${next.slug}/`}><span class="mono">{next.n} →</span>{next.verb}</a> : <a class="n" href={`${base}/#work`}><span class="mono">→</span>Evidence</a>}
+      </nav>
+    </main>
+
+    <footer class="wrap foot mono">
+      <span>Christine Park</span>
+      <a href={`${base}/#contact`}>Discuss a project →</a>
+    </footer>
+  </div>
+  <ProjectDialogs />
+</Base>
+
+<style>
+  .page { --acc: #a8c8ff; background: #000; color: #fff; min-height: 100svh; }
+  .top { padding-top: 8px; padding-bottom: clamp(28px, 4vw, 44px); border-bottom: 1px solid #161616; }
+  main { padding-block: clamp(36px, 5vw, 64px); }
+  .hd { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 14px clamp(24px, 4vw, 56px); align-items: end; }
+  .id { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+  .kick { margin: 0; color: #8d8d8d; letter-spacing: .14em; text-transform: uppercase; display: flex; gap: 8px; flex-wrap: wrap; }
+  .kick a { color: #8d8d8d; text-decoration: none; border-bottom: 1px solid #333; }
+  .kick a:hover { color: #fff; }
+  .kick span { color: #444; }
+  h1 { margin: 0; font-size: clamp(30px, 4vw, 56px); font-weight: 300; letter-spacing: -0.035em; line-height: 1.06; text-wrap: balance; }
+  .mech { margin: 0; color: var(--acc); letter-spacing: .04em; line-height: 1.6; }
+  .note { margin: 12px 0 0; color: #9a9a9a; font-size: 15.5px; line-height: 1.6; max-width: 54ch; }
+  .ev { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 14px 0 0; }
+  .ev span { color: #6a6a6a; letter-spacing: .12em; text-transform: uppercase; }
+  .ev button { font: inherit; background: none; border: 0; border-bottom: 1px solid #3a3a3a; color: #e6e6e6; padding: 2px 0; cursor: pointer; }
+  .ev button:hover { color: var(--acc); border-color: var(--acc); }
+  .fig { margin-top: clamp(28px, 4vw, 48px); display: grid; gap: clamp(28px, 4vw, 48px); }
+  .src { display: grid; grid-template-columns: 120px 1fr; gap: 10px 24px; margin-top: 28px; padding-top: 18px; border-top: 1px solid #1a1a1a; }
+  .src > p { margin: 0; color: #6a6a6a; letter-spacing: .1em; text-transform: uppercase; }
+  .src > div { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+  .src a { color: #8d8d8d; text-decoration: none; font-size: 13.5px; line-height: 1.5; }
+  .src a:hover { color: #fff; }
+  .pn { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; margin-top: clamp(40px, 6vw, 72px); padding-top: 24px; border-top: 1px solid #262626; }
+  .pn a { color: #fff; text-decoration: none; display: grid; gap: 4px; font-size: clamp(20px, 2.2vw, 28px); font-weight: 300; letter-spacing: -0.02em; }
+  .pn a .mono { color: #6a6a6a; font-size: 12px; letter-spacing: .12em; }
+  .pn a:hover { color: var(--acc); }
+  .pn .n { justify-self: end; text-align: right; }
+  .pn .all { font-size: 12px; color: #8d8d8d; letter-spacing: .14em; text-transform: uppercase; border: 1px solid #333; padding: 10px 14px; }
+  .foot { display: flex; justify-content: space-between; gap: 16px; padding-block: 28px 36px; color: #5a5a5a; border-top: 1px solid #111; }
+  .foot a { color: #8d8d8d; text-decoration: none; }
+  .foot a:hover { color: #fff; }
+  @media (max-width: 900px) {
+    .hd { grid-template-columns: 1fr; }
+    .src { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
+    .pn { grid-template-columns: 1fr 1fr; }
+    .pn .all { grid-column: 1 / -1; grid-row: 2; justify-self: center; }
+  }
+</style>

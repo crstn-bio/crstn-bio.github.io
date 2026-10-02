@@ -1,0 +1,55 @@
+---
+// 근거 상세 창: [data-open="<id>"] 버튼(어느 페이지든)을 누르면 열려요. 단계 도식 + 사실만.
+import Pipeline from './Pipeline.astro';
+import { projects } from '../data/projects';
+---
+{projects.filter((x) => x.kind).map((x) => (
+  <dialog class="proj" id={`proj-${x.id}`} aria-labelledby={`proj-${x.id}-h`}>
+    <div class="d-top">
+      <div>
+        <p class="d-piece mono">{x.cap} · Stage {x.stage}</p>
+        <h3 id={`proj-${x.id}-h`}>{x.title}</h3>
+      </div>
+      <button type="button" class="d-close mono" data-close aria-label="Close">Close ✕</button>
+    </div>
+    <Pipeline kind={x.kind!} label={x.label!} />
+    <dl class="d-facts">
+      {(x.facts ?? []).map(([k, v]) => <div><dt class="mono">{k}</dt><dd>{v}</dd></div>)}
+    </dl>
+    {x.href && <a class="d-more mono" href={x.href}>Full report →</a>}
+  </dialog>
+))}
+
+<style>
+  .proj { --acc: #a8c8ff; width: min(1120px, calc(100% - 32px)); max-height: calc(100% - 48px); padding: clamp(18px, 2.5vw, 30px); background: #050505; color: #fff; border: 1px solid #2c2c2c; }
+  .proj::backdrop { background: rgba(0, 0, 0, .72); backdrop-filter: blur(3px); }
+  .proj[open] { animation: d-in .28s ease-out; }
+  @keyframes d-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .d-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 18px; }
+  .d-piece { margin: 0 0 8px; color: var(--acc); letter-spacing: .1em; text-transform: uppercase; }
+  .proj h3 { margin: 0; font-size: clamp(22px, 2.4vw, 30px); font-weight: 350; letter-spacing: -0.02em; }
+  .d-close { background: none; border: 1px solid #333; color: #cfcfcf; padding: 8px 12px; cursor: pointer; letter-spacing: .08em; text-transform: uppercase; flex: none; }
+  .d-close:hover { border-color: #fff; color: #fff; }
+  .d-facts { margin: 18px 0 0; }
+  .d-facts div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-top: 1px solid #1c1c1c; }
+  .d-facts dt { color: #7d7d7d; letter-spacing: .1em; text-transform: uppercase; padding-top: 2px; }
+  .d-facts dd { margin: 0; color: #d6d6d6; font-size: 15px; line-height: 1.5; }
+  .d-more { display: inline-block; margin-top: 14px; color: var(--acc); text-decoration: none; letter-spacing: .06em; }
+  @media (max-width: 560px) { .d-facts div { grid-template-columns: 1fr; gap: 2px; } }
+  @media (prefers-reduced-motion: reduce) { .proj[open] { animation: none; } }
+</style>
+
+<script>
+  document.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('[data-open]');
+    if (!b) return;
+    (document.getElementById(`proj-${b.dataset.open}`) as HTMLDialogElement | null)?.showModal();
+  });
+  document.querySelectorAll<HTMLDialogElement>('dialog.proj').forEach((d) => {
+    d.querySelector('[data-close]')?.addEventListener('click', () => d.close());
+    d.addEventListener('click', (e) => {
+      const r = d.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) d.close();
+    });
+  });
+</script>

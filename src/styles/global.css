@@ -80,3 +80,13 @@ strong { font-weight: 560; }
   padding: 8px 12px; z-index: 10;
 }
 .skip:focus { left: 8px; }
+
+/* ── 연구 상태 표시: 한 일과 앞으로의 질문을 눈으로 구분 ── */
+.status { display: inline-block; font-family: var(--mono); font-size: 12px; line-height: 1; letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 8px 4px; border: 1px solid; white-space: nowrap; }
+.status--current { background: #fff; color: #000; border-color: #fff; }
+.status--done { color: #e6e6e6; border-color: #8a8a8a; }
+.status--build { color: #e6e6e6; border-color: #8a8a8a; border-style: solid; }
+.status--next { color: #a8c8ff; border-color: #a8c8ff; }
+.status--question { color: #a8c8ff; border-color: #a8c8ff; border-style: dashed; }
+.status--concept { color: #a9a9a9; border-color: #6a6a6a; border-style: dashed; }
+.status--frontier { color: #a9a9a9; border-color: #6a6a6a; border-style: dotted; }

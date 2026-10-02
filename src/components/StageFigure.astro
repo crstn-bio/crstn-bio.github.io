@@ -1,0 +1,35 @@
+---
+// 단계마다 도안 하나 (Interface만 두 개: 분기 + 하드웨어 개념).
+import Pipeline from './Pipeline.astro';
+import PredictControl from './PredictControl.astro';
+import ControlTestbed from './ControlTestbed.astro';
+import MemoryChain from './MemoryChain.astro';
+import RetrievalFailure from './RetrievalFailure.astro';
+import InterfaceBranch from './InterfaceBranch.astro';
+import Hardware from './Hardware.astro';
+import Restore from './Restore.astro';
+interface Props { slug: string }
+const { slug } = Astro.props;
+---
+{slug === 'measure' && <Pipeline kind="measure" label="Measure: deliver an intervention, record the response after a latency, and relate dose to response for this brain against the population." />}
+{slug === 'decode' && <Pipeline kind="decode" label="Decode: multichannel signals, band-power and firing-rate features, and a low-dimensional state estimate z of t." />}
+{slug === 'personalize' && <Pipeline kind="personalize" label="Personalize: a population prior, observations from one person arriving, and a personal model whose uncertainty narrows." />}
+{slug === 'predict' && <PredictControl />}
+{slug === 'control' && (
+  <div class="ctl">
+    <Pipeline kind="aidbs" label="Concept for adaptive DBS: pretrain on many patients' local field potentials, personalize to one patient with little data, run the model on the device, and stimulate only when beta activity is high." />
+    <p class="cap mono">Concept for personalized adaptive DBS. Not a built system.</p>
+    <ControlTestbed />
+  </div>
+)}
+{slug === 'memory' && <MemoryChain />}
+{slug === 'retrieval' && <RetrievalFailure />}
+{slug === 'minimize' && <Pipeline kind="minimize" label="Minimize: a high-dimensional channel space collapses to a few informative features, then a few state variables, then the minimum sufficient information for the model." />}
+{slug === 'interface' && <><InterfaceBranch /><Hardware /></>}
+{slug === 'scale' && <Pipeline kind="scale" label="Scale: electrode signals, local populations, circuits, whole-brain networks, and one individual model over time." />}
+{slug === 'restore' && <Restore />}
+
+<style>
+  .ctl { display: grid; gap: 20px; }
+  .cap { margin: -10px 0 0; color: #6a6a6a; }
+</style>

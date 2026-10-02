@@ -1,0 +1,42 @@
+---
+// 단계 페이지 위쪽의 작은 레일: 11단계 점 · 번호 · 동사. 지금 단계는 강조, 누르면 그 단계 페이지로.
+import { stages } from '../data/program';
+interface Props { current: string }
+const { current } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<nav class="rail" aria-label="Research program stages">
+  <ol>
+    {stages.map((x) => (
+      <li class={`r-${x.status} ${x.slug === current ? 'is-cur' : ''}`}>
+        <a href={`${base}/how/${x.slug}/`} aria-current={x.slug === current ? 'page' : undefined}>
+          <span class="r-dot" aria-hidden="true"></span>
+          <span class="r-n mono">{x.n}</span>
+          <span class="r-v">{x.verb}</span>
+        </a>
+      </li>
+    ))}
+  </ol>
+</nav>
+
+<style>
+  .rail { --acc: #a8c8ff; }
+  .rail ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); position: relative; }
+  .rail ol::before { content: ''; position: absolute; left: 0; right: 0; top: 5px; height: 1px; background: #2a2a2a; }
+  .rail a { display: grid; gap: 3px; padding-right: 8px; text-decoration: none; color: inherit; }
+  .r-dot { width: 11px; height: 11px; border-radius: 50%; background: #000; border: 1px solid #6a6a6a; margin-bottom: 8px; position: relative; z-index: 1; }
+  .r-current .r-dot { background: #fff; border-color: #fff; }
+  .r-done .r-dot { background: #8a8a8a; }
+  .r-question .r-dot { border-color: var(--acc); border-style: dashed; }
+  .r-concept .r-dot, .r-frontier .r-dot { border-style: dotted; }
+  .r-n { color: #5a5a5a; }
+  .r-v { color: #8a8a8a; font-size: 13.5px; line-height: 1.25; }
+  .is-cur .r-dot { box-shadow: 0 0 0 4px rgba(168, 200, 255, .25); }
+  .is-cur .r-n { color: var(--acc); }
+  .is-cur .r-v { color: #fff; }
+  .rail a:hover .r-v { color: var(--acc); }
+  @media (max-width: 900px) {
+    .r-v { display: none; }
+    .rail a { justify-items: center; padding-right: 0; }
+  }
+</style>

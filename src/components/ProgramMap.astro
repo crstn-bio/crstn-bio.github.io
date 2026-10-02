@@ -1,0 +1,78 @@
+---
+// 홈의 연구 프로그램 지도: 다섯 묶음 · 묶음마다 논리 한 줄 · 단계마다 질문 한 줄. 누르면 단계 페이지.
+import Status from './Status.astro';
+import { groups } from '../data/program';
+import type { StatusKind } from './Status.astro';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const legend: StatusKind[] = ['current', 'done', 'build', 'next', 'question', 'concept', 'frontier'];
+---
+<div class="map">
+  <div class="m-head">
+    <p class="mono">The program · 11 questions</p>
+    <p class="mono hint">Select a stage to open it</p>
+  </div>
+  <ol class="groups">
+    {groups.map((g) => (
+      <li class="grp">
+        <div class="g-h">
+          <span class="g-l">{g.label}</span>
+          <span class="g-x mono">{g.logic}</span>
+        </div>
+        <ol class="tiles">
+          {g.stages.map((s) => (
+            <li>
+              <a class={`tile t-${s.status}`} href={`${base}/how/${s.slug}/`}>
+                <span class="t-top mono"><span class="t-dot" aria-hidden="true"></span>{s.n}{s.mark && <span class="t-mark">{s.mark}</span>}</span>
+                <span class="t-v">{s.verb}</span>
+                <span class="t-q">{s.short}</span>
+                <span class="t-go mono" aria-hidden="true">→</span>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </li>
+    ))}
+  </ol>
+  <p class="legend">{legend.map((k) => <Status kind={k} />)}</p>
+</div>
+
+<style>
+  .map { --acc: #a8c8ff; margin-top: clamp(40px, 6vw, 72px); }
+  .m-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .m-head p { margin: 0; color: #7d7d7d; letter-spacing: .14em; text-transform: uppercase; }
+  .m-head .hint { color: #4a4a4a; }
+  .groups { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0 12px; border-top: 1px solid #2a2a2a; }
+  .grp { padding-top: 16px; display: grid; grid-template-rows: auto 1fr; gap: 12px; align-content: start; }
+  .g-h { display: grid; gap: 4px; }
+  .g-l { font-size: 15px; color: #fff; letter-spacing: -0.005em; }
+  .g-x { color: var(--acc); }
+  .tiles { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; align-content: start; }
+  .tile { position: relative; display: grid; gap: 3px; padding: 12px 34px 12px 12px; text-decoration: none; color: inherit; border: 1px solid #262626; background: #050505; transition: border-color .2s, background .2s; }
+  .tile:hover, .tile:focus-visible { border-color: var(--acc); background: #070b11; }
+  .tile:focus-visible { outline: none; }
+  .t-top { display: flex; align-items: center; gap: 8px; color: #6a6a6a; }
+  .t-dot { width: 9px; height: 9px; border-radius: 50%; border: 1px solid #6a6a6a; flex: none; }
+  .t-current .t-dot { background: #fff; border-color: #fff; }
+  .t-done .t-dot { background: #8a8a8a; border-color: #8a8a8a; }
+  .t-question .t-dot { border-color: var(--acc); border-style: dashed; }
+  .t-concept .t-dot, .t-frontier .t-dot { border-style: dotted; }
+  .t-mark { color: var(--acc); }
+  .t-v { font-size: 17px; color: #fff; letter-spacing: -0.01em; }
+  .t-q { color: #8a8a8a; font-size: 13.5px; line-height: 1.35; }
+  .t-go { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #4a4a4a; transition: color .2s, transform .2s; }
+  .tile:hover .t-go, .tile:focus-visible .t-go { color: var(--acc); transform: translate(3px, -50%); }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 0; }
+
+  @media (max-width: 1100px) {
+    .groups { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+    .grp { padding-bottom: 16px; }
+    .grp:last-child { grid-column: 1 / -1; }
+    .grp:last-child .tiles { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 640px) {
+    .groups { grid-template-columns: 1fr; }
+    .grp:last-child .tiles { grid-template-columns: 1fr; }
+    .grp + .grp { border-top: 1px solid #1a1a1a; }
+  }
+  @media (prefers-reduced-motion: reduce) { .tile, .t-go { transition: none; } }
+</style>

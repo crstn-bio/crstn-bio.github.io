@@ -1,0 +1,157 @@
+---
+// 시스템 도안: 모델이 중심이고, 하드웨어는 모델의 입력(측정)과 출력(개입)이에요.
+// 개인의 뇌 → 측정 → 뇌 모델 z(t) → 반응 예측 → 제어 → 이식형 | 비침습 → 반응 → 다시 뇌, 그리고 모델 갱신
+// 넓은 화면은 가로 도안, 좁은 화면은 세로 도안을 보여줘요.
+const f1 = (v: number) => v.toFixed(1);
+// 잠재 상태 z(t)의 궤적 (리사주 곡선)
+const traj = (cx: number, cy: number, ax: number, ay: number) =>
+  'M' + Array.from({ length: 121 }, (_, i) => {
+    const t = (i / 120) * Math.PI * 2;
+    return `${f1(cx + ax * Math.sin(2 * t + 0.6))} ${f1(cy + ay * Math.sin(3 * t))}`;
+  }).join(' L') + ' Z';
+const trajH = traj(530, 222, 76, 34);
+const trajV = traj(200, 368, 96, 34);
+// 작은 뇌 윤곽
+const brain = (cx: number, cy: number, s: number) => {
+  const p = (x: number, y: number) => `${f1(cx + x * s)} ${f1(cy + y * s)}`;
+  return `M${p(-58, 8)} C${p(-62, -24)} ${p(-30, -46)} ${p(8, -46)} C${p(42, -46)} ${p(64, -30)} ${p(62, -6)} C${p(64, 16)} ${p(48, 28)} ${p(28, 26)} C${p(18, 38)} ${p(-8, 40)} ${p(-20, 30)} C${p(-40, 34)} ${p(-56, 26)} ${p(-58, 8)} Z`;
+};
+const gyri = (cx: number, cy: number, s: number) => {
+  const p = (x: number, y: number) => `${f1(cx + x * s)} ${f1(cy + y * s)}`;
+  return `M${p(-36, -20)} C${p(-20, -30)} ${p(0, -30)} ${p(14, -18)} M${p(-44, 4)} C${p(-24, -6)} ${p(4, -4)} ${p(30, 6)} M${p(-6, -42)} C${p(-10, -24)} ${p(0, -10)} ${p(-4, 10)} M${p(20, -40)} C${p(30, -24)} ${p(40, -14)} ${p(54, -12)}`;
+};
+---
+<figure class="sys" aria-label="System: an individual brain is measured; observations update a brain model with latent state z of t; the model predicts the response; a controller chooses an intervention, implanted or non-invasive; the brain's response is measured again and updates the model. Sensing and intervention hardware are the model's input and output.">
+  <!-- 가로 도안 -->
+  <svg class="h" viewBox="0 0 1200 430" aria-hidden="true">
+    <defs>
+      <marker id="sy-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9" fill="none" stroke="#bdbdbd" stroke-width="1.4" /></marker>
+      <marker id="sy-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9" fill="none" stroke="#a8c8ff" stroke-width="1.4" /></marker>
+      <path id="sy-loopA" d="M160 196 H972 V288 H930 V412 H100 V238" />
+      <path id="sy-loopB" d="M160 196 H972 V288 H1100 V412 H100 V238" />
+      <path id="sy-upd" d="M530 412 V280" />
+      <path id="sy-z" d={trajH} />
+    </defs>
+
+    <!-- 뇌 -->
+    <path class="brain" d={brain(100, 196, 1)} /><path class="dim" d={gyri(100, 196, 1)} />
+    <text class="lbl" x="100" y="266" text-anchor="middle">INDIVIDUAL BRAIN</text>
+
+    <!-- 입력 / 출력 (하드웨어 = 모델의 물리적 입출력) -->
+    <rect class="io" x="198" y="150" width="172" height="92" />
+    <text class="tag" x="198" y="140">INPUT · SENSING</text>
+    <rect class="io" x="846" y="300" width="344" height="80" />
+    <text class="tag" x="1190" y="398" text-anchor="end">OUTPUT · INTERVENTION</text>
+
+    <!-- 연결선 -->
+    <path class="ln" d="M164 196 H210" marker-end="url(#sy-a)" />
+    <path class="ln" d="M354 196 H406" marker-end="url(#sy-a)" />
+    <path class="ln" d="M650 196 H702" marker-end="url(#sy-a)" />
+    <path class="ln" d="M846 196 H898" marker-end="url(#sy-a)" />
+    <path class="ln" d="M972 224 V288 M930 288 H1100" />
+    <path class="ln" d="M930 288 V308 M1100 288 V308" marker-end="url(#sy-a)" />
+    <path class="ln" d="M930 368 V412 M1100 368 V412 M1100 412 H100 V242" marker-end="url(#sy-a)" />
+    <path class="acc dash" d="M530 412 V284" marker-end="url(#sy-b)" />
+    <text class="tag acc-t" x="542" y="352">MODEL UPDATE</text>
+    <text class="tag" x="760" y="404">RESPONSE</text>
+
+    <!-- 상자 -->
+    <rect class="box" x="214" y="168" width="140" height="56" /><text class="lbl" x="284" y="192" text-anchor="middle">MEASURE</text><text class="sub" x="284" y="212" text-anchor="middle">observations</text>
+    <rect class="box model" x="410" y="116" width="240" height="160" />
+    <text class="lbl" x="426" y="140">BRAIN MODEL</text><text class="z" x="634" y="146" text-anchor="end">z(t)</text>
+    <path class="traj" d={trajH} />
+    <circle class="zdot mover" r="4"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#sy-z" /></animateMotion></circle>
+    <rect class="box" x="706" y="168" width="140" height="56" /><text class="lbl" x="776" y="192" text-anchor="middle">PREDICT</text><text class="sub" x="776" y="212" text-anchor="middle">response</text>
+    <rect class="box" x="902" y="168" width="140" height="56" /><text class="lbl" x="972" y="192" text-anchor="middle">CONTROL</text><text class="sub" x="972" y="212" text-anchor="middle">choose</text>
+    <rect class="box" x="860" y="312" width="140" height="56" /><text class="lbl" x="930" y="336" text-anchor="middle">IMPLANTED</text><text class="sub" x="930" y="356" text-anchor="middle">DBS · deep</text>
+    <rect class="box" x="1030" y="312" width="140" height="56" /><text class="lbl" x="1100" y="336" text-anchor="middle">NON-INVASIVE</text><text class="sub" x="1100" y="356" text-anchor="middle">TUS · TMS · tTIS</text>
+
+    <!-- 흐르는 신호 -->
+    <circle class="pulse mover" r="4.5"><animateMotion dur="7s" repeatCount="indefinite"><mpath href="#sy-loopA" /></animateMotion></circle>
+    <circle class="pulse mover" r="4.5"><animateMotion dur="7s" begin="-3.5s" repeatCount="indefinite"><mpath href="#sy-loopB" /></animateMotion></circle>
+    <circle class="pulse mover" r="3.5"><animateMotion dur="2.5s" repeatCount="indefinite"><mpath href="#sy-upd" /></animateMotion></circle>
+  </svg>
+
+  <!-- 세로 도안 (좁은 화면) -->
+  <svg class="v" viewBox="0 0 400 860" aria-hidden="true">
+    <defs>
+      <marker id="sy-av" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9" fill="none" stroke="#bdbdbd" stroke-width="1.4" /></marker>
+      <marker id="sy-bv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9" fill="none" stroke="#a8c8ff" stroke-width="1.4" /></marker>
+      <path id="sy-vA" d="M200 110 V664 H110 V800 H24 V70 H136" />
+      <path id="sy-vB" d="M200 110 V664 H290 V800 H24 V70 H136" />
+      <path id="sy-vz" d={trajV} />
+    </defs>
+    <path class="brain" d={brain(200, 70, 1)} /><path class="dim" d={gyri(200, 70, 1)} />
+    <text class="lbl" x="200" y="134" text-anchor="middle">INDIVIDUAL BRAIN</text>
+
+    <rect class="io" x="96" y="160" width="208" height="70" /><text class="tag" x="212" y="252">INPUT · SENSING</text>
+    <rect class="box" x="120" y="168" width="160" height="54" /><text class="lbl" x="200" y="191" text-anchor="middle">MEASURE</text><text class="sub" x="200" y="210" text-anchor="middle">observations</text>
+    <path class="ln" d="M200 142 V164" marker-end="url(#sy-av)" />
+    <path class="ln" d="M200 222 V280" marker-end="url(#sy-av)" />
+
+    <rect class="box model" x="60" y="284" width="280" height="150" />
+    <text class="lbl" x="76" y="308">BRAIN MODEL</text><text class="z" x="324" y="312" text-anchor="end">z(t)</text>
+    <path class="traj" d={trajV} />
+    <circle class="zdot mover" r="4"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#sy-vz" /></animateMotion></circle>
+
+    <path class="ln" d="M200 434 V476" marker-end="url(#sy-av)" />
+    <rect class="box" x="120" y="480" width="160" height="54" /><text class="lbl" x="200" y="503" text-anchor="middle">PREDICT</text><text class="sub" x="200" y="522" text-anchor="middle">response</text>
+    <path class="ln" d="M200 534 V572" marker-end="url(#sy-av)" />
+    <rect class="box" x="120" y="576" width="160" height="54" /><text class="lbl" x="200" y="599" text-anchor="middle">CONTROL</text><text class="sub" x="200" y="618" text-anchor="middle">choose</text>
+    <path class="ln" d="M200 630 V664 M110 664 H290" />
+    <path class="ln" d="M110 664 V686 M290 664 V686" marker-end="url(#sy-av)" />
+    <rect class="io" x="22" y="680" width="356" height="86" />
+    <rect class="box" x="34" y="690" width="152" height="56" /><text class="lbl" x="110" y="713" text-anchor="middle">IMPLANTED</text><text class="sub" x="110" y="733" text-anchor="middle">DBS · deep</text>
+    <rect class="box" x="214" y="690" width="152" height="56" /><text class="lbl" x="290" y="713" text-anchor="middle">NON-INVASIVE</text><text class="sub" x="290" y="733" text-anchor="middle">TUS · TMS · tTIS</text>
+    <text class="tag" x="200" y="786" text-anchor="middle">INTERVENTION</text>
+
+    <path class="ln" d="M110 746 V800 M290 746 V800 M290 800 H24 V70 H132" marker-end="url(#sy-av)" />
+    <text class="tag" x="200" y="822" text-anchor="middle">RESPONSE</text>
+    <path class="acc dash" d="M290 800 H384 V360 H346" marker-end="url(#sy-bv)" />
+    <text class="tag acc-t" x="378" y="580" transform="rotate(-90 378 580)" text-anchor="middle">MODEL UPDATE</text>
+
+    <circle class="pulse mover" r="4.5"><animateMotion dur="8s" repeatCount="indefinite"><mpath href="#sy-vA" /></animateMotion></circle>
+    <circle class="pulse mover" r="4.5"><animateMotion dur="8s" begin="-4s" repeatCount="indefinite"><mpath href="#sy-vB" /></animateMotion></circle>
+  </svg>
+
+  <figcaption class="mono">Sensing and stimulation hardware are the model’s input and output.</figcaption>
+</figure>
+
+<style>
+  .sys { --acc: #a8c8ff; margin: 0; border: 1px solid #1f1f1f; background-color: #030303; background-image: linear-gradient(#0d0d0d 1px, transparent 1px), linear-gradient(90deg, #0d0d0d 1px, transparent 1px); background-size: 20px 20px; padding: clamp(14px, 2vw, 26px); }
+  .sys svg { display: block; width: 100%; height: auto; }
+  .sys .v { display: none; }
+  .sys figcaption { margin: 10px 0 0; color: #6a6a6a; }
+
+  svg .brain { fill: #050505; stroke: #d6d6d6; stroke-width: 1.3; }
+  svg .dim { fill: none; stroke: #4a4a4a; stroke-width: 1; }
+  svg .ln { fill: none; stroke: #8a8a8a; stroke-width: 1.2; }
+  svg .acc { fill: none; stroke: var(--acc); stroke-width: 1.3; }
+  svg .dash { stroke-dasharray: 5 5; }
+  svg .io { fill: none; stroke: #3a3a3a; stroke-dasharray: 3 4; }
+  svg .box { fill: #050505; stroke: #bdbdbd; stroke-width: 1.1; }
+  svg .box.model { stroke: var(--acc); fill: #060a10; }
+  svg .lbl { fill: #fff; font: 500 14px var(--mono); letter-spacing: 0.08em; }
+  svg .sub { fill: #8a8a8a; font: 13px var(--mono); }
+  svg .tag { fill: #7d7d7d; font: 13px var(--mono); letter-spacing: 0.08em; }
+  svg .acc-t { fill: var(--acc); }
+  svg .z { fill: var(--acc); font: 26px var(--mono); }
+  svg .traj { fill: none; stroke: rgba(168, 200, 255, .35); stroke-width: 1; }
+  svg .zdot { fill: var(--acc); }
+  svg .pulse { fill: var(--acc); }
+
+  @media (max-width: 760px) {
+    .sys .h { display: none; }
+    .sys .v { display: block; }
+    .sys .v .tag, .sys .v .sub { font-size: 14.5px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .sys .mover { display: none; } }
+</style>
+
+<script>
+  // 화면 밖에서는 SVG 애니메이션을 멈춰요
+  document.querySelectorAll<HTMLElement>('.sys').forEach((fig) => {
+    const svgs = [...fig.querySelectorAll<SVGSVGElement>('svg')];
+    new IntersectionObserver(([e]) => svgs.forEach((s) => (e.isIntersecting ? s.unpauseAnimations() : s.pauseAnimations()))).observe(fig);
+  });
+</script>

@@ -1,0 +1,25 @@
+---
+// 03 · How: 모델이 먼저, 하드웨어는 그다음.
+// 홈에는 시스템도 하나와 11단계 지도만. 방법론은 각 단계 페이지(/how/<slug>/)에서.
+import System from './System.astro';
+import ProgramMap from './ProgramMap.astro';
+---
+<section class="how" id="how" aria-labelledby="how-h">
+  <div class="wrap">
+    <div class="head">
+      <div><p class="kicker mono">03 / How</p><h2 id="how-h">Model first. Hardware second.</h2></div>
+      <p>The model decides what to measure and how to intervene. Implants and non-invasive tools are its inputs and outputs.</p>
+    </div>
+    <System />
+    <ProgramMap />
+  </div>
+</section>
+
+<style>
+  .how { --acc: #a8c8ff; background: #000; color: #fff; border-top: 1px solid var(--rule); padding-block: clamp(80px, 11vw, 140px); }
+  .head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px var(--gutter); align-items: end; margin-bottom: clamp(36px, 5vw, 56px); }
+  .kicker { color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 14px; }
+  .head h2 { margin: 0; font-size: clamp(32px, 4.2vw, 56px); font-weight: 300; letter-spacing: -0.035em; line-height: 1.05; }
+  .head > p { margin: 0; color: #a9a9a9; font-size: 17px; line-height: 1.65; max-width: 44ch; }
+  @media (max-width: 760px) { .head { grid-template-columns: 1fr; } }
+</style>

@@ -1,134 +1,69 @@
 ---
-// 01 · Why: 큰 질문 + 풀고 싶은 두 임상 문제 (숫자는 출처가 있는 값만)
-//   Parkinson’s: 2050년 2,520만 명 (2021년의 두 배 이상) — BMJ 2025, GBD 2021 모델
-//   Dementia: 2021년 5,700만 명, 알츠하이머가 60–70% — WHO 치매 팩트시트
-// 해마의 점들: 기억이 흐려져도 엔그램(파란 점)은 남아 있다는 생각을 그림으로
-let seed = 7;
-const rnd = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
-const dots = Array.from({ length: 60 }, (_, i) => ({ x: 14 + (i % 15) * 19, y: 16 + Math.floor(i / 15) * 19, e: [7, 19, 22, 36, 41, 53].includes(i), d: (rnd() * 3).toFixed(2) }));
-// 2021 → 2050: 1,190만 → 2,520만 (중간은 매끄러운 곡선으로)
-const px = (yr: number) => 16 + ((yr - 2021) / 29) * 268;
-const py = (m: number) => 86 - ((m - 8) / 20) * 76;
-const curve = 'M' + Array.from({ length: 30 }, (_, i) => {
-  const yr = 2021 + i, m = 11.9 + (25.2 - 11.9) * (((yr - 2021) / 29) ** 1.15);
-  return `${px(yr).toFixed(1)} ${py(m).toFixed(1)}`;
-}).join(' L');
+// 01 · 질문: 하나의 큰 질문 → 두 질문(상태 · 정보) → 하나의 고리로 모임.
+// 제어와 기억은 따로가 아니라 같은 문제예요: 개인의 뇌를 충분히 정확하게 모델링하기.
+const loop = ['Observe', 'Infer latent state', 'Predict transition', 'Select perturbation', 'Observe response', 'Update model'];
 ---
 <section class="question" id="question" aria-labelledby="question-h">
   <div class="wrap">
-    <p class="kicker mono">01 / Why</p>
+    <p class="kicker mono">01 / The question</p>
     <h2 id="question-h">Can we build a model that learns an individual brain?</h2>
-    <p class="dek">Then use it to predict Parkinson’s and Alzheimer’s before symptoms.</p>
+    <p class="dek">Precise enough to infer what state it is in and what information it holds, predict how that changes, and know what intervention does to it.</p>
 
-    <div class="cases">
-      <article class="case" aria-labelledby="case-pd">
-        <p class="c-name mono" id="case-pd">Parkinson’s</p>
-        <p class="c-num"><span data-count="25.2" data-dec="1">25.2</span>M</p>
-        <p class="c-sub">people by 2050, more than double 2021</p>
-        <svg class="c-viz" viewBox="0 0 300 100" aria-hidden="true">
-          <path class="ax" d="M16 90 H284" />
-          <path class="ln draw" pathLength="1" d={curve} />
-          <circle class="pt" cx={px(2021)} cy={py(11.9)} r="3.5" />
-          <circle class="pt acc pulse" cx={px(2050)} cy={py(25.2)} r="4" />
-          <text x={px(2021)} y="104" text-anchor="start">2021 · 11.9M</text>
-          <text x={px(2050)} y="104" text-anchor="end">2050</text>
-        </svg>
-        <dl class="c-dl">
-          <div><dt class="mono">Problem</dt><dd>Most deep brain stimulation still runs at fixed settings, tuned by hand.</dd></div>
-          <div><dt class="mono">Target</dt><dd class="t">Subthalamic nucleus · β bursts</dd></div>
-        </dl>
-      </article>
-
-      <article class="case" aria-labelledby="case-ad">
-        <p class="c-name mono" id="case-ad">Alzheimer’s</p>
-        <p class="c-num"><span data-count="57" data-dec="0">57</span>M</p>
-        <p class="c-sub">people living with dementia, 60–70% of it Alzheimer’s</p>
-        <svg class="c-viz" viewBox="0 0 300 100" aria-hidden="true">
-          {dots.map((d) => <circle class={d.e ? 'eng' : 'mem'} cx={d.x} cy={d.y} r={d.e ? 4 : 3.2} style={`--d:${d.d}s`} />)}
-        </svg>
-        <dl class="c-dl">
-          <div><dt class="mono">Problem</dt><dd>Today’s drugs slow the decline. None bring a memory back.</dd></div>
-          <div><dt class="mono">Target</dt><dd class="t">Hippocampal engram cells</dd></div>
-        </dl>
-      </article>
+    <div class="two" aria-label="Two questions that converge">
+      <div class="q">
+        <p class="q-k mono">Control</p>
+        <p class="q-t">What state is this brain in?</p>
+        <p class="q-c mono">state → prediction → intervention</p>
+      </div>
+      <div class="q">
+        <p class="q-k mono">Memory</p>
+        <p class="q-t">What information does it contain?</p>
+        <p class="q-c mono">representation → retrieval → accessibility</p>
+      </div>
+      <svg class="join" viewBox="0 0 1000 70" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M250 0 C250 40 500 30 500 70 M750 0 C750 40 500 30 500 70" />
+      </svg>
     </div>
 
-    <p class="src mono">
-      <a href="https://bmjgroup.com/cases-of-parkinsons-disease-set-to-reach-25-million-worldwide-by-2050/" target="_blank" rel="noreferrer">BMJ 2025 · GBD 2021 projections ↗</a>
-      <a href="https://www.who.int/news-room/fact-sheets/detail/dementia" target="_blank" rel="noreferrer">WHO · dementia fact sheet ↗</a>
-    </p>
+    <ol class="loop mono" aria-label="Shared loop">
+      {loop.map((s, i) => <li style={`--i:${i}`}>{s}</li>)}
+    </ol>
+    <p class="note">Restoring memory may be a harder form of closed-loop control: steering states that carry information, not only symptoms.</p>
   </div>
 </section>
 
 <style>
-  .question { --acc: #a8c8ff; background: #000; border-top: 1px solid var(--rule); padding-block: clamp(96px, 14vw, 180px) clamp(80px, 11vw, 140px); }
+  .question { --acc: #a8c8ff; background: #000; border-top: 1px solid var(--rule); padding-block: clamp(96px, 16vw, 200px) clamp(80px, 12vw, 150px); }
   .kicker { color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 28px; }
   h2 {
     margin: 0; max-width: 17ch; color: #fff;
     font-size: clamp(40px, 6.6vw, 96px); font-weight: 300; line-height: 1.02; letter-spacing: -0.045em;
     text-wrap: balance;
   }
-  .dek { margin: clamp(24px, 3vw, 36px) 0 0; color: #a9a9a9; font-size: clamp(18px, 1.6vw, 21px); }
+  .dek { max-width: 54ch; margin: clamp(28px, 4vw, 40px) 0 0; color: #a9a9a9; font-size: clamp(17px, 1.5vw, 20px); line-height: 1.6; }
 
-  .cases { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: clamp(40px, 6vw, 72px); border-top: 1px solid #262626; border-left: 1px solid #262626; }
-  .case { padding: clamp(20px, 2.6vw, 32px); border-right: 1px solid #262626; border-bottom: 1px solid #262626; display: flex; flex-direction: column; background-image: linear-gradient(#0c0c0c 1px, transparent 1px), linear-gradient(90deg, #0c0c0c 1px, transparent 1px); background-size: 24px 24px; }
-  .c-name { margin: 0; color: var(--acc); letter-spacing: 0.14em; text-transform: uppercase; }
-  .c-num { margin: 14px 0 0; color: #fff; font-size: clamp(64px, 8vw, 112px); font-weight: 250; letter-spacing: -0.05em; line-height: 0.95; font-variant-numeric: tabular-nums; }
-  .c-sub { margin: 10px 0 0; color: #a9a9a9; font-size: 15.5px; }
-  .c-viz { display: block; width: 100%; height: auto; margin: 22px 0 6px; overflow: visible; }
-  .c-viz text { fill: #8a8a8a; font: 12px var(--mono); }
-  .c-viz .ax { fill: none; stroke: #333; }
-  .c-viz .ln { fill: none; stroke: #e6e6e6; stroke-width: 1.5; }
-  .c-viz .pt { fill: #e6e6e6; }
-  .c-viz .pt.acc { fill: var(--acc); }
-  .c-viz .mem { fill: #8a8a8a; }
-  .c-viz .eng { fill: var(--acc); }
-  .c-dl { margin: auto 0 0; padding-top: 18px; }
-  .c-dl div { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-top: 1px solid #1f1f1f; }
-  .c-dl dt { color: #7d7d7d; letter-spacing: 0.1em; text-transform: uppercase; padding-top: 3px; }
-  .c-dl dd { margin: 0; color: #d6d6d6; font-size: 16px; line-height: 1.45; }
-  .c-dl dd.t { color: #fff; }
-  .c-dl dd.t::before { content: '→ '; color: var(--acc); }
-  .src { display: flex; flex-wrap: wrap; gap: 6px 24px; margin: 16px 0 0; }
-  .src a { color: #6a6a6a; text-decoration: none; }
-  .src a:hover { color: #fff; }
+  .two { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: clamp(48px, 7vw, 80px); border-top: 1px solid #262626; border-left: 1px solid #262626; }
+  .q { padding: clamp(18px, 2.4vw, 28px); border-right: 1px solid #262626; border-bottom: 1px solid #262626; }
+  .q-k { margin: 0; color: var(--acc); letter-spacing: 0.14em; text-transform: uppercase; }
+  .q-t { margin: 10px 0 0; color: #fff; font-size: clamp(22px, 2.4vw, 32px); font-weight: 350; letter-spacing: -0.02em; line-height: 1.2; }
+  .q-c { margin: 12px 0 0; color: #8a8a8a; }
+  .join { grid-column: 1 / -1; display: block; width: 100%; height: 56px; }
+  .join path { fill: none; stroke: #3a3a3a; stroke-width: 1.2; vector-effect: non-scaling-stroke; }
 
-  /* 움직임: 곡선이 그려지고, 기억 점들은 흐려지지만 엔그램은 남음 */
-  .run .draw { stroke-dasharray: 1; animation: q-draw 2.4s ease-out both; }
-  .run .pulse { transform-box: fill-box; transform-origin: center; animation: q-pulse 1.8s ease-out infinite 2.2s; }
-  .run .mem { animation: q-fade 6s ease-in-out infinite; animation-delay: var(--d); }
-  .run .eng { transform-box: fill-box; transform-origin: center; animation: q-eng 3s ease-in-out infinite; }
-  @keyframes q-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-  @keyframes q-pulse { 0% { transform: scale(1); opacity: 1; } 60%, 100% { transform: scale(2.2); opacity: .2; } }
-  @keyframes q-fade { 0%, 15% { opacity: 1; } 50%, 70% { opacity: .1; } 100% { opacity: 1; } }
-  @keyframes q-eng { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
-
-  @media (max-width: 760px) {
-    .cases { grid-template-columns: 1fr; }
-    .c-dl div { grid-template-columns: 1fr; gap: 4px; }
+  .loop {
+    list-style: none; margin: 0; padding: 16px 18px; border: 1px solid #2c3a4c; background: #04070b;
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 0; color: #8d8d8d; letter-spacing: 0.1em; text-transform: uppercase;
   }
-  @media (prefers-reduced-motion: reduce) {
-    .run .draw, .run .pulse, .run .mem, .run .eng { animation: none; }
+  .loop li { display: flex; align-items: center; animation: q-step 7.2s infinite; animation-delay: calc(var(--i) * 1.2s); }
+  .loop li:not(:last-child)::after { content: '→'; color: #4a4a4a; margin: 0 12px; }
+  @keyframes q-step { 0%, 12% { color: #a8c8ff; } 18%, 100% { color: #8d8d8d; } }
+  .note { max-width: 60ch; margin: 18px auto 0; text-align: center; color: #9a9a9a; font-size: 15.5px; line-height: 1.6; }
+
+  @media (max-width: 640px) {
+    .two { grid-template-columns: 1fr; }
+    .join { display: none; }
+    .loop { margin-top: 0; justify-content: flex-start; }
+    .note { text-align: left; }
   }
+  @media (prefers-reduced-motion: reduce) { .loop li { animation: none; } }
 </style>
-
-<script>
-  // 화면에 들어오면: 숫자가 0부터 올라가고 그림이 움직이기 시작
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  document.querySelectorAll<HTMLElement>('.question .case').forEach((card) => {
-    const num = card.querySelector<HTMLElement>('[data-count]');
-    let done = false;
-    new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting || done) return;
-      done = true; card.classList.add('run');
-      if (!num || reduce) return;
-      const to = Number(num.dataset.count), dec = Number(num.dataset.dec || 0), t0 = performance.now();
-      const tick = (now: number) => {
-        const u = Math.min(1, (now - t0) / 1400), v = to * (1 - (1 - u) ** 3);
-        num.textContent = v.toFixed(dec);
-        if (u < 1) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-    }, { threshold: 0.35 }).observe(card);
-  });
-</script>
