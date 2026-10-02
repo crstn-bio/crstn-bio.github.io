@@ -2,7 +2,8 @@
 // 02 · 구체적 설계
 // 탭(Thesis / Parkinson's / Alzheimer's)을 누르면 뇌가 해당 표적 쪽으로 돌아가고,
 // 오른쪽에 해부학적 위치, 아래에 엔지니어링 도안이 바뀌어요.
-// 모든 그림은 코드로 그린 도식이에요. 실제 환자 데이터가 아니에요.
+// 뇌 모델은 실제 집단 평균 해부 데이터예요 (HCP S1200, MNI152 공간, src/scripts/hcpBrain.ts).
+// 특정 환자의 데이터는 아니고, STN은 문헌상 대략적 위치예요. 아래 도안은 코드로 그린 도식이에요.
 // 기억 도안용 5×5 패턴: 저장된 패턴, 부분만 해독된 패턴, 그 차이
 const stored = [0,1,1,0,0, 1,0,1,1,0, 0,1,0,1,1, 1,1,0,0,1, 0,0,1,1,0];
 const decoded = stored.map((v, i) => (v && [2, 5, 13, 16, 22].includes(i) ? 0 : v));
@@ -100,11 +101,16 @@ const targets = [
     <div class="stage">
       <div class="viewport">
         <canvas id="design-brain" aria-hidden="true"></canvas>
+        <canvas id="design-overlay" aria-hidden="true"></canvas>
         <dl class="hud mono" aria-hidden="true">
-          <div><dt>View</dt><dd data-hud="view">lateral, from above</dd></div>
-          <div><dt>Target</dt><dd data-hud="target">M1</dd></div>
-          <div><dt>Yaw</dt><dd data-hud="yaw">0°</dd></div>
+          <div><dt>View</dt><dd data-hud="view">left anterolateral</dd></div>
+          <div><dt>Target</dt><dd data-hud="target">M1 · area 4, left</dd></div>
+          <div><dt>MNI mm</dt><dd data-hud="mni">−39, −22, 58</dd></div>
+          <div><dt>Device</dt><dd data-hud="device">transducer · schematic</dd></div>
+          <div><dt>Az · El</dt><dd data-hud="az">34° · 5°</dd></div>
         </dl>
+        <p class="status mono" data-status role="status">Loading HCP S1200 surface · 1.5 MB</p>
+        <p class="src mono" aria-hidden="true">HCP S1200 · MNI152 · orthographic</p>
         <p class="hint mono" aria-hidden="true">Drag to rotate</p>
       </div>
 
@@ -272,7 +278,7 @@ const targets = [
         </svg></div>
       </div>
 
-      <figcaption class="mono">Drawn in code for illustration. Anatomy is simplified; device figures are representative, not a specific surgical plan.</figcaption>
+      <figcaption class="mono">Drawings are schematic. The 3D model above is group-average anatomy in MNI152 space (HCP S1200 cortex, HCP-MMP1.0 area 4, HCP subcortical atlas); the STN is placed at approximate literature coordinates. Device geometry is representative, not a surgical plan.</figcaption>
     </figure>
 
     <div class="basis">
@@ -281,7 +287,10 @@ const targets = [
         <a href="https://www.nature.com/articles/s41586-025-08993-1" target="_blank" rel="noreferrer">Ko et al., Nature 2025 · DG→CA3→CA1 engram circuitry reorganizes over time ↗</a>
         <a href="https://www.nature.com/articles/nrn4000" target="_blank" rel="noreferrer">Josselyn, Köhler &amp; Frankland · engram identification and reactivation ↗</a>
         <a href="https://www.neuropixels.org/probe-1-0-nhp-long" target="_blank" rel="noreferrer">Neuropixels 1.0 NHP Long · high-density deep recording ↗</a>
+        <a href="https://www.nature.com/articles/nature18933" target="_blank" rel="noreferrer">Glasser et al., Nature 2016 · HCP-MMP1.0 cortical parcellation ↗</a>
       </div>
+      <p class="mono">Brain model</p>
+      <p class="ack">Data were provided by the Human Connectome Project, WU-Minn Consortium (Principal Investigators: David Van Essen and Kamil Ugurbil; 1U54MH091657) funded by the 16 NIH Institutes and Centers that support the NIH Blueprint for Neuroscience Research; and by the McDonnell Center for Systems Neuroscience at Washington University. Point cloud built with <a href="https://github.com/crstn-bio/crstn-bio.github.io/tree/main/tools/brain-data" target="_blank" rel="noreferrer">tools/brain-data ↗</a></p>
     </div>
   </div>
 </section>
@@ -318,6 +327,8 @@ const targets = [
   .hud dt { color: #6f6f6f; }
   .hud dd { margin: 0; color: #d9d9d9; }
   .hint { position: absolute; right: 16px; bottom: 12px; margin: 0; color: #5f5f5f; pointer-events: none; }
+  .src { position: absolute; left: 16px; bottom: 12px; margin: 0; color: #5f5f5f; pointer-events: none; }
+  .status { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; color: #6a6a6a; letter-spacing: 0.04em; white-space: nowrap; pointer-events: none; }
 
   .panel { padding-top: 4px; }
   .panel:focus-visible { outline-offset: 8px; }
@@ -376,6 +387,8 @@ const targets = [
   .basis > div { display: flex; flex-wrap: wrap; gap: 8px 24px; }
   .basis a { color: #8d8d8d; text-decoration: none; font-size: 13.5px; line-height: 1.5; }
   .basis a:hover { color: #fff; }
+  .basis .ack { margin: 0; color: #6a6a6a; font-size: 12.5px; line-height: 1.6; max-width: 92ch; text-transform: none; letter-spacing: 0; }
+  .basis .ack a { font-size: inherit; color: #8d8d8d; }
 
   @media (max-width: 960px) {
     .d-head, .stage { grid-template-columns: 1fr; }
@@ -393,9 +406,10 @@ const targets = [
     .tabs button::before { width: 0; }
     .tabs button[aria-selected='true']::before { width: 40px; }
     .viewport { aspect-ratio: 1 / 1.05; }
-    .hud { top: auto; bottom: 12px; }
-    .hud div:last-child { display: none; }
+    .hud { left: 12px; top: 12px; }
+    .hud div:nth-child(1), .hud div:nth-child(5) { display: none; }
     .hint { display: none; }
+    .src { left: 12px; bottom: 10px; }
     .anatomy div { grid-template-columns: 1fr; gap: 4px; }
     .basis { grid-template-columns: 1fr; }
   }
@@ -411,239 +425,355 @@ const targets = [
 </svg>
 
 <script>
-  import { buildBrain, buildNetwork, makeRng, makeProjector, depthOf, REGION, type BrainPoint } from '../scripts/brain';
+  import { loadBrain, createRenderer, makeCamera, project, projectDir, type BrainData, type Camera, type Pass, type Renderer, type V3 } from '../scripts/hcpBrain';
 
   const root = document.querySelector<HTMLElement>('.design');
-  const canvas = document.getElementById('design-brain') as HTMLCanvasElement | null;
+  const glCanvas = document.getElementById('design-brain') as HTMLCanvasElement | null;
+  const ov = document.getElementById('design-overlay') as HTMLCanvasElement | null;
+  const viewport = root?.querySelector<HTMLElement>('.viewport');
 
-  if (root && canvas) {
-    const ctx = canvas.getContext('2d')!;
+  if (root && glCanvas && ov && viewport) {
+    const ctx = ov.getContext('2d')!;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const ACC = '168,200,255';
+    const ACCV: V3 = [168 / 255, 200 / 255, 1];
     const MONO = '12px "Geist Mono Variable", ui-monospace, monospace';
+    const SMALL = '10.5px "Geist Mono Variable", ui-monospace, monospace';
     type Key = 'thesis' | 'pd' | 'ad';
 
-    // 탭마다의 시점: yaw(좌우 회전), pitch(위아래 기울기), zoom, 피질 밝기
-    const VIEWS: Record<Key, { yaw: number; pitch: number; zoom: number; cy: number; cortex: number; view: string; target: string; dwg: string }> = {
-      thesis: { yaw: -0.3, pitch: -0.55, zoom: 0.92, cy: 0.6, cortex: 0.72, view: 'lateral, from above', target: 'M1, left precentral gyrus', dwg: 'DWG-01 · a-tbTUS + FES' },
-      pd: { yaw: -1.32, pitch: -0.2, zoom: 1.12, cy: 0.52, cortex: 0.24, view: 'anterior oblique', target: 'STN, bilateral', dwg: 'DWG-02 · closed-loop DBS' },
-      ad: { yaw: -0.28, pitch: 0.12, zoom: 1.06, cy: 0.52, cortex: 0.24, view: 'lateral, from below', target: 'Hippocampus, bilateral', dwg: 'DWG-03 · hippocampal memory loop' },
+    // 탭마다의 시점. az: 수평 방위(0 = 왼쪽 옆, +π/2 = 앞), el: 높이(+ 위에서), c: 화면 가운데에 올 MNI 좌표(mm)
+    interface ViewDef { az: number; el: number; zoom: number; c: V3; cortex: number; view: string; target: string; device: string; dwg: string }
+    const VIEWS: Record<Key, ViewDef> = {
+      thesis: { az: 0.6, el: 0.08, zoom: 1.0, c: [-4, -14, 12], cortex: 1, view: 'left anterolateral', target: 'M1 · area 4, left', device: 'transducer · schematic', dwg: 'DWG-01 · a-tbTUS + FES' },
+      pd: { az: 1.22, el: 0.3, zoom: 1.32, c: [0, -4, 22], cortex: 0.32, view: 'anterior oblique', target: 'STN · bilateral', device: 'lead Ø1.27 mm · to scale', dwg: 'DWG-02 · closed-loop DBS' },
+      ad: { az: -0.5, el: -0.42, zoom: 1.18, c: [-6, -32, 2], cortex: 0.32, view: 'left inferolateral', target: 'hippocampus · bilateral', device: 'probe · long axis (concept)', dwg: 'DWG-03 · hippocampal memory loop' },
     };
 
-    // ── 뇌 모델 ──
-    let w = 0, h = 0, mobile = false;
-    let pts: BrainPoint[] = [];
-    let PX = new Float32Array(0), PY = new Float32Array(0), PZ = new Float32Array(0);
-    let m1: number[] = [], stn: number[] = [], hip: number[] = [];
-    let m1C = [0, 0, 0], stnL = [0, 0, 0], stnR = [0, 0, 0], hipL = [0, 0, 0], hipC = [0, 0, 0];
-    let net = { nodes: [] as number[], edges: [] as [number, number][] };
-    const mean = (ids: number[]) => [0, 1, 2].map((k) => ids.reduce((s, i) => s + [pts[i].x, pts[i].y, pts[i].z][k], 0) / Math.max(1, ids.length));
-
-    function build() {
-      pts = buildBrain(mobile ? 3800 : 6800, { deep: true, seed: 1729 });
-      m1 = []; stn = []; hip = [];
-      const cortex: number[] = [];
-      pts.forEach((p, i) => {
-        if (p.r === REGION.cortex) {
-          cortex.push(i);
-          // 중심고랑 바로 앞(앞쪽 = +x) 띠를 M1로 표시 (왼쪽 반구, z > 0)
-          const y = p.y - 0.14;
-          const xc = 0.2 - (0.3 * (y - 0.05)) / 0.65;
-          if (p.z > 0.05 && y > 0.18 && y < 0.74 && p.x > xc + 0.02 && p.x < xc + 0.15) m1.push(i);
-        } else if (p.r === REGION.stn) stn.push(i);
-        else if (p.r === REGION.hippo) hip.push(i);
-      });
-      m1C = mean(m1);
-      stnL = mean(stn.filter((i) => pts[i].z > 0)); stnR = mean(stn.filter((i) => pts[i].z < 0));
-      hipL = mean(hip.filter((i) => pts[i].z > 0)); hipC = hipL;
-      net = buildNetwork(pts, cortex, mobile ? 90 : 160, makeRng(7), 2, 0.42);
-      PX = new Float32Array(pts.length); PY = new Float32Array(pts.length); PZ = new Float32Array(pts.length);
-    }
+    // ── 크기 ──
+    let w = 0, h = 0, dpr = 1, mobile = false;
+    let data: BrainData | null = null;
+    let renderer: Renderer | null = null;
+    let gl = glCanvas;
 
     function layout() {
-      const d = Math.min(window.devicePixelRatio || 1, 2), r = canvas!.getBoundingClientRect();
-      const was = mobile;
+      const r = viewport!.getBoundingClientRect();
       w = r.width; h = r.height; mobile = w < 560;
-      canvas!.width = Math.round(w * d); canvas!.height = Math.round(h * d);
-      ctx.setTransform(d, 0, 0, d, 0, 0);
-      if (!pts.length || was !== mobile) build();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      ov!.width = Math.round(w * dpr); ov!.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      renderer?.resize(w, h, dpr);
     }
 
     // ── 시점 애니메이션 ──
     let active: Key = 'thesis';
-    const cur = { ...VIEWS.thesis };
-    const from = { ...VIEWS.thesis };
-    let animStart = -1, ANIM = 1.4;
-    let userYaw = 0, userPitch = 0;
-    const weight = { thesis: 1, pd: 0, ad: 0 };
+    const cur = { az: VIEWS.thesis.az, el: VIEWS.thesis.el, zoom: 1, c: [...VIEWS.thesis.c] as V3, cortex: 1 };
+    const from = { ...cur, c: [...cur.c] as V3 };
+    let animStart = -1;
+    const ANIM = 1.4;
+    let userAz = 0, userEl = 0;
+    const weight: Record<Key, number> = { thesis: 1, pd: 0, ad: 0 };
     const easeIO = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 
     function go(k: Key, now: number) {
-      Object.assign(from, cur, { yaw: cur.yaw + userYaw, pitch: cur.pitch + userPitch });
-      userYaw = 0; userPitch = 0;
+      Object.assign(from, cur, { az: cur.az + userAz, el: cur.el + userEl, c: [...cur.c] });
+      userAz = 0; userEl = 0;
       active = k; animStart = now;
     }
 
+    let lastStep = -1;
     function stepView(now: number) {
-      const tgt = VIEWS[active];
-      const u = reduce || animStart < 0 ? 1 : Math.min(1, (now - animStart) / 1000 / ANIM);
-      const e = easeIO(u);
-      cur.yaw = from.yaw + (tgt.yaw - from.yaw) * e;
-      cur.pitch = from.pitch + (tgt.pitch - from.pitch) * e;
-      cur.zoom = from.zoom + (tgt.zoom - from.zoom) * e;
-      cur.cortex = from.cortex + (tgt.cortex - from.cortex) * e;
-      cur.cy = from.cy + (tgt.cy - from.cy) * e;
-      (Object.keys(weight) as Key[]).forEach((k) => {
-        const want = k === active ? 1 : 0;
-        weight[k] += (want - weight[k]) * (reduce ? 1 : 0.08);
-      });
+      const t = VIEWS[active];
+      // 강조 전환은 시간 기준으로 (화면 주사율과 상관없이 같은 속도)
+      const dt = lastStep < 0 ? 16 : Math.min(200, now - lastStep); lastStep = now;
+      const kw = reduce ? 1 : 1 - Math.exp(-dt / 220);
+      const e = easeIO(reduce || animStart < 0 ? 1 : Math.min(1, (now - animStart) / 1000 / ANIM));
+      const mix = (a: number, b: number) => a + (b - a) * e;
+      cur.az = mix(from.az, t.az); cur.el = mix(from.el, t.el); cur.zoom = mix(from.zoom, t.zoom); cur.cortex = mix(from.cortex, t.cortex);
+      cur.c = [0, 1, 2].map((i) => mix(from.c[i], t.c[i])) as V3;
+      (Object.keys(weight) as Key[]).forEach((k) => { weight[k] += ((k === active ? 1 : 0) - weight[k]) * kw; });
     }
 
-    // ── 그리기 ──
-    function label(x: number, y: number, dx: number, dy: number, text: string, a: number, color = '255,255,255') {
+    // ── 겹쳐 그리는 도식 ──
+    const sub = (a: number[], b: number[]) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+    const add = (a: number[], b: number[], s = 1) => [a[0] + b[0] * s, a[1] + b[1] * s, a[2] + b[2] * s];
+    const norm = (a: number[]) => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+    const cross = (a: number[], b: number[]) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+
+    function label(x: number, y: number, dx: number, dy: number, text: string, a: number, color = '255,255,255', sub = '') {
       if (a < 0.03) return;
-      ctx.save(); ctx.globalAlpha = a; ctx.font = MONO;
-      const tw = ctx.measureText(text).width;
+      ctx.save(); ctx.globalAlpha = a; ctx.font = SMALL;
+      const sw = sub ? ctx.measureText(sub).width : 0;
+      ctx.font = MONO;
+      const tw = Math.max(ctx.measureText(text).width, sw);
       // 이름표가 들어갈 공간이 더 넓은 쪽으로, 그래도 모자라면 화면 안으로 밀어 넣음
-      const need = Math.abs(dx) + tw + 16;
-      const roomR = w - 8 - x, roomL = x - 8;
+      const need = Math.abs(dx) + tw + 16, roomR = w - 8 - x, roomL = x - 8;
       if (dx > 0 && roomR < need) dx = roomL >= need || roomL > roomR ? -Math.abs(dx) : dx;
       else if (dx < 0 && roomL < need) dx = roomR >= need || roomR > roomL ? Math.abs(dx) : dx;
       if (dx > 0) dx = Math.min(dx, Math.max(12, roomR - tw - 16));
       else dx = -Math.min(-dx, Math.max(12, roomL - tw - 16));
-      const ty = Math.max(16, Math.min(h - 16, y + dy));
-      ctx.strokeStyle = `rgba(${color},0.8)`; ctx.fillStyle = `rgba(${color},1)`; ctx.lineWidth = 1;
+      const ty = Math.max(16, Math.min(h - 40, y + dy));
+      ctx.strokeStyle = `rgba(${color},0.75)`; ctx.fillStyle = `rgba(${color},1)`; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dx * 0.6, ty); ctx.lineTo(x + dx, ty); ctx.stroke();
       ctx.textBaseline = 'middle'; ctx.textAlign = dx < 0 ? 'right' : 'left';
       ctx.fillText(text, x + dx + (dx < 0 ? -7 : 7), ty);
+      if (sub) { ctx.font = SMALL; ctx.fillStyle = '#8a8a8a'; ctx.fillText(sub, x + dx + (dx < 0 ? -7 : 7), ty + 16); }
       ctx.restore();
     }
 
+    // 조준선: 가운데가 빈 원 + 네 방향 눈금
+    function reticle(x: number, y: number, r: number, a: number, color = '255,255,255') {
+      ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = `rgba(${color},0.7)`; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { ctx.moveTo(x + dx * (r + 2), y + dy * (r + 2)); ctx.lineTo(x + dx * (r + 6), y + dy * (r + 6)); }
+      ctx.stroke(); ctx.restore();
+    }
+
+    // 굵기가 있는 막대 (리드 몸체): 화면에서 수직 방향으로 반지름만큼 벌림
+    function rod(a: number[], b: number[], rPx: number) {
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      const px = (-(b[1] - a[1]) / len) * rPx, py = ((b[0] - a[0]) / len) * rPx;
+      ctx.beginPath();
+      ctx.moveTo(a[0] + px, a[1] + py); ctx.lineTo(b[0] + px, b[1] + py); ctx.lineTo(b[0] - px, b[1] - py); ctx.lineTo(a[0] - px, a[1] - py);
+      ctx.closePath();
+    }
+
+    // 볼록 껍질 (변환기 몸체 윤곽)
+    function hull(pts: number[][]) {
+      const p = [...pts].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+      const cr = (o: number[], a: number[], b: number[]) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+      const lo: number[][] = [], up: number[][] = [];
+      for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
+      for (const q of p.reverse()) { while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
+      return lo.slice(0, -1).concat(up.slice(0, -1));
+    }
+
+    function drawThesis(cam: Camera, a: number, t: number) {
+      const lm = data!.landmarks.m1;
+      const n = lm.normal, T = lm.target;
+      const focus = add(T, n, -3);                       // 피질 안쪽 3 mm
+      const face = add(T, n, 16);                        // 두피 위 (피질에서 약 1.6 cm)
+      const back = add(face, n, 12);
+      const e1 = norm(cross(n, [0, 0, 1])), e2 = cross(n, e1);
+      const ring = (c: number[], r: number) => Array.from({ length: 28 }, (_, i) => {
+        const th = (i / 28) * Math.PI * 2;
+        return project(cam, add(add(c, e1, r * Math.cos(th)), e2, r * Math.sin(th)));
+      });
+      const fr = ring(face, 9), br = ring(back, 9);
+      const F = project(cam, focus), C = project(cam, face);
+      const ax = [F[0] - C[0], F[1] - C[1]], al = Math.hypot(ax[0], ax[1]) || 1;
+      const pp = [-ax[1] / al, ax[0] / al];
+      const side = (q: number[]) => (q[0] - C[0]) * pp[0] + (q[1] - C[1]) * pp[1];
+      const s1 = fr.reduce((m, q) => (side(q) > side(m) ? q : m)), s2 = fr.reduce((m, q) => (side(q) < side(m) ? q : m));
+
+      ctx.save(); ctx.globalAlpha = a;
+      // 빔: 변환기 가장자리에서 초점으로 모이는 원뿔 (옅게 채우고 가장자리는 점선)
+      ctx.fillStyle = `rgba(${ACC},0.09)`;
+      ctx.beginPath(); ctx.moveTo(s1[0], s1[1]); ctx.lineTo(F[0], F[1]); ctx.lineTo(s2[0], s2[1]); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(s1[0], s1[1]); ctx.lineTo(F[0], F[1]); ctx.moveTo(s2[0], s2[1]); ctx.lineTo(F[0], F[1]); ctx.stroke();
+      ctx.setLineDash([]);
+      // 몸체
+      const hp = hull([...fr, ...br]);
+      ctx.fillStyle = '#000'; ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      ctx.beginPath(); hp.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]))); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.beginPath(); fr.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]))); ctx.closePath(); ctx.stroke();
+      // 초점: 빔 방향으로 길쭉한 타원
+      const ang = Math.atan2(ax[1], ax[0]);
+      const axial = Math.max(5, Math.hypot(...projectDir(cam, n)) * 6), lateral = Math.max(2.2, cam.k * 1.6);
+      if (!reduce) {
+        // 세타 버스트: 0.2초마다 3번 (10배 느리게 재생)
+        const ph = (t % 2) / 2;
+        for (let k = 0; k < 3; k++) {
+          const q = ph - k * 0.06; if (q < 0 || q > 0.5) continue;
+          ctx.strokeStyle = `rgba(${ACC},${(0.85 * (1 - q * 2)).toFixed(3)})`;
+          ctx.beginPath(); ctx.ellipse(F[0], F[1], axial + q * 36, lateral + q * 22, ang, 0, Math.PI * 2); ctx.stroke();
+        }
+      }
+      ctx.fillStyle = `rgba(${ACC},0.85)`; ctx.beginPath(); ctx.ellipse(F[0], F[1], axial, lateral, ang, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      const B = project(cam, back);
+      if (!mobile) label(B[0], B[1], 40, 40, 'TRANSDUCER', a, '255,255,255', 'scalp · 1–2 cm to M1'); // 모바일은 HUD의 Device 줄로 대신
+      reticle(F[0], F[1], 9, a, ACC);
+      label(F[0], F[1], -96, 54, 'M1 · FOCUS', a, ACC);
+    }
+
+    function drawPD(cam: Camera, a: number, t: number) {
+      const leads = data!.landmarks.leads;
+      ctx.save(); ctx.globalAlpha = a;
+      for (const s of ['L', 'R'] as const) {
+        const { target, dir, entry } = leads[s];
+        // 접점 4개(길이 1.5 mm, 간격 0.5 mm)가 STN 중심을 가로지르도록
+        const tip = add(target, dir, -3.75);
+        const out = add(entry, dir, 14);
+        const A = project(cam, tip), E = project(cam, entry), O = project(cam, out);
+        const r = Math.max(1.2, (1.27 / 2) * cam.k);
+        ctx.fillStyle = '#000'; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1;
+        rod(A, E, r); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)'; rod(E, O, r); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#fff';
+        for (let k = 0; k < 4; k++) { rod(project(cam, add(tip, dir, k * 2)), project(cam, add(tip, dir, k * 2 + 1.5)), r); ctx.fill(); }
+        // 들어가는 자리 (피질 표면)
+        ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.beginPath(); ctx.arc(E[0], E[1], 3.5, 0, Math.PI * 2); ctx.stroke();
+        if (!reduce) {
+          const S = project(cam, target);
+          const ph = ((t + (s === 'L' ? 0 : 0.6)) % 1.2) / 1.2;
+          ctx.strokeStyle = `rgba(${ACC},${(0.55 * (1 - ph)).toFixed(3)})`;
+          ctx.beginPath(); ctx.arc(S[0], S[1], 8 + ph * 24, 0, Math.PI * 2); ctx.stroke();
+        }
+      }
+      ctx.restore();
+      const SL = project(cam, leads.L.target), SR = project(cam, leads.R.target);
+      reticle(SL[0], SL[1], 9, a, ACC); reticle(SR[0], SR[1], 9, a, ACC);
+      // 이름표는 바깥쪽으로 (앞에서 보면 환자의 왼쪽이 화면 오른쪽)
+      const midX = (SL[0] + SR[0]) / 2;
+      const lx = mobile ? 40 : 90;
+      label(SL[0], SL[1], SL[0] < midX ? -lx : lx, 48, 'STN · L', a, ACC);
+      label(SR[0], SR[1], SR[0] < midX ? -lx : lx, 48, 'STN · R', a, ACC);
+      const mid = project(cam, add(leads.R.target, leads.R.dir, 34));
+      label(mid[0], mid[1], 70, -20, 'DBS LEAD · 4 CONTACTS', a);
+      const ER = project(cam, leads.R.entry);
+      if (a > 0.03) {
+        ctx.save(); ctx.globalAlpha = a * 0.75; ctx.font = SMALL; ctx.fillStyle = '#9a9a9a'; ctx.textBaseline = 'middle';
+        ctx.textAlign = ER[0] > w - 170 ? 'right' : 'left';
+        ctx.fillText('65° sagittal · 18° coronal', ER[0] + (ctx.textAlign === 'right' ? -12 : 12), ER[1] - 4);
+        ctx.restore();
+      }
+    }
+
+    function drawAD(cam: Camera, a: number, t: number) {
+      const H = data!.landmarks.hpc.L;
+      const ax = H.axis;
+      const tip = add(H.head, ax, -2);                  // 머리 안쪽 끝
+      const out = add(H.entry, ax, -14);
+      const A = project(cam, tip), E = project(cam, H.entry), O = project(cam, out);
+      ctx.save(); ctx.globalAlpha = a;
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1.3;
+      ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(E[0], E[1]); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.beginPath(); ctx.moveTo(E[0], E[1]); ctx.lineTo(O[0], O[1]); ctx.stroke();
+      ctx.beginPath(); ctx.arc(E[0], E[1], 3.5, 0, Math.PI * 2); ctx.stroke();
+      // 기록 부위: 해마 긴 축을 따라 2 mm마다
+      const n = Math.round(H.length / 2);
+      for (let k = 0; k < n; k++) {
+        const q = project(cam, add(tip, ax, -k * 2));
+        const on = !reduce && Math.sin(t * 5 + k * 1.9) > 0.82;
+        ctx.fillStyle = on ? '#fff' : `rgba(${ACC},0.9)`;
+        ctx.fillRect(q[0] - 1.5, q[1] - 1.5, 3, 3);
+      }
+      // 치수: 해마 긴 축 길이
+      const hd = project(cam, H.head), tl = project(cam, H.tail);
+      const dx = tl[0] - hd[0], dy = tl[1] - hd[1], dl = Math.hypot(dx, dy) || 1;
+      let px = -dy / dl, py = dx / dl;
+      if (py > 0) { px = -px; py = -py; }                 // 위쪽으로 띄움
+      const o = 22, p0 = [hd[0] + px * o, hd[1] + py * o], p1 = [tl[0] + px * o, tl[1] + py * o];
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]);
+      for (const p of [p0, p1]) { ctx.moveTo(p[0] - px * 4, p[1] - py * 4); ctx.lineTo(p[0] + px * 4, p[1] + py * 4); }
+      ctx.stroke();
+      ctx.font = SMALL; ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(`≈ ${Math.round(H.length)} mm long axis`, (p0[0] + p1[0]) / 2 + px * 14, (p0[1] + p1[1]) / 2 + py * 14);
+      ctx.restore();
+      const C = project(cam, H.head), M = project(cam, H.centroid);
+      reticle(C[0], C[1], 9, a, ACC);
+      label(M[0], M[1], mobile ? 40 : 80, 74, mobile ? 'HIPPOCAMPUS' : 'HIPPOCAMPUS · LONG-AXIS PROBE', a, ACC);
+      label(E[0], E[1], 40, 44, 'OCCIPITAL ENTRY', a);
+    }
+
+    // 방향 표시: MNI 축 R(+x) · A(+y) · S(+z)
+    function gizmo(cam: Camera) {
+      const ox = w - (mobile ? 34 : 46), oy = mobile ? 34 : 46, L = mobile ? 16 : 20;
+      ctx.save(); ctx.font = SMALL; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 1;
+      const placed: number[][] = [];
+      const axes = ([[[1, 0, 0], 'R'], [[0, 1, 0], 'A'], [[0, 0, 1], 'S']] as const)
+        .map(([e, name]) => ({ e: e as unknown as number[], name, toward: e[0] * cam.T[0] + e[1] * cam.T[1] + e[2] * cam.T[2] }))
+        .sort((p, q) => q.toward - p.toward);               // 카메라 쪽 축 이름을 먼저 자리 잡게
+      for (const { e, name, toward } of axes) {
+        const [dx, dy] = projectDir(cam, e);
+        const al = 0.35 + 0.45 * (0.5 + 0.5 * toward);
+        const s = L / cam.k;
+        ctx.strokeStyle = `rgba(255,255,255,${al.toFixed(2)})`; ctx.fillStyle = `rgba(255,255,255,${(al + 0.1).toFixed(2)})`;
+        ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox + dx * s, oy + dy * s); ctx.stroke();
+        // 거의 정면(또는 반대)을 향하는 축은 이름이 원점에 겹치니 생략, 다른 이름과 겹치면 살짝 내림
+        if (Math.hypot(dx * s, dy * s) < L * 0.35) continue;
+        let tx = ox + dx * s * 1.42, ty = oy + dy * s * 1.42;
+        for (const [px, py] of placed) if (Math.hypot(tx - px, ty - py) < 11) ty = py + 12;
+        placed.push([tx, ty]);
+        ctx.fillText(name, tx, ty);
+      }
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ox, oy, 1.6, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+
+    // 축척 막대 (정사영이라 화면 어디서나 같은 축척)
+    function scaleBar(cam: Camera) {
+      const x = 16, y = h - 36, len = 10 * cam.k;
+      ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y); ctx.moveTo(x, y - 3); ctx.lineTo(x, y + 3); ctx.moveTo(x + len, y - 3); ctx.lineTo(x + len, y + 3); ctx.stroke();
+      ctx.font = SMALL; ctx.fillStyle = '#9a9a9a'; ctx.textBaseline = 'middle'; ctx.fillText('10 mm', x + len + 8, y);
+      ctx.restore();
+    }
+
+    // ── 그리기 ──
     let lastHud = 0;
-    const hudYaw = root.querySelector<HTMLElement>('[data-hud="yaw"]');
+    const lod = () => (mobile ? 0.55 : 1);
 
     function draw(now: number) {
+      if (!data || !renderer) return;
       stepView(now);
       const t = now / 1000;
       const drift = reduce ? 0 : Math.sin(t * 0.18) * 0.06;
-      const yaw = cur.yaw + userYaw + drift, pitch = Math.max(-1.2, Math.min(0.8, cur.pitch + userPitch));
-      const scale = (mobile ? Math.min(w * 0.4, h * 0.36) : Math.min(w * 0.33, h * 0.36)) * cur.zoom;
-      const cx = w * 0.5, cy = h * (cur.cy + (mobile ? 0.04 : 0));
-      const P = makeProjector({ yaw, pitch, cx, cy, scale });
-      ctx.clearRect(0, 0, w, h);
+      const az = cur.az + userAz + drift, el = Math.max(-1.3, Math.min(1.3, cur.el + userEl));
+      const kb = Math.min((0.74 * w) / 172, (0.8 * h) / 150) * (mobile ? 1.06 : 1);
+      const cam = makeCamera(az, el, cur.c, kb * cur.zoom, w * 0.5, h * 0.5);
 
       const wT = weight.thesis, wP = weight.pd, wA = weight.ad;
-      const inM1 = new Uint8Array(pts.length); for (const i of m1) inM1[i] = 1;
+      const G = 2.4 * cur.cortex, F = 0.11, A = 0.34;
+      const passes: Pass[] = [
+        { part: 'ctxL', mode: 'cortex', gain: G },
+        { part: 'ctxR', mode: 'cortex', gain: G },
+        { part: 'm1', mode: 'cortex', gain: G * (1 - wT) },
+        { part: 'm1', mode: 'accent', gain: A * 0.62 * wT, color: ACCV, glow: true },
+        { part: 'cb', mode: 'faint', gain: F * 0.75 * (0.5 + 0.5 * cur.cortex) },
+        { part: 'bs', mode: 'faint', gain: F * 0.9, cutZ: -66 },
+        { part: 'thal', mode: 'faint', gain: F * (0.7 + 1.3 * wP) },
+        { part: 'hpcL', mode: 'faint', gain: F * 0.7 * (1 - wA) },
+        { part: 'hpcR', mode: 'faint', gain: F * 0.7 * (1 - wA) },
+        { part: 'hpcL', mode: 'accent', gain: A * wA, color: ACCV, glow: true },
+        { part: 'hpcR', mode: 'accent', gain: A * 0.8 * wA, color: ACCV, glow: true },
+        { part: 'stnL', mode: 'faint', gain: F * 0.5 * (1 - wP) },
+        { part: 'stnR', mode: 'faint', gain: F * 0.5 * (1 - wP) },
+        { part: 'stnL', mode: 'accent', gain: A * 0.6 * wP, color: ACCV, glow: true },
+        { part: 'stnR', mode: 'accent', gain: A * 0.6 * wP, color: ACCV, glow: true },
+      ];
+      renderer.draw(cam, passes, lod());
 
-      // 점 (밝기 단계로 묶어서 빠르게)
-      const B = 10, white: number[][] = Array.from({ length: B }, () => []), acc: number[][] = Array.from({ length: B }, () => []);
-      for (let i = 0; i < pts.length; i++) {
-        const p = pts[i];
-        const [x, y, z] = P(p.x, p.y, p.z);
-        PX[i] = x; PY[i] = y; PZ[i] = z;
-        const d = 0.3 + 0.7 * depthOf(z);
-        let a: number, hot = 0;
-        if (p.r === REGION.stn) { hot = wP; a = 0.1 + 0.85 * wP; }
-        else if (p.r === REGION.hippo) { hot = wA; a = 0.08 + 0.8 * wA; }
-        else if (inM1[i]) { hot = wT; a = p.b * d * cur.cortex * (1 - wT) + (0.55 + 0.45 * d) * wT; }
-        else if (p.r === REGION.interior) a = 0.12 * d * cur.cortex;
-        else a = p.b * d * cur.cortex;
-        a = Math.min(0.999, a);
-        if (a < 0.02) continue;
-        (hot > 0.5 ? acc : white)[Math.floor(a * B)].push(i);
-      }
-      for (let b = 0; b < B; b++) {
-        const al = ((b + 0.5) / B).toFixed(3);
-        if (white[b].length) { ctx.fillStyle = `rgba(255,255,255,${al})`; for (const i of white[b]) ctx.fillRect(PX[i], PY[i], 1.2, 1.2); }
-        if (acc[b].length) { ctx.fillStyle = `rgba(${ACC},${al})`; for (const i of acc[b]) ctx.fillRect(PX[i] - 0.3, PY[i] - 0.3, 1.8, 1.8); }
-      }
-
-      // 옅은 피질 네트워크 (Thesis에서만 약간)
-      if (wT > 0.05) {
-        ctx.strokeStyle = `rgba(255,255,255,${(0.05 * wT).toFixed(3)})`; ctx.lineWidth = 0.6; ctx.beginPath();
-        for (const [a, b] of net.edges) { const i = net.nodes[a], j = net.nodes[b]; ctx.moveTo(PX[i], PY[i]); ctx.lineTo(PX[j], PY[j]); }
-        ctx.stroke();
-      }
-
-      // ① Thesis: 집속 초음파 변환기와 빔
-      if (wT > 0.03) {
-        const n = [m1C[0] * 0.3, m1C[1] - 0.14, m1C[2]]; const L = Math.hypot(n[0], n[1], n[2]) || 1;
-        const off = 0.4;
-        const [fx, fy] = P(m1C[0], m1C[1], m1C[2]);
-        const [tx, ty] = P(m1C[0] + (n[0] / L) * off, m1C[1] + (n[1] / L) * off, m1C[2] + (n[2] / L) * off);
-        const ang = Math.atan2(fy - ty, fx - tx), px = -Math.sin(ang), py = Math.cos(ang);
-        ctx.save(); ctx.globalAlpha = wT;
-        ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(tx + px * 20, ty + py * 20); ctx.lineTo(fx, fy); ctx.moveTo(tx - px * 20, ty - py * 20); ctx.lineTo(fx, fy); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = '#000'; ctx.strokeStyle = '#fff';
-        ctx.beginPath(); ctx.moveTo(tx + px * 24, ty + py * 24); ctx.lineTo(tx - px * 24, ty - py * 24);
-        ctx.lineTo(tx - px * 24 - Math.cos(ang) * 14, ty - py * 24 - Math.sin(ang) * 14); ctx.lineTo(tx + px * 24 - Math.cos(ang) * 14, ty + py * 24 - Math.sin(ang) * 14); ctx.closePath(); ctx.fill(); ctx.stroke();
-        // 세타 버스트: 0.2초마다 3번 (10배 느리게 재생)
-        if (!reduce) {
-          const ph = (t % 2) / 2;
-          for (let k = 0; k < 3; k++) {
-            const q = ph - k * 0.06; if (q < 0 || q > 0.5) continue;
-            ctx.strokeStyle = `rgba(${ACC},${(0.9 * (1 - q * 2)).toFixed(3)})`;
-            ctx.beginPath(); ctx.ellipse(fx, fy, 4 + q * 40, 2 + q * 18, ang, 0, Math.PI * 2); ctx.stroke();
-          }
-        }
-        ctx.fillStyle = `rgba(${ACC},0.9)`; ctx.beginPath(); ctx.ellipse(fx, fy, 7, 3, ang, 0, Math.PI * 2); ctx.fill();
-        ctx.restore();
-        label(tx, ty, 70, -26, 'TRANSDUCER', wT);
-        label(fx, fy, -90, 44, 'M1 · FOCAL ZONE', wT, ACC);
-      }
-
-      // ② Parkinson's: 양측 DBS 리드
-      if (wP > 0.03) {
-        ctx.save(); ctx.globalAlpha = wP;
-        for (const c of [stnL, stnR]) {
-          const side = Math.sign(c[2]) || 1;
-          const [sx, sy] = P(c[0], c[1], c[2]);
-          const [ex, ey] = P(c[0] + 0.32, 1.02, c[2] + side * 0.16);
-          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.4;
-          ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(sx, sy); ctx.stroke();
-          const len = Math.hypot(sx - ex, sy - ey) || 1, ux = (sx - ex) / len, uy = (sy - ey) / len;
-          ctx.fillStyle = `rgb(${ACC})`;
-          for (let k = 0; k < 4; k++) ctx.fillRect(sx - ux * (3 + k * 7) - 2.5, sy - uy * (3 + k * 7) - 2.5, 5, 5);
-          if (!reduce) {
-            const ph = ((t + (side > 0 ? 0 : 0.6)) % 1.2) / 1.2;
-            ctx.strokeStyle = `rgba(${ACC},${(0.6 * (1 - ph)).toFixed(3)})`;
-            ctx.beginPath(); ctx.arc(sx, sy, 6 + ph * 26, 0, Math.PI * 2); ctx.stroke();
-          }
-        }
-        ctx.restore();
-        const [lx, ly] = P(stnL[0], stnL[1], stnL[2]);
-        label(lx, ly, -110, 60, 'STN · DBS LEAD', wP, ACC);
-      }
-
-      // ③ Alzheimer's: 해마 + 기록 탐침
-      if (wA > 0.03) {
-        const [hx, hy] = P(hipC[0], hipC[1], hipC[2]);
-        const [ex, ey] = P(hipC[0] - 0.02, 1.02, hipC[2]);
-        ctx.save(); ctx.globalAlpha = wA;
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.4;
-        ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(hx, hy); ctx.stroke();
-        const len = Math.hypot(hx - ex, hy - ey) || 1, ux = (hx - ex) / len, uy = (hy - ey) / len;
-        for (let k = 0; k < 16; k++) {
-          const on = !reduce && Math.sin(t * 6 + k * 1.7) > 0.7;
-          ctx.fillStyle = on ? '#fff' : `rgba(${ACC},0.9)`;
-          ctx.fillRect(hx - ux * k * 5 - 1.5, hy - uy * k * 5 - 1.5, 3, 3);
-        }
-        ctx.restore();
-        label(hx, hy, -120, 56, 'HIPPOCAMPUS · CA3 → CA1', wA, ACC);
-      }
-
-      if (hudYaw && now - lastHud > 120) { lastHud = now; hudYaw.textContent = `${Math.round((yaw * 180) / Math.PI)}°`; }
+      ctx.clearRect(0, 0, w, h);
+      if (wT > 0.03) drawThesis(cam, wT, t);
+      if (wP > 0.03) drawPD(cam, wP, t);
+      if (wA > 0.03) drawAD(cam, wA, t);
+      gizmo(cam);
+      scaleBar(cam);
+      if (hudAz && now - lastHud > 120) { lastHud = now; hudAz.textContent = `${Math.round((az * 180) / Math.PI)}° · ${Math.round((el * 180) / Math.PI)}°`; }
     }
 
     // ── 탭 ──
     const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
     const panels = [...root.querySelectorAll<HTMLElement>('[role="tabpanel"]')];
     const sheets = [...root.querySelectorAll<HTMLElement>('[data-dwg]')];
-    const hudView = root.querySelector<HTMLElement>('[data-hud="view"]');
-    const hudTarget = root.querySelector<HTMLElement>('[data-hud="target"]');
+    const hud = (k: string) => root.querySelector<HTMLElement>(`[data-hud="${k}"]`);
+    const hudView = hud('view'), hudTarget = hud('target'), hudMni = hud('mni'), hudDevice = hud('device'), hudAz = hud('az');
     const dwgId = root.querySelector<HTMLElement>('[data-dwg-id]');
+    const status = root.querySelector<HTMLElement>('[data-status]');
+
+    const fmt = (v: number) => (v < 0 ? '−' : '') + Math.abs(Math.round(v));
+    function mniText(k: Key) {
+      if (!data) return '—';
+      const lm = data.landmarks;
+      if (k === 'thesis') return lm.m1.target.map(fmt).join(', ');
+      if (k === 'pd') return `±${Math.abs(Math.round(lm.stn.R[0]))}, ${fmt(lm.stn.R[1])}, ${fmt(lm.stn.R[2])}`;
+      return lm.hpc.L.centroid.map(fmt).join(', ');
+    }
 
     function select(k: Key, focus = false) {
       tabs.forEach((b) => {
@@ -655,6 +785,8 @@ const targets = [
       sheets.forEach((s) => { s.hidden = s.dataset.dwg !== k; });
       if (hudView) hudView.textContent = VIEWS[k].view;
       if (hudTarget) hudTarget.textContent = VIEWS[k].target;
+      if (hudMni) hudMni.textContent = mniText(k);
+      if (hudDevice) hudDevice.textContent = VIEWS[k].device;
       if (dwgId) dwgId.textContent = VIEWS[k].dwg;
       go(k, performance.now());
       if (reduce) draw(performance.now());
@@ -671,28 +803,47 @@ const targets = [
 
     // ── 끌어서 돌리기 ──
     let dragging = false, lx = 0, ly = 0;
-    canvas.addEventListener('pointerdown', (e) => { dragging = true; lx = e.clientX; ly = e.clientY; canvas.setPointerCapture(e.pointerId); });
-    canvas.addEventListener('pointermove', (e) => {
+    ov.addEventListener('pointerdown', (e) => { dragging = true; lx = e.clientX; ly = e.clientY; ov.setPointerCapture(e.pointerId); });
+    ov.addEventListener('pointermove', (e) => {
       if (!dragging) return;
-      userYaw -= (e.clientX - lx) * 0.008; userPitch -= (e.clientY - ly) * 0.004;
+      userAz -= (e.clientX - lx) * 0.008; userEl += (e.clientY - ly) * 0.005;
       lx = e.clientX; ly = e.clientY;
       if (reduce) draw(performance.now());
     });
     const stop = () => { dragging = false; };
-    canvas.addEventListener('pointerup', stop); canvas.addEventListener('pointercancel', stop);
+    ov.addEventListener('pointerup', stop); ov.addEventListener('pointercancel', stop);
 
-    // ── 시작 ──
+    // ── 시작: 섹션이 가까워지면 데이터(약 1.5 MB)를 받아요 ──
     layout();
     let rt = 0;
     window.addEventListener('resize', () => { clearTimeout(rt); rt = window.setTimeout(() => { layout(); if (reduce) draw(performance.now()); }, 150); });
-    if (reduce) draw(performance.now());
-    else {
-      let running = false;
-      const loop = (now: number) => { if (!running) return; draw(now); requestAnimationFrame(loop); };
-      new IntersectionObserver(([e]) => {
-        if (e.isIntersecting && !running) { running = true; requestAnimationFrame(loop); }
-        else if (!e.isIntersecting) running = false;
-      }).observe(canvas);
+
+    let running = false, visible = false;
+    const loop = (now: number) => { if (!running) return; draw(now); requestAnimationFrame(loop); };
+    const start = () => { if (!reduce && visible && data && !running) { running = true; requestAnimationFrame(loop); } };
+
+    let requested = false;
+    async function load() {
+      if (requested) return; requested = true;
+      try {
+        data = await loadBrain(`${import.meta.env.BASE_URL.replace(/\/?$/, '/')}brain/hcp-mni152.bin`);
+        const made = createRenderer(gl, data);
+        renderer = made.renderer; gl = made.canvas;
+        layout();
+        if (hudMni) hudMni.textContent = mniText(active);
+        if (status) status.hidden = true;
+        viewport!.dataset.ready = renderer.kind;
+        draw(performance.now());
+        start();
+      } catch {
+        if (status) status.textContent = 'Brain model could not be loaded.';
+      }
     }
+
+    new IntersectionObserver(([e]) => { if (e.isIntersecting) load(); }, { rootMargin: '600px 0px' }).observe(viewport);
+    new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible) start(); else running = false;
+    }).observe(viewport);
   }
 </script>
