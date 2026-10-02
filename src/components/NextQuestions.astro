@@ -1,49 +1,29 @@
 ---
-// 05 · 다음 질문: 경력 목표 대신 구체적인 다음 연구 질문. 모두 '연구 질문'이에요.
-import Status from './Status.astro';
-const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-const qs = [
-  { s: '01 → 04', to: 'measure', q: 'Does the brain’s state just before stimulation predict how much a-tbTUS with FES changes motor output?' },
-  { s: '03', to: 'personalize', q: 'How much patient-specific LFP does a model need before it beats a population model at estimating motor state?' },
-  { s: '08 → 09', to: 'minimize', q: 'Can cortical or non-invasive signals stand in for deep recordings when estimating that state in one patient?' },
-  { s: '06', to: 'memory', q: 'Which features of human hippocampal population activity follow one memory from encoding to retrieval?' },
-  { s: '07', to: 'retrieval', q: 'Can neural measurements tell a degraded representation from an inaccessible one?' },
-];
+// 04 · 연구 질문: 목록은 src/data/questions.ts 에서 고쳐요. 비어 있으면 섹션이 숨겨져요.
+import { questions } from '../data/questions';
 ---
-<section class="next section" id="next" aria-labelledby="next-h">
+{questions.length > 0 && (
+<section class="next section" id="questions" aria-labelledby="next-h">
   <div class="wrap">
     <div class="head">
-      <div><p class="kicker mono">05 / Next questions</p><h2 id="next-h">What I want to test next.</h2></div>
-      <p>Each question is testable and tied to one stage of the program.</p>
+      <div><p class="kicker mono">04 / Open questions</p><h2 id="next-h">What I want to test next.</h2></div>
     </div>
     <ol class="qs">
-      {qs.map((x, i) => (
-        <li>
-          <span class="n mono">Q{i + 1}</span>
-          <span class="q">{x.q}</span>
-          <span class="m"><a class="mono st" href={`${base}/how/${x.to}/`}>Stage {x.s} →</a><Status kind="question" /></span>
-        </li>
+      {questions.map((q, i) => (
+        <li><span class="n mono">Q{i + 1}</span><span class="q">{q}</span></li>
       ))}
     </ol>
   </div>
 </section>
+)}
 
 <style>
-  .next { --acc: #a8c8ff; background: #000; color: #fff; }
-  .head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px var(--gutter); align-items: end; margin-bottom: clamp(28px, 4vw, 48px); }
+  .next { --acc: #a8c8ff; background: #000; color: #fff; border-top: 1px solid var(--rule); }
+  .head { margin-bottom: clamp(24px, 4vw, 40px); }
   .kicker { color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 14px; }
   .head h2 { margin: 0; font-size: clamp(32px, 4.2vw, 56px); font-weight: 300; letter-spacing: -0.035em; line-height: 1.05; }
-  .head > p { margin: 0; color: #a9a9a9; font-size: 17px; line-height: 1.65; max-width: 44ch; }
   .qs { list-style: none; margin: 0; padding: 0; border-top: 1px solid #262626; }
-  .qs li { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 8px 20px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid #1c1c1c; }
+  .qs li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px 20px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid #1c1c1c; }
   .n { color: var(--acc); }
-  .q { font-size: clamp(17px, 1.6vw, 20px); line-height: 1.45; color: #f0f0f0; font-weight: 350; }
-  .m { display: flex; align-items: center; gap: 10px; }
-  .st { color: #6a6a6a; text-decoration: none; }
-  .st:hover { color: var(--acc); }
-  @media (max-width: 760px) {
-    .head { grid-template-columns: 1fr; }
-    .qs li { grid-template-columns: 36px minmax(0, 1fr); }
-    .m { grid-column: 2; }
-  }
+  .q { font-size: clamp(16px, 1.5vw, 19px); line-height: 1.45; color: #e6e6e6; font-weight: 350; }
 </style>

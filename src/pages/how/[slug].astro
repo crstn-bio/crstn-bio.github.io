@@ -25,7 +25,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     <main id="main" class="wrap">
       <header class="hd">
         <div class="id">
-          <p class="mono kick"><a href={`${base}/#how`}>How</a><span>/</span>{g.label}<span>/</span>{s.n} {s.verb}</p>
+          <p class="mono kick"><a href={`${base}/#approach`}>Approach</a><span>/</span>{g.label}<span>/</span>{s.n} {s.verb}</p>
           <Status kind={s.status} text={s.statusText} />
         </div>
         <h1>{s.q}</h1>
@@ -48,9 +48,9 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       )}
 
       <nav class="pn" aria-label="Previous and next stage">
-        {prev ? <a class="p" href={`${base}/how/${prev.slug}/`}><span class="mono">← {prev.n}</span>{prev.verb}</a> : <a class="p" href={`${base}/#how`}><span class="mono">←</span>Overview</a>}
-        <a class="all mono" href={`${base}/#how`}>All stages</a>
-        {next ? <a class="n" href={`${base}/how/${next.slug}/`}><span class="mono">{next.n} →</span>{next.verb}</a> : <a class="n" href={`${base}/#work`}><span class="mono">→</span>Evidence</a>}
+        {prev ? <a class="p" href={`${base}/how/${prev.slug}/`}><span class="mono">← {prev.n}</span>{prev.verb}</a> : <a class="p" href={`${base}/#approach`}><span class="mono">←</span>Overview</a>}
+        <a class="all mono" href={`${base}/#approach`}>Back to approach</a>
+        {next ? <a class="n" href={`${base}/how/${next.slug}/`}><span class="mono">{next.n} →</span>{next.verb}</a> : <a class="n" href={`${base}/#questions`}><span class="mono">→</span>Questions</a>}
       </nav>
     </main>
 

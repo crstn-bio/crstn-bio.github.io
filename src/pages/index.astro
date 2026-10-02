@@ -1,11 +1,10 @@
 ---
-// 홈: 질문 → 왜 중요한가 → 어떻게 풀 것인가 → 지금까지의 근거 → 다음 질문 → 함께하기
+// 홈: 질문 → 왜 중요한가(+뇌 표적) → 접근(고리 + 한 일) → 연구 질문 → 함께하기
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
 import Question from '../components/Question.astro';
 import Why from '../components/Why.astro';
-import How from '../components/How.astro';
-import Evidence from '../components/BuildTrajectory.astro';
+import Approach from '../components/Approach.astro';
 import NextQuestions from '../components/NextQuestions.astro';
 import Footer from '../components/Footer.astro';
 ---
@@ -14,8 +13,7 @@ import Footer from '../components/Footer.astro';
   <main id="main">
     <Question />
     <Why />
-    <How />
-    <Evidence />
+    <Approach />
     <NextQuestions />
   </main>
   <Footer />

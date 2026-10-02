@@ -1,0 +1,151 @@
+---
+// 03 · Approach: 하나의 닫힌 고리, 네 조각. 조각마다 접근 한 줄 + 지금까지 한 프로젝트.
+// 조각(원)을 누르면 오른쪽 해당 블록이 강조돼요. 프로젝트를 누르면 방법 상세 창.
+import Status from './Status.astro';
+import ProjectDialogs from './ProjectDialogs.astro';
+import { projects } from '../data/projects';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const pieces = [
+  { key: 'read', n: '01', name: 'Read', field: 'Signals', pos: 'top', how: 'Record brain and muscle signals at the resolution the question needs.' },
+  { key: 'model', n: '02', name: 'Model', field: 'AI & statistics', pos: 'right', how: 'Estimate this person’s brain state and predict how it will respond.' },
+  { key: 'control', n: '03', name: 'Control', field: 'Hardware', pos: 'bottom', how: 'Close the loop: sense, compute and act in real time.' },
+  { key: 'stimulate', n: '04', name: 'Stimulate', field: 'Neuromodulation', pos: 'left', how: 'Intervene, then measure what changed: non-invasive (TUS) or implanted (DBS).' },
+] as const;
+---
+<section class="ap section" id="approach" aria-labelledby="ap-h">
+  <div class="wrap">
+    <div class="head">
+      <div><p class="kicker mono">03 / Approach</p><h2 id="ap-h">One closed loop, built piece by piece.</h2></div>
+      <p>Read the brain, model it, choose an intervention, deliver it, and learn from the response. Each piece already has work behind it.</p>
+    </div>
+
+    <div class="grid">
+      <div class="ring" aria-hidden="true">
+        <svg viewBox="0 0 400 400">
+          <circle class="r-track" cx="200" cy="200" r="140" />
+          {[45, 135, 225, 315].map((a) => {
+            const r = (a * Math.PI) / 180, x = 200 + 140 * Math.sin(r), y = 200 - 140 * Math.cos(r);
+            return <path class="r-arrow" d="M-5 -5 L3 0 L-5 5" transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${a})`} />;
+          })}
+          <g class="r-orbit"><circle class="r-dot" cx="200" cy="60" r="5" /></g>
+          <text class="r-c1" x="200" y="194" text-anchor="middle">one brain</text>
+          <text class="r-c2" x="200" y="216" text-anchor="middle">model z(t)</text>
+        </svg>
+        {pieces.map((p, i) => (
+          <button type="button" class={`node ${p.pos}`} data-piece={p.key} style={`--i:${i}`} tabindex="-1">
+            <span class="n-name">{p.name}</span>
+            <span class="n-field mono">{p.field}</span>
+          </button>
+        ))}
+      </div>
+
+      <ol class="blocks">
+        {pieces.map((p) => (
+          <li class="blk" data-piece={p.key}>
+            <div class="b-h">
+              <span class="b-n mono">{p.n}</span>
+              <span class="b-name">{p.name}</span>
+              <span class="b-field mono">{p.field}</span>
+            </div>
+            <p class="b-how">{p.how}</p>
+            <ul class="b-proj">
+              {projects.filter((x) => x.piece === p.key).map((x) => (
+                <li>
+                  <button type="button" class="prow" data-open={x.id} aria-haspopup="dialog">
+                    <span class="p-title">{x.title}</span>
+                    <Status kind={x.status} text={x.statusText} />
+                    <span class="p-line">{x.line}</span>
+                    <span class="p-go mono" aria-hidden="true">→</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </li>
+        ))}
+      </ol>
+    </div>
+
+    <p class="more mono"><a href={`${base}/how/measure/`}>The method, step by step →</a></p>
+  </div>
+  <ProjectDialogs />
+</section>
+
+<style>
+  .ap { --acc: #a8c8ff; background: #000; color: #fff; border-top: 1px solid var(--rule); }
+  .head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px var(--gutter); align-items: end; margin-bottom: clamp(32px, 5vw, 56px); }
+  .kicker { color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 14px; }
+  .head h2 { margin: 0; font-size: clamp(32px, 4.2vw, 56px); font-weight: 300; letter-spacing: -0.035em; line-height: 1.05; }
+  .head > p { margin: 0; color: #a9a9a9; font-size: 17px; line-height: 1.65; max-width: 46ch; }
+
+  .grid { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: clamp(28px, 5vw, 72px); align-items: center; }
+
+  .ring { position: relative; width: 100%; max-width: 440px; aspect-ratio: 1; margin-inline: auto; }
+  .ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .r-track { fill: none; stroke: #333; stroke-width: 1; stroke-dasharray: 2 5; }
+  .r-arrow { fill: none; stroke: #6a6a6a; stroke-width: 1.2; }
+  .r-dot { fill: var(--acc); }
+  .r-orbit { transform-box: view-box; transform-origin: 200px 200px; animation: orbit 8s linear infinite; }
+  .r-c1 { fill: #fff; font: 18px var(--sans); }
+  .r-c2 { fill: var(--acc); font: 15px var(--mono); }
+  .node { position: absolute; width: 32%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; display: grid; place-content: center; gap: 4px; text-align: center; padding: 6px; background: #050505; border: 1px solid #3a3a3a; color: #fff; font: inherit; cursor: pointer; transition: border-color .25s, background .25s; animation: node 8s infinite; animation-delay: calc(var(--i) * 2s); }
+  .node.top { left: 50%; top: 16%; } .node.right { left: 84%; top: 50%; } .node.bottom { left: 50%; top: 84%; } .node.left { left: 16%; top: 50%; }
+  .node:hover, .node.on { border-color: var(--acc); background: #0a0f17; }
+  .n-name { font-size: clamp(15px, 1.5vw, 18px); letter-spacing: -0.01em; }
+  .n-field { color: #8a8a8a; }
+  @keyframes orbit { to { transform: rotate(360deg); } }
+  @keyframes node { 0%, 10% { border-color: var(--acc); } 20%, 100% { border-color: #3a3a3a; } }
+
+  .blocks { list-style: none; margin: 0; padding: 0; border-top: 1px solid #262626; }
+  .blk { padding: 16px 0 14px; border-bottom: 1px solid #1c1c1c; transition: opacity .25s; }
+  .blocks.filtered .blk:not(.on) { opacity: .3; }
+  .b-h { display: flex; align-items: baseline; gap: 12px; }
+  .b-n { color: var(--acc); }
+  .b-name { font-size: 20px; letter-spacing: -0.015em; }
+  .b-field { color: #6a6a6a; letter-spacing: .1em; text-transform: uppercase; margin-left: auto; }
+  .b-how { margin: 6px 0 0; color: #bdbdbd; font-size: 15.5px; line-height: 1.55; }
+  .b-proj { list-style: none; margin: 8px 0 0; padding: 0; }
+  .prow { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; grid-template-columns: auto auto minmax(0, 1fr) 18px; align-items: center; gap: 4px 12px; padding: 8px 0 8px 14px; border-left: 1px solid #2a2a2a; }
+  .prow:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+  .p-title { font-size: 15.5px; color: #fff; }
+  .p-line { grid-column: 1 / 4; color: #8a8a8a; font-size: 14px; line-height: 1.45; }
+  .p-go { grid-column: 4; grid-row: 1 / span 2; color: #5a5a5a; transition: transform .2s, color .2s; }
+  .prow:hover .p-title { color: var(--acc); }
+  .prow:hover .p-go { color: var(--acc); transform: translateX(3px); }
+  .prow:hover { border-left-color: var(--acc); }
+
+  .more { margin: clamp(24px, 4vw, 40px) 0 0; }
+  .more a { color: #bdbdbd; text-decoration: none; border-bottom: 1px solid #3a3a3a; padding-bottom: 2px; letter-spacing: .06em; }
+  .more a:hover { color: var(--acc); border-color: var(--acc); }
+
+  @media (max-width: 900px) {
+    .head, .grid { grid-template-columns: 1fr; }
+    .ring { max-width: 340px; }
+  }
+  @media (max-width: 560px) {
+    .n-name { font-size: 14px; }
+    .n-field { display: none; }
+    .prow { grid-template-columns: minmax(0, 1fr) 18px; }
+    .prow :global(.status) { grid-column: 1; justify-self: start; }
+    .p-line { grid-column: 1; }
+    .p-go { grid-column: 2; grid-row: 1 / span 3; }
+  }
+  @media (prefers-reduced-motion: reduce) { .r-orbit, .node { animation: none; } }
+</style>
+
+<script>
+  const sec = document.getElementById('approach');
+  if (sec) {
+    const list = sec.querySelector<HTMLElement>('.blocks');
+    const nodes = [...sec.querySelectorAll<HTMLButtonElement>('.node')];
+    const blks = [...sec.querySelectorAll<HTMLElement>('.blk')];
+    let cur = '';
+    nodes.forEach((n) => n.addEventListener('click', () => {
+      cur = cur === n.dataset.piece ? '' : n.dataset.piece || '';
+      nodes.forEach((m) => m.classList.toggle('on', m.dataset.piece === cur));
+      blks.forEach((b) => b.classList.toggle('on', b.dataset.piece === cur));
+      list?.classList.toggle('filtered', !!cur);
+      if (cur && window.innerWidth < 900) blks.find((b) => b.dataset.piece === cur)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }));
+  }
+</script>

@@ -5,32 +5,32 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 export type Item = {
   id: string; cap: string; stage: string; status: StatusKind; statusText?: string; title: string; line: string;
   chain: { t: string; next?: boolean }[]; kind?: 'tus' | 'spikes' | 'eeg' | 'adni' | 'imu'; label?: string;
-  facts?: [string, string][]; href?: string;
+  facts?: [string, string][]; href?: string; piece: 'read' | 'model' | 'control' | 'stimulate';
 };
 export const projects: Item[] = [
   {
-    id: 'thesis', cap: 'Measure · intervene', stage: '01', status: 'current', title: 'a-tbTUS + FES',
+    id: 'thesis', piece: 'stimulate', cap: 'Measure · intervene', stage: '01', status: 'current', title: 'a-tbTUS + FES',
     line: 'How perturbation changes human motor-system function.',
     chain: [{ t: 'a-tbTUS → M1' }, { t: 'FES → muscle' }, { t: 'measure' }],
     kind: 'tus', label: 'Thesis method: accelerated theta-burst transcranial ultrasound to primary motor cortex, functional electrical stimulation of the matching muscle in the same session, and the response measured before and after.',
     facts: [['Role', 'Honours thesis student and research assistant, Krembil Brain Institute, UHN'], ['Question', 'Effects of combining a-tbTUS with functional electrical stimulation']],
   },
   {
-    id: 'mer', cap: 'Decode', stage: '02', status: 'done', statusText: 'Completed · workshop', title: 'Deep-brain microelectrode recordings',
+    id: 'mer', piece: 'read', cap: 'Decode', stage: '02', status: 'done', statusText: 'Completed · workshop', title: 'Deep-brain microelectrode recordings',
     line: 'Spikes and spectral features from deep-brain recordings.',
     chain: [{ t: 'LFP · spikes' }, { t: 'filter' }, { t: 'features' }, { t: 'state', next: true }, { t: 'policy', next: true }, { t: 'simulated stimulation', next: true }],
     kind: 'spikes', label: 'Method: microelectrode recordings from four deep nuclei (Vim, STN, SNr, Rt), band-pass filtered 300 to 3000 Hz, spikes detected at minus 10 times the median absolute deviation, rasters across 115 recordings, population firing rate with a 10 ms Gaussian kernel, and LFP power spectra with Welch’s method.',
     facts: [['Setting', 'NeuroTech coding workshop'], ['Data', 'Milosevic lab, Toronto Western Hospital (public) · LFP: Paulk et al.'], ['Next', 'state → policy → simulated stimulation (not built yet)']],
   },
   {
-    id: 'eeg', cap: 'Decode', stage: '02', status: 'done', title: 'EEG / EMG state analysis',
+    id: 'eeg', piece: 'read', cap: 'Decode', stage: '02', status: 'done', title: 'EEG / EMG state analysis',
     line: 'Spectral features from scalp and muscle signals.',
     chain: [{ t: 'EEG · EMG' }, { t: 'windowed FFT' }, { t: 'band power' }],
     kind: 'eeg', label: 'Method: EEG and EMG signals, windowed FFT, and power spectral density summarised as band power.',
     facts: [['Field', 'Behavioural neuroscience']],
   },
   {
-    id: 'adni', cap: 'Human data · disease modelling', stage: '04', status: 'done', title: 'Plasma biomarkers → amyloid PET',
+    id: 'adni', piece: 'model', cap: 'Human data · disease modelling', stage: '04', status: 'done', title: 'Plasma biomarkers → amyloid PET',
     line: 'Visit-matched human data and out-of-sample evaluation in Alzheimer’s disease. Not memory decoding.',
     chain: [{ t: 'match visits' }, { t: '3 models' }, { t: 'grouped CV' }, { t: 'AUC .902 → .919' }],
     kind: 'adni', href: `${base}/research/plasma-abeta/`,
@@ -38,7 +38,7 @@ export const projects: Item[] = [
     facts: [['Question', 'Does plasma Aβ42/40 add to p-tau217 for amyloid-PET positivity?'], ['Cohort', '1,524 observations · 1,236 participants (ADNI, Mar 2026)'], ['Result', 'ΔAUC +0.017 (95% CI 0.010–0.026); larger in CU (+0.027) than CI (+0.012)']],
   },
   {
-    id: 'imu', cap: 'Control-system engineering', stage: '05', status: 'build', title: 'Build 01 · motion-controlled pan–tilt',
+    id: 'imu', piece: 'control', cap: 'Control-system engineering', stage: '05', status: 'build', title: 'Motion-controlled pan–tilt',
     line: 'A physical control loop. Not a brain–computer interface.',
     chain: [{ t: 'sense · IMU' }, { t: 'estimate · orientation' }, { t: 'map · control law' }, { t: 'act · 2-axis servos' }],
     kind: 'imu', label: 'Build: an IMU senses tilt, the angle is mapped to a servo pulse width on an Arduino UNO R3, and two SG90 servos move the pan and tilt axes.',
