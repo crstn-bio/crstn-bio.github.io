@@ -12,8 +12,8 @@ export const site = {
     'Before and alongside the lab, I have worked on the clinical side of care: preparing perioperative spaces, taking vital signs, and getting imaging records in front of physicians. It keeps me close to the patients this research is ultimately for.',
     'My interests sit between computational neuroscience and neurotechnology — building analyses that are honest about their uncertainty, and asking how stimulation protocols translate into measurable change.',
   ],
-  // TODO: 공개해도 되는 이메일 주소로 바꾸세요.
-  email: 'your.email@mail.utoronto.ca',
+  // Contact 부분에 공개로 보이는 이메일
+  email: 'christine.park2@uhn.ca',
   links: [
     { label: 'LinkedIn', href: 'https://www.linkedin.com/in/christine-park-7ab9ab427' },
     // { label: 'GitHub', href: 'https://github.com/<아이디>' },

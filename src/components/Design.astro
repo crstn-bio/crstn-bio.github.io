@@ -1,80 +1,62 @@
 ---
-// 02 · 구체적 설계
-// 탭(Thesis / Parkinson's / Alzheimer's)을 누르면 뇌가 해당 표적 쪽으로 돌아가고,
-// 오른쪽에 해부학적 위치, 아래에 엔지니어링 도안이 바뀌어요.
-// 뇌 모델은 실제 집단 평균 해부 데이터예요 (HCP S1200, MNI152 공간, src/scripts/hcpBrain.ts).
-// 특정 환자의 데이터는 아니고, STN은 문헌상 대략적 위치예요. 아래 도안은 코드로 그린 도식이에요.
-// 기억 도안용 5×5 패턴: 저장된 패턴, 부분만 해독된 패턴, 그 차이
-const stored = [0,1,1,0,0, 1,0,1,1,0, 0,1,0,1,1, 1,1,0,0,1, 0,0,1,1,0];
-const decoded = stored.map((v, i) => (v && [2, 5, 13, 16, 22].includes(i) ? 0 : v));
-const diff = stored.map((v, i) => (v && !decoded[i] ? 1 : 0));
-const cells = (bits: number[], x0: number, kind: string) =>
-  bits.map((v, i) => ({ x: x0 + (i % 5) * 22, y: 106 + Math.floor(i / 5) * 22, v, kind }));
-const grids = [...cells(decoded, 170, 'w'), ...cells(stored, 330, 'w'), ...cells(diff, 470, 'a')];
-
-// 두피·두개골·피질을 타원으로, 피질에는 이랑(볼록)과 고랑(오목)을 넣어요.
-const arc = (rx: number, ry: number) => `M${300 - rx} 410 A${rx} ${ry} 0 0 1 ${300 + rx} 410`;
-const cortexPath = (() => {
-  const pts: string[] = [];
-  for (let i = 0; i <= 180; i++) {
-    const th = Math.PI - (i / 180) * Math.PI;
-    const r = 1 - 0.035 * Math.pow(0.5 + 0.5 * Math.cos(16 * th + Math.PI), 16);
-    pts.push(`${(300 + 222 * r * Math.cos(th)).toFixed(1)} ${(410 - 234 * r * Math.sin(th)).toFixed(1)}`);
-  }
-  return 'M' + pts.join(' L');
-})();
+// 02 · 접근법: 궁극적 질문으로 가는 세 단계 + 목표
+// 탭을 누르면 실제 해부 데이터로 그린 뇌가 표적 쪽으로 돌아가고 (src/scripts/hcpBrain.ts),
+// 오른쪽에 한 문장 + 짧은 세 단계, 아래에 움직이는 방법 도식(Pipeline)이 바뀌어요.
+// 뇌 모델은 HCP S1200 집단 평균 해부 데이터(MNI152)예요. 특정 환자의 데이터는 아니고, STN은 문헌상 대략적 위치예요.
+import Pipeline from './Pipeline.astro';
 
 const targets = [
   {
-    key: 'thesis',
-    when: 'Now',
-    name: 'Thesis',
-    target: 'M1 · a-tbTUS + FES',
+    key: 'thesis', when: 'Now', name: 'Motor cortex', target: 'M1 · a-tbTUS + FES', pipe: 'tus' as const,
     kicker: 'Now · honours thesis, Krembil Brain Institute',
-    title: 'Focused ultrasound on motor cortex, paired with movement',
-    anatomy: [
-      ['Structure', 'Primary motor cortex (M1), Brodmann area 4'],
-      ['Location', 'Precentral gyrus, directly in front of the central sulcus, on the lateral and upper surface of the frontal lobe'],
-      ['Depth', 'Cortical surface, roughly 1–2 cm beneath the scalp'],
-      ['Why here', 'Motor cortex output can be measured at the muscle, so changes in its excitability are observable'],
+    title: 'Change motor cortex, without surgery.',
+    how: [
+      ['Focused ultrasound bursts to M1', 'a-tbTUS · 5 Hz'],
+      ['Stimulate the matching muscle', 'FES · same session'],
+      ['Measure the change in motor output', 'pre vs post'],
     ],
-    loop: ['a-tbTUS → M1', 'FES → muscle', 'Combined session', 'Measure response'],
-    question: 'Does pairing focused ultrasound with functional electrical stimulation change motor cortex more than either on its own?',
+    question: 'Does pairing the two change motor cortex more than either alone?',
     note: '',
+    pipeLabel: 'Thesis approach: focused ultrasound in theta bursts to primary motor cortex, functional electrical stimulation of the matching muscle in the same session, and the motor response measured before and after.',
   },
   {
-    key: 'pd',
-    when: 'Next',
-    name: 'Parkinson’s',
-    target: 'STN · closed-loop DBS',
+    key: 'pd', when: 'Next', name: 'Parkinson’s', target: 'STN · AI closed-loop DBS', pipe: 'aidbs' as const,
     kicker: 'Next · the first step of the vision',
-    title: 'Closed-loop deep brain stimulation of the subthalamic nucleus',
-    anatomy: [
-      ['Structure', 'Subthalamic nucleus (STN), both hemispheres'],
-      ['Location', 'Small lens-shaped nucleus in the ventral diencephalon, below the thalamus and zona incerta, above the substantia nigra, medial to the internal capsule'],
-      ['Coordinates', 'Typical indirect target ≈ 11–13 mm lateral, 2–4 mm posterior, 4–6 mm inferior to the mid-commissural point, refined per patient with imaging and microelectrode recording'],
-      ['Why here', 'The DBS lead already sits in the circuit and can record local field potentials; beta-band (13–30 Hz) activity tracks bradykinesia and rigidity in many patients'],
+    title: 'Personalize deep brain stimulation fast, with no new hardware.',
+    how: [
+      ['Pretrain a model on many patients’ recordings', 'deep learning · LFP'],
+      ['Adapt it to one patient from little data', 'transfer · minimal invasion'],
+      ['Stimulate only when the brain needs it', '130 Hz · closed loop on β'],
     ],
-    loop: ['LFP · beta', 'State z(t)', 'Patient model', 'DBS amplitude'],
     question: 'How little patient-specific data is enough to learn a new brain?',
-    note: '',
+    note: 'The implanted lead both records and stimulates, so personalization needs no extra surgery.',
+    pipeLabel: 'DBS approach: pretrain a deep model on local field potentials from many patients, adapt it to one patient from little data, sense beta from the implanted lead, and deliver 130 Hz stimulation only while beta is high.',
   },
   {
-    key: 'ad',
-    when: 'Later',
-    name: 'Alzheimer’s',
-    target: 'Hippocampus · memory',
-    kicker: 'Later · extending the loop to memory',
-    title: 'Decoding and restoring memory-related activity in the hippocampus',
-    anatomy: [
-      ['Structure', 'Hippocampal formation: dentate gyrus, CA3, CA1 and subiculum'],
-      ['Location', 'Medial temporal lobe, forming the floor of the temporal horn of the lateral ventricle, running from the head (front) to the tail, which curves up behind the thalamus'],
-      ['Circuit', 'Entorhinal cortex → dentate gyrus → CA3 → CA1 → subiculum; the recurrent CA3 network supports recall from partial cues'],
-      ['Why here', 'Among the earliest regions affected in Alzheimer’s disease, and central to forming and retrieving episodic memory'],
+    key: 'ad', when: 'Later', name: 'Alzheimer’s', target: 'Hippocampus · engram read/write', pipe: 'engram' as const,
+    kicker: 'Later · from circuits to single memories',
+    title: 'Find the cells that hold a memory. Read them, replay them, write them back.',
+    how: [
+      ['Record hundreds of hippocampal neurons at once', 'Neuropixels 1.0 NHP Long'],
+      ['Decode the ensemble behind one memory', 'engram · not just CA1 or CA3'],
+      ['Reactivate those exact cells', 'visualize · replay · write'],
     ],
-    loop: ['Spikes + LFP', 'Representation', 'Memory model', 'Patterned stimulation'],
-    question: 'What remains when memory becomes inaccessible, and can it be written back?',
-    note: 'Speculative extension, not an existing method.',
+    question: 'When a memory becomes inaccessible in Alzheimer’s, can its engram be found and reactivated?',
+    note: 'In mice, reactivating engram cells recovered memories in early Alzheimer’s models. In humans this is a speculative direction.',
+    pipeLabel: 'Memory approach: record hundreds of hippocampal neurons with a long high-density probe, decode the cell ensemble active for one memory, show the same cells reactivating at recall, and target stimulation to that ensemble rather than the whole region.',
+  },
+  {
+    key: 'goal', when: 'Goal', name: 'Whole brain', target: 'Predict before symptoms', pipe: 'goal' as const,
+    kicker: 'The goal · where the three steps lead',
+    title: 'Model one person’s brain, and predict change before symptoms.',
+    how: [
+      ['Measure across scales', 'cortex · circuit · cell'],
+      ['Learn that person’s brain dynamics', 'a model that keeps updating'],
+      ['Forecast pathology, then intervene early', 'lead time before symptoms'],
+    ],
+    question: 'Can a model of one dynamic brain see disease coming?',
+    note: '',
+    pipeLabel: 'Goal: combine motor cortex, deep-nucleus and hippocampal signals into one person-specific model of brain dynamics that forecasts pathological change, giving lead time before symptoms appear.',
   },
 ];
 ---
@@ -82,16 +64,16 @@ const targets = [
   <div class="wrap">
     <div class="d-head">
       <div>
-        <p class="kicker mono">02 / The design</p>
-        <h2 id="design-h">Three targets, one loop.</h2>
+        <p class="kicker mono">02 / The approach</p>
+        <h2 id="design-h">Three steps, one model.</h2>
       </div>
-      <p>Choose a stage. The model turns to the target, shows where it sits in the brain, and how I would reach it.</p>
+      <p>Each step goes deeper, from the cortex to single memories. Choose one.</p>
     </div>
 
     <div class="tabs" role="tablist" aria-label="Stage">
       {targets.map((t, i) => (
         <button type="button" role="tab" id={`tab-${t.key}`} aria-controls={`panel-${t.key}`} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} data-target={t.key}>
-          <span class="t-when mono">{String(i + 1).padStart(2, '0')} · {t.when}</span>
+          <span class="t-when mono">{t.key === 'goal' ? '∞' : String(i + 1).padStart(2, '0')} · {t.when}</span>
           <span class="t-name">{t.name}</span>
           <span class="t-target mono">{t.target}</span>
         </button>
@@ -119,178 +101,44 @@ const targets = [
           <div class="panel" role="tabpanel" id={`panel-${t.key}`} aria-labelledby={`tab-${t.key}`} hidden={i !== 0}>
             <p class="p-kicker mono">{t.kicker}</p>
             <h3>{t.title}</h3>
-            <dl class="anatomy">
-              {t.anatomy.map(([k, v]) => (<div><dt class="mono">{k}</dt><dd>{v}</dd></div>))}
-            </dl>
-            <ol class="chips mono" aria-label="Loop">
-              {t.loop.map((c, i) => (<><li>{c}</li>{i < t.loop.length - 1 && <li class="sep" aria-hidden="true">→</li>}</>))}
+            <ol class="how">
+              {t.how.map(([a, b], j) => (
+                <li><span class="h-n mono">{String(j + 1).padStart(2, '0')}</span><span class="h-t">{a}</span><span class="h-s mono">{b}</span></li>
+              ))}
             </ol>
             <p class="q">{t.question}</p>
-            {t.note && <p class="note mono">{t.note}</p>}
+            {t.note && <p class="note">{t.note}</p>}
           </div>
         ))}
       </div>
     </div>
 
-    <!-- 엔지니어링 도안: 탭마다 하나씩, 두 장씩 -->
-    <figure class="dwg">
-      <div class="dwg-bar mono">
-        <span>Engineering drawing</span>
-        <span data-dwg-id>DWG-01 · a-tbTUS + FES</span>
-        <span>Schematic · not to scale</span>
+    <!-- 방법 도식: 탭마다 하나 -->
+    <figure class="approach">
+      <div class="a-bar mono">
+        <span>Approach</span>
+        <span data-a-id>{targets[0].target}</span>
+        <span>Animated schematic</span>
       </div>
-      <p class="swipe mono" aria-hidden="true">Swipe sideways to see the full drawing →</p>
-
-      <!-- DWG-01 Thesis -->
-      <div class="sheets" data-dwg="thesis">
-        <div class="sheet"><svg viewBox="0 0 600 420" role="img" aria-label="Coronal schematic: a focused ultrasound transducer on the scalp, its beam passing the skull and converging to a focal zone in the primary motor cortex.">
-          <text class="h" x="24" y="34">A · Focus geometry</text><text class="s" x="24" y="54">coronal section through M1</text>
-          <path class="ln" d={arc(260, 280)} />
-          <path class="ln dim" d={arc(244, 262)} /><path class="ln dim" d={arc(232, 248)} />
-          <path class="ln" d={cortexPath} />
-          <rect class="box" x="236" y="80" width="128" height="34" />
-          <path class="ln" d="M242 114 Q300 136 358 114" />
-          <path class="beam" d="M248 120 L297 196 M352 120 L303 196" />
-          <ellipse class="acc-fill" cx="300" cy="198" rx="8" ry="20" />
-          <path class="acc" d="M300 150 L300 236" stroke-dasharray="2 4" />
-          <path class="dim" d="M366 130 L412 130 M312 198 L412 198 M404 130 L404 198" />
-          <rect class="tag" x="410" y="154" width="74" height="22" /><text class="t" x="416" y="170">≈ 1–2 cm</text>
-          <path class="lead" d="M364 96 L428 74" /><text class="t" x="434" y="78">Focused transducer</text>
-          <path class="lead" d="M276 126 L176 100" /><text class="t" x="24" y="104">Coupling gel</text>
-          <path class="lead" d="M72 146 L212 146" /><text class="t" x="24" y="150">Scalp</text>
-          <path class="lead" d="M72 176 L188 176" /><text class="t" x="24" y="180">Skull</text>
-          <path class="lead" d="M80 206 L192 206" /><text class="t" x="24" y="210">Cortex</text>
-          <path class="lead acc" d="M308 206 L430 244" />
-          <rect class="tag acc-box" x="430" y="226" width="146" height="62" />
-          <text class="t acc-t" x="440" y="246">Focal zone</text><text class="t" x="440" y="264">M1, precentral</text><text class="t" x="440" y="280">gyrus</text>
-        </svg></div>
-        <div class="sheet"><svg viewBox="0 0 600 420" role="img" aria-label="Timing schematic: theta-burst ultrasound bursts every 200 milliseconds, and functional electrical stimulation combined in the same session.">
-          <text class="h" x="24" y="34">B · Combined protocol</text><text class="s" x="24" y="54">timing illustrative</text>
-          <text class="t" x="24" y="122">a-tbTUS</text>
-          <path class="ln dim" d="M120 130 L576 130" />
-          <g class="acc">
-            <path d="M130 130 V100 M136 130 V100 M142 130 V100" /><path d="M218 130 V100 M224 130 V100 M230 130 V100" />
-            <path d="M306 130 V100 M312 130 V100 M318 130 V100" /><path d="M394 130 V100 M400 130 V100 M406 130 V100" />
-            <path d="M482 130 V100 M488 130 V100 M494 130 V100" />
-          </g>
-          <path class="dim" d="M136 150 L224 150 M136 144 L136 156 M224 144 L224 156" /><text class="t" x="150" y="172">200 ms · 5 Hz</text>
-          <path class="lead" d="M142 96 L170 76" /><text class="t" x="176" y="78">burst</text>
-          <text class="t" x="24" y="232">FES</text>
-          <path class="ln dim" d="M120 240 L576 240" />
-          <rect class="box" x="130" y="212" width="370" height="28" />
-          <path class="ln" d="M140 240 V216 M150 240 V216 M160 240 V216 M170 240 V216 M180 240 V216 M190 240 V216 M200 240 V216 M210 240 V216 M220 240 V216 M230 240 V216 M240 240 V216 M250 240 V216 M260 240 V216 M270 240 V216 M280 240 V216 M290 240 V216 M300 240 V216 M310 240 V216 M320 240 V216 M330 240 V216 M340 240 V216 M350 240 V216 M360 240 V216 M370 240 V216 M380 240 V216 M390 240 V216 M400 240 V216 M410 240 V216 M420 240 V216 M430 240 V216 M440 240 V216 M450 240 V216 M460 240 V216 M470 240 V216 M480 240 V216 M490 240 V216" />
-          <text class="t" x="130" y="266">stimulation of the target muscle</text>
-          <path class="dim" d="M112 90 L104 90 L104 250 L112 250" /><text class="t" x="24" y="176">same</text><text class="t" x="24" y="194">session</text>
-          <text class="t" x="24" y="342">Measure</text>
-          <path class="ln dim" d="M120 350 L576 350" />
-          <path class="ln" d="M520 350 V318 L540 318 V350" />
-          <text class="t" x="352" y="312">neurophysiological outcome</text>
-          <path class="ln dim" d="M120 390 L576 390" />
-          <text class="s" x="120" y="410">time →</text>
-        </svg></div>
-      </div>
-
-      <!-- DWG-02 Parkinson's -->
-      <div class="sheets" data-dwg="pd" hidden>
-        <div class="sheet"><svg viewBox="0 0 600 420" role="img" aria-label="Coronal schematic: a DBS lead with four ring contacts passes the thalamus and zona incerta and ends in the subthalamic nucleus, above the substantia nigra.">
-          <text class="h" x="24" y="34">A · Lead in target</text><text class="s" x="24" y="54">coronal, schematic</text>
-          <path class="ln" d="M84 172 C92 124 240 112 286 140 C318 162 300 202 230 210 C160 218 80 214 84 172 Z" />
-          <text class="t" x="110" y="176">Thalamus</text>
-          <path class="ln dim" d="M120 232 C180 222 260 222 330 236" /><text class="s" x="96" y="250">zona incerta</text>
-          <ellipse class="acc-fill soft" cx="262" cy="276" rx="74" ry="22" transform="rotate(-18 262 276)" />
-          <ellipse class="acc" cx="262" cy="276" rx="74" ry="22" transform="rotate(-18 262 276)" />
-          <path class="ln" d="M150 340 C220 318 300 300 380 300 C400 312 380 330 330 338 C260 348 200 360 150 356 Z" />
-          <text class="t" x="96" y="382">Substantia nigra</text>
-          <path class="ln dim" d="M432 150 L398 330 M462 150 L430 330" /><text class="s" x="470" y="176">internal</text><text class="s" x="470" y="192">capsule</text>
-          <!-- lead -->
-          <g transform="rotate(12 262 276)">
-            <rect class="lead-body" x="255" y="40" width="14" height="250" rx="7" />
-            <rect class="contact" x="255" y="276" width="14" height="10" /><rect class="contact" x="255" y="258" width="14" height="10" />
-            <rect class="contact" x="255" y="240" width="14" height="10" /><rect class="contact" x="255" y="222" width="14" height="10" />
-          </g>
-          <path class="lead acc" d="M300 296 L470 330" /><text class="t acc-t" x="476" y="334">STN</text>
-          <text class="t" x="476" y="352">subthalamic</text><text class="t" x="476" y="370">nucleus</text>
-          <path class="lead" d="M300 96 L352 76" /><text class="t" x="358" y="74">DBS lead</text><text class="s" x="358" y="92">4 ring contacts</text>
-        </svg></div>
-        <div class="sheet"><svg viewBox="0 0 600 420" role="img" aria-label="Closed loop: STN local field potential beta power is estimated, a patient model sets stimulation amplitude, and the effect is measured again. A small plot shows amplitude rising when beta crosses a threshold.">
-          <text class="h" x="24" y="34">B · Closed loop</text><text class="s" x="24" y="54">per patient</text>
-          <rect class="box" x="24" y="84" width="124" height="52" /><text class="t" x="36" y="106">Sense</text><text class="s" x="36" y="124">LFP · 13–30 Hz</text>
-          <rect class="box" x="170" y="84" width="124" height="52" /><text class="t" x="182" y="106">Estimate</text><text class="s" x="182" y="124">state z(t)</text>
-          <rect class="box acc-box" x="316" y="84" width="124" height="52" /><text class="t acc-t" x="328" y="106">Patient model</text><text class="s" x="328" y="124">per person</text>
-          <rect class="box" x="462" y="84" width="114" height="52" /><text class="t" x="474" y="106">Stimulate</text><text class="s" x="474" y="124">set amplitude</text>
-          <path class="arrow" d="M148 110 L166 110 M294 110 L312 110 M440 110 L458 110" />
-          <path class="arrow" d="M519 136 V162 H86 V140" /><text class="s" x="232" y="180">effect appears in the next recording</text>
-          <!-- plot -->
-          <path class="ln dim" d="M60 380 L576 380 M60 380 L60 220" />
-          <text class="s" x="24" y="226">beta</text>
-          <path class="ln" d="M60 330 C110 326 140 322 170 300 C200 270 220 250 250 256 C280 262 300 300 330 312 C370 322 420 318 470 322 C510 326 540 328 576 330" />
-          <path class="acc" d="M60 290 L576 290" stroke-dasharray="5 5" /><text class="s acc-t" x="500" y="282">threshold</text>
-          <path class="acc thick" d="M60 372 L196 372 L206 344 L300 344 L312 372 L576 372" />
-          <text class="s" x="24" y="376">amp</text>
-          <text class="s" x="210" y="402">stimulation rises only while beta is high</text>
-        </svg></div>
-      </div>
-
-      <!-- DWG-03 Alzheimer's -->
-      <div class="sheets" data-dwg="ad" hidden>
-        <div class="sheet"><svg viewBox="0 0 600 420" role="img" aria-label="Hippocampal circuit schematic: entorhinal cortex to dentate gyrus, to CA3, to CA1, to subiculum, and back to entorhinal cortex.">
-          <text class="h" x="24" y="34">A · Hippocampal circuit</text><text class="s" x="24" y="54">cross-section, schematic</text>
-          <path class="ln" d="M150 300 C120 250 130 170 200 140 C270 112 360 124 400 170 C430 206 420 250 390 266" />
-          <path class="ln" d="M210 280 C190 250 196 206 232 192 C268 180 300 196 306 226 C312 256 286 276 258 276" />
-          <text class="t" x="232" y="244">DG</text>
-          <text class="t" x="130" y="206">CA3</text>
-          <text class="t acc-t" x="410" y="160">CA1</text>
-          <path class="ln" d="M390 266 C400 300 440 318 490 318" /><text class="t" x="470" y="344">Subiculum</text>
-          <rect class="box" x="40" y="330" width="168" height="44" /><text class="t" x="52" y="357">Entorhinal cortex</text>
-          <path class="arrow" d="M150 330 C170 310 200 300 222 288" /><text class="s" x="150" y="392">perforant path</text>
-          <path class="arrow" d="M214 262 C186 250 164 232 156 214" /><text class="s" x="40" y="250">mossy fibres</text>
-          <path class="arrow acc thick" d="M176 162 C230 120 330 118 386 150" /><text class="s acc-t" x="230" y="108">Schaffer collaterals</text>
-          <path class="arrow" d="M500 330 C470 390 280 400 210 360" />
-          <path class="ln dim" d="M150 176 C120 170 118 146 140 142 C160 138 166 158 152 170" /><text class="s" x="40" y="146">recurrent</text>
-        </svg></div>
-        <div class="sheet"><svg viewBox="0 0 600 420" role="img" aria-label="Speculative concept: a high-density probe records the hippocampus, the decoded pattern is compared with a stored pattern, and the difference defines patterned stimulation.">
-          <text class="h" x="24" y="34">B · Record → compare → write</text><text class="s acc-t" x="24" y="54">speculative</text>
-          <!-- probe -->
-          <rect class="box" x="40" y="80" width="40" height="30" />
-          <path class="lead-body" d="M54 110 L54 360 L60 376 L66 360 L66 110 Z" />
-          <g class="sites">
-            <rect x="56" y="190" width="3" height="3" /><rect x="61" y="198" width="3" height="3" /><rect x="56" y="206" width="3" height="3" /><rect x="61" y="214" width="3" height="3" />
-            <rect x="56" y="222" width="3" height="3" /><rect x="61" y="230" width="3" height="3" /><rect x="56" y="238" width="3" height="3" /><rect x="61" y="246" width="3" height="3" />
-            <rect x="56" y="254" width="3" height="3" /><rect x="61" y="262" width="3" height="3" /><rect x="56" y="270" width="3" height="3" /><rect x="61" y="278" width="3" height="3" />
-            <rect x="56" y="286" width="3" height="3" /><rect x="61" y="294" width="3" height="3" /><rect x="56" y="302" width="3" height="3" /><rect x="61" y="310" width="3" height="3" />
-            <rect x="56" y="318" width="3" height="3" /><rect x="61" y="326" width="3" height="3" /><rect x="56" y="334" width="3" height="3" /><rect x="61" y="342" width="3" height="3" />
-          </g>
-          <path class="dim" d="M92 110 L92 376 M86 110 L98 110 M86 376 L98 376" /><text class="s" x="100" y="246">45 mm</text>
-          <text class="t" x="24" y="404">Neuropixels 1.0 NHP · 4,416 sites · 384 ch</text>
-          <!-- patterns -->
-          <text class="s" x="170" y="96">decoded</text>
-          <g class="grids">
-            {grids.map((c) => <rect x={c.x} y={c.y} width="18" height="18" class={c.v ? (c.kind === 'a' ? 'on-a' : 'on') : 'off'} />)}
-          </g>
-          <text class="s" x="330" y="96">stored</text>
-          <text class="s acc-t" x="470" y="96">difference</text>
-          <path class="arrow" d="M290 170 L316 170 M450 170 L466 170" />
-          <path class="arrow acc" d="M530 222 L530 262" />
-          <rect class="box acc-box" x="360" y="268" width="216" height="52" />
-          <text class="t acc-t" x="372" y="290">Patterned stimulation</text><text class="s" x="372" y="308">future implant</text>
-          <text class="s" x="170" y="354">The probe records, to learn the code.</text>
-          <text class="s" x="170" y="372">It does not stimulate.</text>
-        </svg></div>
-      </div>
-
-      <figcaption class="mono">Drawings are schematic. The 3D model above is group-average anatomy in MNI152 space (HCP S1200 cortex, HCP-MMP1.0 area 4, HCP subcortical atlas); the STN is placed at approximate literature coordinates. Device geometry is representative, not a surgical plan.</figcaption>
+      {targets.map((t, i) => (
+        <div class="a-pipe" data-approach={t.key} hidden={i !== 0}>
+          <Pipeline kind={t.pipe} label={t.pipeLabel} />
+        </div>
+      ))}
     </figure>
 
     <div class="basis">
       <p class="mono">Research basis</p>
       <div>
-        <a href="https://www.nature.com/articles/s41586-025-08993-1" target="_blank" rel="noreferrer">Ko et al., Nature 2025 · DG→CA3→CA1 engram circuitry reorganizes over time ↗</a>
-        <a href="https://www.nature.com/articles/nrn4000" target="_blank" rel="noreferrer">Josselyn, Köhler &amp; Frankland · engram identification and reactivation ↗</a>
+        <a href="https://onlinelibrary.wiley.com/doi/10.1002/ana.23951" target="_blank" rel="noreferrer">Little et al., Ann Neurol 2013 · adaptive DBS driven by beta ↗</a>
+        <a href="https://www.science.org/doi/10.1126/science.aaw4325" target="_blank" rel="noreferrer">Josselyn &amp; Tonegawa, Science 2020 · memory engrams ↗</a>
+        <a href="https://www.nature.com/articles/nature17172" target="_blank" rel="noreferrer">Roy et al., Nature 2016 · engram reactivation in Alzheimer’s mouse models ↗</a>
+        <a href="https://www.nature.com/articles/s41586-025-08993-1" target="_blank" rel="noreferrer">Ko et al., Nature 2025 · engram circuitry reorganizes over time ↗</a>
         <a href="https://www.neuropixels.org/probe-1-0-nhp-long" target="_blank" rel="noreferrer">Neuropixels 1.0 NHP Long · high-density deep recording ↗</a>
         <a href="https://www.nature.com/articles/nature18933" target="_blank" rel="noreferrer">Glasser et al., Nature 2016 · HCP-MMP1.0 cortical parcellation ↗</a>
       </div>
       <p class="mono">Brain model</p>
-      <p class="ack">Data were provided by the Human Connectome Project, WU-Minn Consortium (Principal Investigators: David Van Essen and Kamil Ugurbil; 1U54MH091657) funded by the 16 NIH Institutes and Centers that support the NIH Blueprint for Neuroscience Research; and by the McDonnell Center for Systems Neuroscience at Washington University. Point cloud built with <a href="https://github.com/crstn-bio/crstn-bio.github.io/tree/main/tools/brain-data" target="_blank" rel="noreferrer">tools/brain-data ↗</a></p>
+      <p class="ack">Group-average anatomy in MNI152 space (HCP S1200 cortex, HCP-MMP1.0 area 4, HCP subcortical atlas); the STN is placed at approximate literature coordinates, and devices are representative, not a surgical plan. Data were provided by the Human Connectome Project, WU-Minn Consortium (Principal Investigators: David Van Essen and Kamil Ugurbil; 1U54MH091657) funded by the 16 NIH Institutes and Centers that support the NIH Blueprint for Neuroscience Research; and by the McDonnell Center for Systems Neuroscience at Washington University. Point cloud built with <a href="https://github.com/crstn-bio/crstn-bio.github.io/tree/main/tools/brain-data" target="_blank" rel="noreferrer">tools/brain-data ↗</a></p>
     </div>
   </div>
 </section>
@@ -303,7 +151,7 @@ const targets = [
   .d-head > p { margin: 0; color: #a9a9a9; font-size: 17px; line-height: 1.65; max-width: 46ch; }
 
   /* 탭 */
-  .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: clamp(36px, 5vw, 56px); border-bottom: 1px solid #222; }
+  .tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: clamp(36px, 5vw, 56px); border-bottom: 1px solid #222; }
   .tabs button {
     font: inherit; text-align: left; color: #8d8d8d; background: none; border: 0; border-top: 1px solid #333;
     padding: 18px 20px 20px 0; cursor: pointer; display: grid; gap: 6px; position: relative; transition: color 200ms;
@@ -312,8 +160,9 @@ const targets = [
   .tabs button[aria-selected='true'] { color: #fff; }
   .tabs button[aria-selected='true']::before { width: 100%; }
   .tabs button:hover { color: #fff; }
+  .tabs button[data-target='goal'] .t-when { color: var(--acc); }
   .t-when { letter-spacing: 0.12em; text-transform: uppercase; color: inherit; opacity: 0.8; }
-  .t-name { font-size: clamp(20px, 2vw, 26px); font-weight: 400; letter-spacing: -0.02em; }
+  .t-name { font-size: clamp(19px, 1.9vw, 25px); font-weight: 400; letter-spacing: -0.02em; }
   .t-target { color: #8d8d8d; }
   .tabs button[aria-selected='true'] .t-target { color: var(--acc); }
 
@@ -332,57 +181,23 @@ const targets = [
 
   .panel { padding-top: 4px; }
   .panel:focus-visible { outline-offset: 8px; }
-  .p-kicker { color: var(--acc); letter-spacing: 0.06em; margin: 0 0 12px; }
-  .panel h3 { font-size: clamp(22px, 2.2vw, 28px); font-weight: 400; letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 20px; }
-  .anatomy { margin: 0; border-top: 1px solid #222; }
-  .anatomy div { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 12px; padding: 11px 0; border-bottom: 1px solid #1a1a1a; }
-  .anatomy dt { color: #7d7d7d; padding-top: 2px; }
-  .anatomy dd { margin: 0; color: #cfcfcf; font-size: 14.5px; line-height: 1.55; }
-  .chips { list-style: none; margin: 20px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 6px; align-items: center; }
-  .chips li { border: 1px solid #333; padding: 5px 9px; color: #d9d9d9; }
-  .chips li.sep { border: 0; padding: 0 2px; color: #555; }
-  .q { margin: 20px 0 0; color: #fff; font-size: 16px; line-height: 1.5; }
-  .note { color: var(--acc); margin: 10px 0 0; }
+  .p-kicker { color: var(--acc); letter-spacing: 0.06em; margin: 0 0 14px; }
+  .panel h3 { font-size: clamp(24px, 2.5vw, 34px); font-weight: 350; letter-spacing: -0.025em; line-height: 1.15; margin: 0 0 26px; text-wrap: balance; }
+  .how { list-style: none; margin: 0; padding: 0; border-top: 1px solid #222; counter-reset: h; }
+  .how li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 2px 10px; padding: 13px 0; border-bottom: 1px solid #1a1a1a; }
+  .h-n { color: var(--acc); grid-row: span 2; padding-top: 3px; }
+  .h-t { color: #f0f0f0; font-size: 16px; line-height: 1.4; }
+  .h-s { color: #8a8a8a; }
+  .q { margin: 22px 0 0; color: #cfcfcf; font-size: 16px; line-height: 1.5; }
+  .note { margin: 10px 0 0; color: #8a8a8a; font-size: 14px; line-height: 1.55; border-left: 1px solid var(--acc); padding-left: 12px; }
 
-  /* 도안 */
-  .dwg { margin: clamp(40px, 6vw, 64px) 0 0; border: 1px solid #222; background: #030303; }
-  .dwg-bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; padding: 12px 16px; border-bottom: 1px solid #222; color: #7d7d7d; text-transform: uppercase; letter-spacing: 0.08em; }
-  .dwg-bar [data-dwg-id] { color: #fff; }
-  .swipe { display: none; margin: 0; padding: 10px 16px 0; color: #6a6a6a; }
-  .sheets { display: grid; grid-template-columns: 1fr 1fr; }
-  .sheets[hidden] { display: none; }
-  .sheet { background-image: linear-gradient(#0d0d0d 1px, transparent 1px), linear-gradient(90deg, #0d0d0d 1px, transparent 1px); background-size: 20px 20px; }
-  .sheet + .sheet { border-left: 1px solid #222; }
-  .sheet svg { display: block; width: 100%; height: auto; }
-  .dwg figcaption { padding: 12px 16px; border-top: 1px solid #222; color: #6a6a6a; }
+  /* 방법 도식 */
+  .approach { margin: clamp(36px, 5vw, 56px) 0 0; }
+  .a-bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; padding: 0 0 12px; color: #7d7d7d; text-transform: uppercase; letter-spacing: 0.08em; }
+  .a-bar [data-a-id] { color: #fff; text-transform: none; letter-spacing: 0.04em; }
+  .a-pipe[hidden] { display: none; }
 
-  svg .h { fill: #fff; font: 500 16px var(--sans); letter-spacing: -0.01em; }
-  svg .s { fill: #8a8a8a; font: 12.5px var(--mono); }
-  svg .t { fill: #d6d6d6; font: 13.5px var(--mono); }
-  svg .acc-t { fill: var(--acc); }
-  svg .ln { fill: none; stroke: #cfcfcf; stroke-width: 1.2; }
-  svg .ln.dim, svg path.dim { stroke: #555; }
-  svg .dim { fill: none; stroke: #6a6a6a; stroke-width: 1; }
-  svg .lead { fill: none; stroke: #8a8a8a; stroke-width: 1; }
-  svg .box { fill: #050505; stroke: #bdbdbd; stroke-width: 1.1; }
-  svg .acc-box { stroke: var(--acc); }
-  svg .acc, svg g.acc path { fill: none; stroke: var(--acc); stroke-width: 1.3; }
-  svg .acc.thick, svg .thick { stroke-width: 2; }
-  svg .acc-fill { fill: var(--acc); fill-opacity: 0.55; stroke: none; }
-  svg .acc-fill.soft { fill-opacity: 0.14; }
-  svg .tag { fill: #030303; stroke: #333; stroke-width: 1; }
-  svg .tag.acc-box { stroke: var(--acc); }
-  svg .beam { fill: none; stroke: #8a8a8a; stroke-width: 1; stroke-dasharray: 3 3; }
-  svg .lead-body { fill: #0a0a0a; stroke: #e0e0e0; stroke-width: 1.2; }
-  svg .contact { fill: var(--acc); }
-  svg .sites rect { fill: var(--acc); }
-  svg .grids .off { fill: none; stroke: #2a2a2a; }
-  svg .grids .on { fill: #d6d6d6; }
-  svg .grids .on-a { fill: var(--acc); }
-  svg .arrow { fill: none; stroke: #bdbdbd; stroke-width: 1.2; marker-end: url(#dwg-arrow); }
-  svg .arrow.acc { stroke: var(--acc); marker-end: url(#dwg-arrow-acc); }
-
-  .basis { display: grid; grid-template-columns: 170px 1fr; gap: 12px 24px; margin-top: 28px; padding-top: 20px; border-top: 1px solid #1a1a1a; }
+  .basis { display: grid; grid-template-columns: 170px 1fr; gap: 12px 24px; margin-top: 36px; padding-top: 20px; border-top: 1px solid #1a1a1a; }
   .basis > p { margin: 0; color: #6a6a6a; letter-spacing: 0.1em; text-transform: uppercase; }
   .basis > div { display: flex; flex-wrap: wrap; gap: 8px 24px; }
   .basis a { color: #8d8d8d; text-decoration: none; font-size: 13.5px; line-height: 1.5; }
@@ -393,36 +208,21 @@ const targets = [
   @media (max-width: 960px) {
     .d-head, .stage { grid-template-columns: 1fr; }
     .panels { margin-top: 24px; }
-    .sheets { grid-template-columns: 1fr; }
-    .sheet + .sheet { border-left: 0; border-top: 1px solid #222; }
-    .sheet { overflow-x: auto; }
-    .sheet svg { min-width: 540px; }
-    .swipe { display: block; }
+    .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   @media (max-width: 600px) {
-    .tabs { grid-template-columns: 1fr; border-bottom: 0; }
-    .tabs button { padding: 14px 0; grid-template-columns: auto 1fr; column-gap: 12px; align-items: baseline; }
-    .tabs button .t-target { grid-column: 1 / -1; }
-    .tabs button::before { width: 0; }
-    .tabs button[aria-selected='true']::before { width: 40px; }
+    .tabs button { padding: 14px 12px 14px 0; }
+    .tabs button .t-target { font-size: 12px; }
     .viewport { aspect-ratio: 1 / 1.05; }
     .hud { left: 12px; top: 12px; }
     .hud div:nth-child(1), .hud div:nth-child(5) { display: none; }
     .hint { display: none; }
     .src { left: 12px; bottom: 10px; }
-    .anatomy div { grid-template-columns: 1fr; gap: 4px; }
+    .a-bar span:last-child { display: none; }
     .basis { grid-template-columns: 1fr; }
   }
   @media (prefers-reduced-motion: reduce) { .tabs button::before { transition: none; } }
 </style>
-
-<!-- SVG 화살표 머리 (한 번만 정의) -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <marker id="dwg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9" fill="none" stroke="#bdbdbd" stroke-width="1.4" /></marker>
-    <marker id="dwg-arrow-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9" fill="none" stroke="#a8c8ff" stroke-width="1.4" /></marker>
-  </defs>
-</svg>
 
 <script>
   import { loadBrain, createRenderer, makeCamera, project, projectDir, type BrainData, type Camera, type Pass, type Renderer, type V3 } from '../scripts/hcpBrain';
@@ -439,14 +239,15 @@ const targets = [
     const ACCV: V3 = [168 / 255, 200 / 255, 1];
     const MONO = '12px "Geist Mono Variable", ui-monospace, monospace';
     const SMALL = '10.5px "Geist Mono Variable", ui-monospace, monospace';
-    type Key = 'thesis' | 'pd' | 'ad';
+    type Key = 'thesis' | 'pd' | 'ad' | 'goal';
 
     // 탭마다의 시점. az: 수평 방위(0 = 왼쪽 옆, +π/2 = 앞), el: 높이(+ 위에서), c: 화면 가운데에 올 MNI 좌표(mm)
     interface ViewDef { az: number; el: number; zoom: number; c: V3; cortex: number; view: string; target: string; device: string; dwg: string }
     const VIEWS: Record<Key, ViewDef> = {
-      thesis: { az: 0.6, el: 0.08, zoom: 1.0, c: [-4, -14, 12], cortex: 1, view: 'left anterolateral', target: 'M1 · area 4, left', device: 'transducer · schematic', dwg: 'DWG-01 · a-tbTUS + FES' },
-      pd: { az: 1.22, el: 0.3, zoom: 1.32, c: [0, -4, 22], cortex: 0.32, view: 'anterior oblique', target: 'STN · bilateral', device: 'lead Ø1.27 mm · to scale', dwg: 'DWG-02 · closed-loop DBS' },
-      ad: { az: -0.5, el: -0.42, zoom: 1.18, c: [-6, -32, 2], cortex: 0.32, view: 'left inferolateral', target: 'hippocampus · bilateral', device: 'probe · long axis (concept)', dwg: 'DWG-03 · hippocampal memory loop' },
+      thesis: { az: 0.6, el: 0.08, zoom: 1.0, c: [-4, -14, 12], cortex: 1, view: 'left anterolateral', target: 'M1 · area 4, left', device: 'transducer · schematic', dwg: 'M1 · a-tbTUS + FES' },
+      pd: { az: 1.22, el: 0.3, zoom: 1.32, c: [0, -4, 22], cortex: 0.32, view: 'anterior oblique', target: 'STN · bilateral', device: 'lead Ø1.27 mm · to scale', dwg: 'STN · AI closed-loop DBS' },
+      ad: { az: -0.5, el: -0.42, zoom: 1.18, c: [-6, -32, 2], cortex: 0.32, view: 'left inferolateral', target: 'hippocampus · bilateral', device: 'probe · long axis (concept)', dwg: 'Hippocampus · engram read/write' },
+      goal: { az: 0.38, el: 0.24, zoom: 0.98, c: [0, -16, 8], cortex: 0.62, view: 'left anterolateral', target: 'M1 · STN · hippocampus', device: 'model · concept', dwg: 'Whole brain · predict before symptoms' },
     };
 
     // ── 크기 ──
@@ -471,7 +272,7 @@ const targets = [
     let animStart = -1;
     const ANIM = 1.4;
     let userAz = 0, userEl = 0;
-    const weight: Record<Key, number> = { thesis: 1, pd: 0, ad: 0 };
+    const weight: Record<Key, number> = { thesis: 1, pd: 0, ad: 0, goal: 0 };
     const easeIO = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 
     function go(k: Key, now: number) {
@@ -680,6 +481,30 @@ const targets = [
       label(E[0], E[1], 40, 44, 'OCCIPITAL ENTRY', a);
     }
 
+    // 목표: 세 표적을 하나의 모델로 잇는 그래프 (해부학적 연결이 아니라 모델의 연결)
+    function drawGoal(cam: Camera, a: number, t: number) {
+      const lm = data!.landmarks;
+      const N = { m1: lm.m1.target, sL: lm.stn.L, sR: lm.stn.R, hL: lm.hpc.L.centroid, hR: lm.hpc.R.centroid };
+      const P = Object.fromEntries(Object.entries(N).map(([k, v]) => [k, project(cam, v)])) as Record<keyof typeof N, V3>;
+      const E: [keyof typeof N, keyof typeof N][] = [['m1', 'sL'], ['sL', 'sR'], ['sL', 'hL'], ['sR', 'hR'], ['hL', 'hR'], ['m1', 'hL']];
+      ctx.save(); ctx.globalAlpha = a; ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.setLineDash([3, 4]);
+      ctx.beginPath(); for (const [p, q] of E) { ctx.moveTo(P[p][0], P[p][1]); ctx.lineTo(P[q][0], P[q][1]); } ctx.stroke();
+      ctx.setLineDash([]);
+      // 연결을 따라 흐르는 신호
+      ctx.fillStyle = `rgb(${ACC})`;
+      E.forEach(([p, q], j) => {
+        const u = reduce ? 0.5 : (t * 0.35 + j * 0.23) % 1;
+        ctx.beginPath(); ctx.arc(P[p][0] + (P[q][0] - P[p][0]) * u, P[p][1] + (P[q][1] - P[p][1]) * u, 2.2, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.restore();
+      for (const k of ['m1', 'sL', 'sR', 'hL', 'hR'] as const) reticle(P[k][0], P[k][1], 7, a, ACC);
+      const lx = mobile ? 40 : 70;
+      label(P.m1[0], P.m1[1], lx, -30, 'M1', a, ACC);
+      label(P.sL[0], P.sL[1], -lx, -40, 'STN', a, ACC);
+      label(P.hL[0], P.hL[1], -lx, 46, 'HIPPOCAMPUS', a, ACC);
+    }
+
     // 방향 표시: MNI 축 R(+x) · A(+y) · S(+z)
     function gizmo(cam: Camera) {
       const ox = w - (mobile ? 34 : 46), oy = mobile ? 34 : 46, L = mobile ? 16 : 20;
@@ -727,24 +552,26 @@ const targets = [
       const kb = Math.min((0.74 * w) / 172, (0.8 * h) / 150) * (mobile ? 1.06 : 1);
       const cam = makeCamera(az, el, cur.c, kb * cur.zoom, w * 0.5, h * 0.5);
 
-      const wT = weight.thesis, wP = weight.pd, wA = weight.ad;
+      const wT = weight.thesis, wP = weight.pd, wA = weight.ad, wG = weight.goal;
+      // 목표 탭에서는 세 표적을 모두 함께 밝혀요
+      const eT = Math.max(wT, 0.8 * wG), eP = Math.max(wP, wG), eA = Math.max(wA, 0.8 * wG);
       const G = 2.4 * cur.cortex, F = 0.11, A = 0.34;
       const passes: Pass[] = [
         { part: 'ctxL', mode: 'cortex', gain: G },
         { part: 'ctxR', mode: 'cortex', gain: G },
-        { part: 'm1', mode: 'cortex', gain: G * (1 - wT) },
-        { part: 'm1', mode: 'accent', gain: A * 0.62 * wT, color: ACCV, glow: true },
+        { part: 'm1', mode: 'cortex', gain: G * (1 - eT) },
+        { part: 'm1', mode: 'accent', gain: A * 0.62 * eT, color: ACCV, glow: true },
         { part: 'cb', mode: 'faint', gain: F * 0.75 * (0.5 + 0.5 * cur.cortex) },
         { part: 'bs', mode: 'faint', gain: F * 0.9, cutZ: -66 },
         { part: 'thal', mode: 'faint', gain: F * (0.7 + 1.3 * wP) },
-        { part: 'hpcL', mode: 'faint', gain: F * 0.7 * (1 - wA) },
-        { part: 'hpcR', mode: 'faint', gain: F * 0.7 * (1 - wA) },
-        { part: 'hpcL', mode: 'accent', gain: A * wA, color: ACCV, glow: true },
-        { part: 'hpcR', mode: 'accent', gain: A * 0.8 * wA, color: ACCV, glow: true },
-        { part: 'stnL', mode: 'faint', gain: F * 0.5 * (1 - wP) },
-        { part: 'stnR', mode: 'faint', gain: F * 0.5 * (1 - wP) },
-        { part: 'stnL', mode: 'accent', gain: A * 0.6 * wP, color: ACCV, glow: true },
-        { part: 'stnR', mode: 'accent', gain: A * 0.6 * wP, color: ACCV, glow: true },
+        { part: 'hpcL', mode: 'faint', gain: F * 0.7 * (1 - eA) },
+        { part: 'hpcR', mode: 'faint', gain: F * 0.7 * (1 - eA) },
+        { part: 'hpcL', mode: 'accent', gain: A * eA, color: ACCV, glow: true },
+        { part: 'hpcR', mode: 'accent', gain: A * 0.8 * eA, color: ACCV, glow: true },
+        { part: 'stnL', mode: 'faint', gain: F * 0.5 * (1 - eP) },
+        { part: 'stnR', mode: 'faint', gain: F * 0.5 * (1 - eP) },
+        { part: 'stnL', mode: 'accent', gain: A * 0.6 * eP, color: ACCV, glow: true },
+        { part: 'stnR', mode: 'accent', gain: A * 0.6 * eP, color: ACCV, glow: true },
       ];
       renderer.draw(cam, passes, lod());
 
@@ -752,6 +579,7 @@ const targets = [
       if (wT > 0.03) drawThesis(cam, wT, t);
       if (wP > 0.03) drawPD(cam, wP, t);
       if (wA > 0.03) drawAD(cam, wA, t);
+      if (wG > 0.03) drawGoal(cam, wG, t);
       gizmo(cam);
       scaleBar(cam);
       if (hudAz && now - lastHud > 120) { lastHud = now; hudAz.textContent = `${Math.round((az * 180) / Math.PI)}° · ${Math.round((el * 180) / Math.PI)}°`; }
@@ -760,10 +588,10 @@ const targets = [
     // ── 탭 ──
     const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
     const panels = [...root.querySelectorAll<HTMLElement>('[role="tabpanel"]')];
-    const sheets = [...root.querySelectorAll<HTMLElement>('[data-dwg]')];
+    const sheets = [...root.querySelectorAll<HTMLElement>('[data-approach]')];
     const hud = (k: string) => root.querySelector<HTMLElement>(`[data-hud="${k}"]`);
     const hudView = hud('view'), hudTarget = hud('target'), hudMni = hud('mni'), hudDevice = hud('device'), hudAz = hud('az');
-    const dwgId = root.querySelector<HTMLElement>('[data-dwg-id]');
+    const dwgId = root.querySelector<HTMLElement>('[data-a-id]');
     const status = root.querySelector<HTMLElement>('[data-status]');
 
     const fmt = (v: number) => (v < 0 ? '−' : '') + Math.abs(Math.round(v));
@@ -772,7 +600,8 @@ const targets = [
       const lm = data.landmarks;
       if (k === 'thesis') return lm.m1.target.map(fmt).join(', ');
       if (k === 'pd') return `±${Math.abs(Math.round(lm.stn.R[0]))}, ${fmt(lm.stn.R[1])}, ${fmt(lm.stn.R[2])}`;
-      return lm.hpc.L.centroid.map(fmt).join(', ');
+      if (k === 'ad') return lm.hpc.L.centroid.map(fmt).join(', ');
+      return '3 targets';
     }
 
     function select(k: Key, focus = false) {
@@ -782,7 +611,7 @@ const targets = [
         if (on && focus) b.focus();
       });
       panels.forEach((p) => { p.hidden = p.id !== `panel-${k}`; });
-      sheets.forEach((s) => { s.hidden = s.dataset.dwg !== k; });
+      sheets.forEach((s) => { s.hidden = s.dataset.approach !== k; });
       if (hudView) hudView.textContent = VIEWS[k].view;
       if (hudTarget) hudTarget.textContent = VIEWS[k].target;
       if (hudMni) hudMni.textContent = mniText(k);

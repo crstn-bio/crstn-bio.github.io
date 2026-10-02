@@ -1,35 +1,111 @@
 ---
+// 03 · 빌드업: 지금까지 만든 것들을 하나의 궤적으로.
+// 프로젝트마다 한 줄 머리말 + 단계별 도식(Pipeline). 글은 최소로, 방법은 그림과 움직임으로.
+import Pipeline from './Pipeline.astro';
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
 const items = [
-  {n:'01',cat:'INTERVENTION',title:'a-tbTUS + FES',sub:'Human neuromodulation · honours thesis',kind:'brain',status:'ACTIVE / UHN'},
-  {n:'02',cat:'NEURAL SIGNALS',title:'Human DBS electrophysiology',sub:'Signal processing closer to the target system',kind:'signal',status:'PYTHON / ANALYSIS'},
-  {n:'03',cat:'CONTROL',title:'Motion-controlled pan–tilt',sub:'IMU → orientation → microcontroller → servo',kind:'control',status:'BUILT'},
-  {n:'04',cat:'MODELLING',title:'Plasma biomarkers → amyloid PET',sub:'Participant-grouped CV · bootstrap inference',kind:'model',status:'R / ADNI'},
-  {n:'05',cat:'SPECTRA',title:'EEG / EMG state analysis',sub:'FFT · PSD · behavioral neuroscience',kind:'spectra',status:'PYTHON / MATLAB'},
+  {
+    n: '01', cat: 'Intervention', title: 'a-tbTUS + FES', sub: 'Honours thesis', status: 'Active · UHN', kind: 'tus' as const,
+    label: 'Thesis method: accelerated theta-burst transcranial ultrasound to primary motor cortex, functional electrical stimulation of the target muscle in the same session, and the response measured before and after.',
+  },
+  {
+    n: '02', cat: 'Neural signals', title: 'Deep-brain microelectrode recordings', sub: 'NeuroTech coding workshop', status: 'Python', kind: 'spikes' as const,
+    label: 'Method: microelectrode recordings from four deep nuclei (Vim, STN, SNr, Rt), band-pass filtered 300 to 3000 Hz, spikes detected at minus 10 times the median absolute deviation, rasters across 115 recordings, population firing rate with a 10 ms Gaussian kernel, and LFP power spectra with Welch’s method.',
+    note: 'Data: Milosevic lab, Toronto Western Hospital (public) · LFP: Paulk et al. · traces drawn for illustration, parameters as analysed',
+  },
+  {
+    n: '03', cat: 'Control', title: 'Motion-controlled pan–tilt', sub: 'Arduino build', status: 'Built', kind: 'imu' as const,
+    label: 'Build: an IMU senses tilt, the angle is mapped to a servo pulse width on an Arduino UNO R3, and two SG90 servos move the pan and tilt axes.',
+  },
+  {
+    n: '04', cat: 'Prediction', title: 'Plasma biomarkers → amyloid PET', sub: 'Does Aβ42/40 add to p-tau217?', status: 'R · ADNI', kind: 'adni' as const,
+    href: `${base}/research/plasma-abeta/`,
+    label: 'Method: plasma and amyloid-PET visits matched one-to-one within participant up to 365 days; 1,524 observations from 1,236 participants (863 cognitively unimpaired, 661 impaired); three logistic models; participant-grouped 5-fold cross-validation repeated 5 times; 1,000 participant-level bootstrap replicates. Adding Aβ42/40 raised AUC from 0.902 to 0.919, with a larger gain in CU (+0.027) than CI (+0.012), and raised specificity at 90% sensitivity from 0.713 to 0.803.',
+    note: 'ADNI, March 2026 release · 1,524 observations · 1,236 participants · ΔAUC overall +0.017 (95% CI 0.010–0.026)',
+  },
+  {
+    n: '05', cat: 'Spectra', title: 'EEG / EMG state analysis', sub: 'Behavioural neuroscience', status: 'Python · MATLAB', kind: 'eeg' as const,
+    label: 'Method: EEG and EMG signals, windowed FFT, and power spectral density summarised as band power.',
+  },
 ];
 ---
 <section class="builds section" id="work" aria-labelledby="build-h">
   <div class="wrap">
     <div class="build-head">
       <div><p class="mono kicker">03 / Build-up</p><h2 id="build-h">Building the pieces.</h2></div>
-      <p>What I have built so far, and how each piece feeds the loop: intervention, signals, control, modelling.</p>
+      <p>Each piece feeds the loop: intervention, signals, control, prediction.</p>
     </div>
-    <div class="build-grid">
-      {items.map((x)=><article class={`build ${x.kind}`}>
-        <div class="viz" aria-hidden="true">
-          {x.kind==='brain' && <><div class="mini-brain"></div><span class="target"></span><span class="waves"></span></>}
-          {x.kind==='signal' && <svg viewBox="0 0 240 90"><path d="M0 49 L12 48 18 45 23 60 28 20 33 67 39 38 45 50 59 47 67 44 72 57 77 28 82 65 88 39 96 49 112 48 120 46 126 56 132 25 138 63 144 41 153 49 168 48 178 43 185 60 191 23 197 64 203 39 212 49 240 48"/></svg>}
-          {x.kind==='control' && <img class="photo" src={`${base}/builds/imu-pan-tilt/hand-control.jpg`} alt="A hand tilts a small IMU while the 3D-printed two-servo mount follows, wired to an Elegoo UNO R3." loading="lazy" />}
-          {x.kind==='model' && <svg viewBox="0 0 240 100"><path class="axis" d="M20 82H225M20 82V10"/><path d="M20 80 C45 76,55 62,78 52 S125 30,220 18"/><path class="dash" d="M20 80 C55 78,70 68,95 54 S145 25,220 14"/></svg>}
-          {x.kind==='spectra' && <svg viewBox="0 0 240 100"><path class="axis" d="M20 82H225M20 82V10"/><path d="M20 80 C35 77,40 24,52 18 S66 67,78 73 100 61,112 54 128 72,145 75 170 70,190 76 210 78,225 79"/></svg>}
-        </div>
-        <div class="meta mono"><span>{x.n} / {x.cat}</span><span>{x.status}</span></div>
-        <h3>{x.title}</h3><p>{x.sub}</p>
-      </article>)}
-    </div>
-    <p class="trajectory mono"><span>HUMAN RESPONSE</span> → <span>NEURAL SIGNAL</span> → <span>PHYSICAL CONTROL</span> → <span>PREDICTION</span> → <strong>PATIENT-SPECIFIC CLOSED LOOP</strong></p>
+
+    <ol class="traj">
+      {items.map((x) => (
+        <li class="row">
+          <header class="row-h">
+            <span class="id mono">{x.n} / {x.cat}</span>
+            <h3>{x.title}</h3>
+            <span class="sub">{x.sub}</span>
+            <span class="status mono">{x.status}</span>
+            {x.href && <a class="more mono" href={x.href}>Report →</a>}
+          </header>
+          <Pipeline kind={x.kind} label={x.label} />
+          {x.note && <p class="note mono">{x.note}</p>}
+        </li>
+      ))}
+    </ol>
+
+    <p class="trajectory mono"><span>Human response</span> → <span>Neural signal</span> → <span>Physical control</span> → <span>Prediction</span> → <strong>Patient-specific closed loop</strong></p>
   </div>
 </section>
+
 <style>
-.builds{background:#000;color:#fff;border-top:1px solid #1f1f1f}.build-head{display:grid;grid-template-columns:1.1fr .9fr;gap:30px;align-items:end;margin-bottom:36px}.kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#8d8d8d;margin:0 0 14px}.build-head h2{font-size:clamp(32px,4.2vw,56px);font-weight:300;letter-spacing:-.035em;margin:0}.build-head>p{color:#a9a9a9;font-size:17px;max-width:46ch;margin:0;line-height:1.65}.build-grid{display:grid;grid-template-columns:repeat(12,1fr);border-top:1px solid #242424;border-left:1px solid #242424}.build{grid-column:span 4;min-height:300px;padding:14px 16px 18px;border-right:1px solid #242424;border-bottom:1px solid #242424;background:#050505}.build:nth-child(4),.build:nth-child(5){grid-column:span 6}.viz .photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05);opacity:.9;transition:filter .4s}.build:hover .viz .photo{filter:none}.viz{height:150px;position:relative;overflow:hidden;border-bottom:1px solid #191919;margin-bottom:13px;background-image:linear-gradient(#101010 1px,transparent 1px),linear-gradient(90deg,#101010 1px,transparent 1px);background-size:24px 24px}.meta{display:flex;justify-content:space-between;gap:10px;color:#8d8d8d;font-size:12px;letter-spacing:.06em}.build h3{font-size:18px;font-weight:430;margin:12px 0 6px}.build p{font-size:14.5px;color:#9a9a9a;margin:0;line-height:1.55}.viz svg{width:100%;height:100%}.viz path{fill:none;stroke:#e6e6e6;stroke-width:1.3}.viz .axis{stroke:#353535}.viz .dash{stroke:#6f6f6f;stroke-dasharray:4 4}.mini-brain{position:absolute;width:130px;height:92px;left:50%;top:26px;transform:translateX(-50%);border:1px solid #555;border-radius:53% 47% 45% 55%;box-shadow:inset 0 0 30px #161616}.target{position:absolute;width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 14px rgba(255,255,255,.6);left:54%;top:62px}.waves{position:absolute;width:54px;height:54px;border:1px solid #fff;border-radius:50%;left:calc(54% - 23px);top:39px;opacity:.3}.servo{position:absolute;border:1px solid #777;background:#151515}.pan{width:58px;height:30px;left:50%;bottom:26px;transform:translateX(-50%)}.tilt{width:30px;height:48px;left:50%;bottom:55px;transform:translateX(-50%)}.arm{position:absolute;width:70px;height:1px;background:#8ec5ff;left:50%;bottom:78px;transform-origin:left;transform:rotate(-30deg)}.imu{position:absolute;left:22px;top:24px;border:1px solid #3c5369;color:#8ec5ff;padding:5px;font:9px var(--mono)}.trajectory{margin:24px 0 0;color:#6a6a6a;font-size:12px;letter-spacing:.08em;text-transform:uppercase}.trajectory strong{color:#a8c8ff;font-weight:500}.trajectory span{color:#92928d}@media(max-width:820px){.build-head{grid-template-columns:1fr}.build{grid-column:span 6!important;min-height:250px}.build:last-child{grid-column:span 12!important}.viz{height:120px}.trajectory{line-height:2}}@media(max-width:520px){.build{grid-column:span 12!important}.build-head h2{font-size:32px}}
+  .builds { background: #000; color: #fff; border-top: 1px solid #1f1f1f; }
+  .build-head { display: grid; grid-template-columns: 1.1fr .9fr; gap: 30px; align-items: end; margin-bottom: clamp(36px, 5vw, 56px); }
+  .kicker { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #8d8d8d; margin: 0 0 14px; }
+  .build-head h2 { font-size: clamp(32px, 4.2vw, 56px); font-weight: 300; letter-spacing: -.035em; margin: 0; }
+  .build-head > p { color: #a9a9a9; font-size: 17px; max-width: 40ch; margin: 0; line-height: 1.65; }
+
+  /* 궤적: 왼쪽 세로선 + 마디, 신호가 위에서 아래로 흐름 */
+  .traj { list-style: none; margin: 0; padding: 0 0 0 28px; position: relative; }
+  .traj::before { content: ''; position: absolute; left: 4px; top: 12px; bottom: 24px; width: 1px; background: #262626; }
+  .traj::after { content: ''; position: absolute; left: 4px; top: 12px; width: 1px; height: 90px; background: linear-gradient(transparent, #a8c8ff, transparent); animation: rail 9s linear infinite; }
+  @keyframes rail { from { transform: translateY(0); opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } to { transform: translateY(var(--rail, 1200px)); opacity: 0; } }
+  .row { position: relative; padding-bottom: clamp(44px, 5.5vw, 64px); }
+  .row::before { content: ''; position: absolute; left: -28px; top: 7px; width: 9px; height: 9px; border: 1px solid #8a8a8a; background: #000; border-radius: 50%; }
+  .row:first-child::before { border-color: #a8c8ff; background: #a8c8ff; }
+
+  .row-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-bottom: 16px; }
+  .row-h .id { color: #8d8d8d; letter-spacing: .1em; text-transform: uppercase; min-width: 150px; }
+  .row-h h3 { margin: 0; font-size: clamp(19px, 1.8vw, 23px); font-weight: 400; letter-spacing: -.02em; }
+  .row-h .sub { color: #9a9a9a; font-size: 15px; }
+  .row-h .status { margin-left: auto; color: #8d8d8d; border: 1px solid #2c2c2c; padding: 3px 8px; letter-spacing: .06em; text-transform: uppercase; }
+  .row-h .more { color: #a8c8ff; text-decoration: none; letter-spacing: .06em; }
+  .row-h .more:hover { color: #fff; }
+  .note { margin: 10px 0 0; color: #6a6a6a; line-height: 1.6; }
+
+  .trajectory { margin: 8px 0 0 28px; color: #6a6a6a; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; line-height: 2; }
+  .trajectory strong { color: #a8c8ff; font-weight: 500; }
+  .trajectory span { color: #92928d; }
+
+  @media (max-width: 820px) {
+    .build-head { grid-template-columns: 1fr; }
+    .row-h .id { min-width: 0; width: 100%; }
+    .row-h .status { margin-left: 0; }
+  }
+  @media (max-width: 520px) {
+    .build-head h2 { font-size: 32px; }
+    .traj { padding-left: 20px; }
+    .traj::before, .traj::after { left: 3px; }
+    .row::before { left: -21px; }
+    .trajectory { margin-left: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .traj::after { display: none; } }
 </style>
+
+<script>
+  // 세로선을 따라 흐르는 신호가 목록 끝까지 가도록 길이를 맞춰요
+  const traj = document.querySelector<HTMLElement>('.traj');
+  if (traj) {
+    const set = () => traj.style.setProperty('--rail', `${Math.max(200, traj.offsetHeight - 130)}px`);
+    set(); window.addEventListener('resize', set);
+  }
+</script>

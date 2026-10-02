@@ -4,8 +4,8 @@
 <section class="question" id="question" aria-labelledby="question-h">
   <div class="wrap">
     <p class="kicker mono">01 / The question</p>
-    <h2 id="question-h">Can we build a model that learns an individual brain?</h2>
-    <p class="dek">Patient-specific models that understand a person’s neural state, predict how it will respond, and guide precise intervention. Closed-loop deep brain stimulation for Parkinson’s disease is where I would start.</p>
+    <h2 id="question-h">Can we model a whole brain, and predict disease before symptoms?</h2>
+    <p class="dek">The brain keeps changing, so the model has to keep learning from the person it describes. I am building toward it in three steps: motor cortex, then deep brain stimulation, then memory.</p>
     <ol class="loop mono" aria-label="The loop">
       <li>Measure</li><li>Decode</li><li>Personalize</li><li>Predict</li><li>Control</li>
     </ol>
@@ -28,4 +28,10 @@
   .loop li { display: flex; align-items: center; }
   .loop li:not(:last-child)::after { content: ''; width: clamp(18px, 4vw, 56px); height: 1px; background: #333; margin: 0 14px; }
   .loop li:nth-child(3) { color: #fff; }
+  /* 고리를 따라 차례로 밝아짐 */
+  .loop li { animation: q-step 6s infinite; }
+  .loop li:nth-child(2) { animation-delay: 1.2s; } .loop li:nth-child(3) { animation-delay: 2.4s; }
+  .loop li:nth-child(4) { animation-delay: 3.6s; } .loop li:nth-child(5) { animation-delay: 4.8s; }
+  @keyframes q-step { 0%, 14% { color: #a8c8ff; } 22%, 100% { color: inherit; } }
+  @media (prefers-reduced-motion: reduce) { .loop li { animation: none; } }
 </style>
