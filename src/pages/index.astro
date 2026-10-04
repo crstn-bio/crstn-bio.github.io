@@ -1,9 +1,8 @@
 ---
-// 홈: 질문 → 왜 중요한가(+뇌 표적) → 접근(고리 + 한 일) → 연구 질문 → 함께하기
+// 홈: 대표 섹션(질문 + 뇌 위의 고리, Motor/Memory, 한 일) → 방법(세 원칙 + 11단계) → 연구 질문 → 함께하기
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
-import Question from '../components/Question.astro';
-import Why from '../components/Why.astro';
+import Signature from '../components/Signature.astro';
 import Approach from '../components/Approach.astro';
 import NextQuestions from '../components/NextQuestions.astro';
 import Footer from '../components/Footer.astro';
@@ -11,8 +10,7 @@ import Footer from '../components/Footer.astro';
 <Base>
   <Hero />
   <main id="main">
-    <Question />
-    <Why />
+    <Signature />
     <Approach />
     <NextQuestions />
   </main>

@@ -9,4 +9,4 @@ mechanism: population prior → individual data → personal model
 diagram: personalize
 ---
 
-Start from many brains, then let each person’s observations move the model.
+Start from many brains, then let each person’s observations move the model. The test is held-out prediction: the personal model has to forecast this person’s next response better than the population model does.

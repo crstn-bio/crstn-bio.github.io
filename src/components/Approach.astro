@@ -1,20 +1,15 @@
 ---
-// 03 · Approach: 하나의 닫힌 고리, 네 조각. 조각마다 접근 한 줄 + 지금까지 한 프로젝트.
-// 조각(원)을 누르면 오른쪽 해당 블록이 강조돼요. 프로젝트를 누르면 방법 상세 창.
-import Status from './Status.astro';
-import ProjectDialogs from './ProjectDialogs.astro';
-import { site, md, url, getRoadmap, projects } from '../lib/content';
-// 글은 src/content/site.yaml 의 approach: 와 projects: 에서. 원은 개수에 맞춰 고리 위에 고르게 놓여요.
+// 03 · Method: 세 원칙(적은 데이터 · 더 나은 모델 · 최소한의 인터페이스) + 11단계 방법 버튼.
+// 원칙 카드는 해당 방법 페이지로 이어져요 (page: 에 roadmap 파일 이름).
+// 글은 src/content/site.yaml 의 approach: 에서. 방법 버튼은 공개된 roadmap 페이지를 자동으로 나열해요.
+import { site, md, url, getRoadmap } from '../lib/content';
 const ap = site.approach ?? {};
-const list = projects();
-const N = Math.max(1, (ap.pieces ?? []).length);
-const pieces = (ap.pieces ?? []).map((p: any, i: number) => {
-  const a = (i * 2 * Math.PI) / N;
-  return { ...p, n: String(i + 1).padStart(2, '0'), left: 50 + 34 * Math.sin(a), top: 50 - 34 * Math.cos(a) };
-});
-const arrows = Array.from({ length: N }, (_, i) => ((i + 0.5) * 360) / N);
 const nodes = await getRoadmap();
-const first = nodes[0];
+const bySlug = new Map(nodes.map((n) => [n.slug, n]));
+const principles = (ap.principles ?? []).map((p: any) => {
+  const node = p.page ? bySlug.get(p.page) : undefined;
+  return { ...p, href: node ? url(`/how/${node.slug}/`) : null, n: node?.n, step: node?.data.title };
+});
 ---
 <section class="ap section" id="approach" aria-labelledby="ap-h">
   <div class="wrap">
@@ -22,6 +17,21 @@ const first = nodes[0];
       <div><p class="kicker mono">{ap.kicker}</p><h2 id="ap-h">{ap.title}</h2></div>
       {ap.text && <p set:html={md(ap.text)} />}
     </div>
+
+    {principles.length > 0 && (
+      <ul class="pr">
+        {principles.map((p: any) => {
+          const inner = (
+            <>
+              <span class="pr-t">{p.title}</span>
+              {p.text && <span class="pr-x" set:html={md(p.text)} />}
+              {p.step && <span class="pr-go mono">{p.n} · {p.step} <span aria-hidden="true">→</span></span>}
+            </>
+          );
+          return <li>{p.href ? <a class="pr-c" href={p.href}>{inner}</a> : <div class="pr-c">{inner}</div>}</li>;
+        })}
+      </ul>
+    )}
 
     {ap.method_label && nodes.length > 0 && (
       <nav class="method" aria-label={ap.method_label}>
@@ -35,56 +45,7 @@ const first = nodes[0];
         </ol>
       </nav>
     )}
-
-    <div class="grid">
-      <div class="ring" aria-hidden="true">
-        <svg viewBox="0 0 400 400">
-          <circle class="r-track" cx="200" cy="200" r="140" />
-          {arrows.map((a) => {
-            const r = (a * Math.PI) / 180, x = 200 + 140 * Math.sin(r), y = 200 - 140 * Math.cos(r);
-            return <path class="r-arrow" d="M-5 -5 L3 0 L-5 5" transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${a})`} />;
-          })}
-          <g class="r-orbit"><circle class="r-dot" cx="200" cy="60" r="5" /></g>
-          <text class="r-c1" x="200" y="194" text-anchor="middle">{ap.center?.[0]}</text>
-          <text class="r-c2" x="200" y="216" text-anchor="middle">{ap.center?.[1]}</text>
-        </svg>
-        {pieces.map((p: any, i: number) => (
-          <button type="button" class="node" data-piece={p.id} style={`--i:${i};--d:${((i * 8) / N).toFixed(2)}s;left:${p.left.toFixed(2)}%;top:${p.top.toFixed(2)}%`} tabindex="-1">
-            <span class="n-name">{p.name}</span>
-            <span class="n-field mono">{p.field}</span>
-          </button>
-        ))}
-      </div>
-
-      <ol class="blocks">
-        {pieces.map((p: any) => (
-          <li class="blk" data-piece={p.id}>
-            <div class="b-h">
-              <span class="b-n mono">{p.n}</span>
-              <span class="b-name">{p.name}</span>
-              <span class="b-field mono">{p.field}</span>
-            </div>
-            <p class="b-how" set:html={md(p.text)} />
-            <ul class="b-proj">
-              {list.filter((x: any) => x.piece === p.id).map((x: any) => (
-                <li>
-                  <button type="button" class="prow" data-open={x.id} aria-haspopup="dialog">
-                    <span class="p-title">{x.title}</span>
-                    <Status kind={x.status} text={x.status_label} />
-                    <span class="p-line">{x.summary}</span>
-                    <span class="p-go mono" aria-hidden="true">→</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </li>
-        ))}
-      </ol>
-    </div>
-
-    {first && ap.link && <p class="more"><a class="more-btn mono" href={url(`/how/${first.slug}/`)}>{ap.link}</a></p>}
   </div>
-  <ProjectDialogs />
 </section>
 
 <style>
@@ -94,45 +55,16 @@ const first = nodes[0];
   .head h2 { margin: 0; font-size: clamp(32px, 4.2vw, 56px); font-weight: 300; letter-spacing: -0.035em; line-height: 1.05; }
   .head > p { margin: 0; color: #a9a9a9; font-size: 17px; line-height: 1.65; max-width: 46ch; }
 
-  .grid { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: clamp(28px, 5vw, 72px); align-items: center; }
+  .pr { list-style: none; margin: 0 0 clamp(36px, 5vw, 56px); padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid #262626; border-left: 1px solid #262626; }
+  .pr li { display: flex; }
+  .pr-c { flex: 1; display: flex; flex-direction: column; gap: 10px; padding: clamp(20px, 2.4vw, 30px); border-right: 1px solid #262626; border-bottom: 1px solid #262626; color: #fff; text-decoration: none; transition: background .2s; }
+  a.pr-c:hover, a.pr-c:focus-visible { background: #0a0f17; outline: none; }
+  .pr-t { font-size: clamp(22px, 2.2vw, 30px); font-weight: 300; letter-spacing: -0.025em; line-height: 1.1; }
+  .pr-x { color: #a9a9a9; font-size: 16px; line-height: 1.5; }
+  .pr-go { margin-top: auto; padding-top: 10px; color: #6a6a6a; letter-spacing: .08em; text-transform: uppercase; transition: color .2s; }
+  a.pr-c:hover .pr-go { color: var(--acc); }
 
-  .ring { position: relative; width: 100%; max-width: 440px; aspect-ratio: 1; margin-inline: auto; }
-  .ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .r-track { fill: none; stroke: #333; stroke-width: 1; stroke-dasharray: 2 5; }
-  .r-arrow { fill: none; stroke: #6a6a6a; stroke-width: 1.2; }
-  .r-dot { fill: var(--acc); }
-  .r-orbit { transform-box: view-box; transform-origin: 200px 200px; animation: orbit 8s linear infinite; }
-  .r-c1 { fill: #fff; font: 18px var(--sans); }
-  .r-c2 { fill: var(--acc); font: 15px var(--mono); }
-  .node { position: absolute; width: 32%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; display: grid; place-content: center; gap: 4px; text-align: center; padding: 6px; background: #050505; border: 1px solid #3a3a3a; color: #fff; font: inherit; cursor: pointer; transition: border-color .25s, background .25s; animation: node 8s infinite; animation-delay: var(--d, 0s); }
-  .node:hover, .node.on { border-color: var(--acc); background: #0a0f17; }
-  .n-name { font-size: clamp(15px, 1.5vw, 18px); letter-spacing: -0.01em; }
-  .n-field { color: #8a8a8a; }
-  @keyframes orbit { to { transform: rotate(360deg); } }
-  @keyframes node { 0%, 10% { border-color: var(--acc); } 20%, 100% { border-color: #3a3a3a; } }
-
-  .blocks { list-style: none; margin: 0; padding: 0; border-top: 1px solid #262626; }
-  .blk { padding: 16px 0 14px; border-bottom: 1px solid #1c1c1c; transition: opacity .25s; }
-  .blocks.filtered .blk:not(.on) { opacity: .3; }
-  .b-h { display: flex; align-items: baseline; gap: 12px; }
-  .b-n { color: var(--acc); }
-  .b-name { font-size: 20px; letter-spacing: -0.015em; }
-  .b-field { color: #6a6a6a; letter-spacing: .1em; text-transform: uppercase; margin-left: auto; }
-  .b-how { margin: 6px 0 0; color: #bdbdbd; font-size: 15.5px; line-height: 1.55; }
-  .b-proj { list-style: none; margin: 8px 0 0; padding: 0; }
-  .prow { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; grid-template-columns: auto auto minmax(0, 1fr) 18px; align-items: center; gap: 4px 12px; padding: 8px 0 8px 14px; border-left: 1px solid #2a2a2a; }
-  .prow:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
-  .p-title { font-size: 15.5px; color: #fff; }
-  .p-line { grid-column: 1 / 4; color: #8a8a8a; font-size: 14px; line-height: 1.45; }
-  .p-go { grid-column: 4; grid-row: 1 / span 2; color: #5a5a5a; transition: transform .2s, color .2s; }
-  .prow:hover .p-title { color: var(--acc); }
-  .prow:hover .p-go { color: var(--acc); transform: translateX(3px); }
-  .prow:hover { border-left-color: var(--acc); }
-
-  .more { margin: clamp(24px, 4vw, 40px) 0 0; }
-
-
-  .method { margin: 0 0 clamp(32px, 5vw, 56px); }
+  .method { margin: 0; }
   .m-k { margin: 0 0 12px; color: #7d7d7d; letter-spacing: .14em; text-transform: uppercase; }
   .method ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
   .method a { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: 1px solid #2c2c2c; background: #050505; color: #e6e6e6; text-decoration: none; transition: border-color .2s, background .2s, color .2s; }
@@ -144,36 +76,10 @@ const first = nodes[0];
   .m-concept .m-dot, .m-frontier .m-dot { border-style: dotted; }
   .m-n { color: #6a6a6a; }
   .m-t { font-size: 15px; }
-  .more-btn { display: inline-block; padding: 14px 22px; border: 1px solid var(--acc); color: var(--acc); text-decoration: none; letter-spacing: .1em; text-transform: uppercase; transition: background .2s, color .2s; }
-  .more-btn:hover { background: var(--acc); color: #000; }
   @media (max-width: 900px) {
-    .head, .grid { grid-template-columns: 1fr; }
-    .ring { max-width: 340px; }
+    .head { grid-template-columns: 1fr; }
   }
-  @media (max-width: 560px) {
-    .n-name { font-size: 14px; }
-    .n-field { display: none; }
-    .prow { grid-template-columns: minmax(0, 1fr) 18px; }
-    .prow :global(.status) { grid-column: 1; justify-self: start; }
-    .p-line { grid-column: 1; }
-    .p-go { grid-column: 2; grid-row: 1 / span 3; }
+  @media (max-width: 760px) {
+    .pr { grid-template-columns: 1fr; }
   }
-  @media (prefers-reduced-motion: reduce) { .r-orbit, .node { animation: none; } }
 </style>
-
-<script>
-  const sec = document.getElementById('approach');
-  if (sec) {
-    const list = sec.querySelector<HTMLElement>('.blocks');
-    const nodes = [...sec.querySelectorAll<HTMLButtonElement>('.node')];
-    const blks = [...sec.querySelectorAll<HTMLElement>('.blk')];
-    let cur = '';
-    nodes.forEach((n) => n.addEventListener('click', () => {
-      cur = cur === n.dataset.piece ? '' : n.dataset.piece || '';
-      nodes.forEach((m) => m.classList.toggle('on', m.dataset.piece === cur));
-      blks.forEach((b) => b.classList.toggle('on', b.dataset.piece === cur));
-      list?.classList.toggle('filtered', !!cur);
-      if (cur && window.innerWidth < 900) blks.find((b) => b.dataset.piece === cur)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }));
-  }
-</script>

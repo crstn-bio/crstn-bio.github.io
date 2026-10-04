@@ -38,7 +38,13 @@ export interface BrainData {
 export async function loadBrain(url: string): Promise<BrainData> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`brain data ${res.status}`);
-  const buf = await res.arrayBuffer();
+  let buf: ArrayBuffer;
+  if (/\.txt$/.test(url)) {
+    // 바이너리를 못 올리는 곳(미리보기 링크)을 위한 base64 텍스트판
+    const b = atob((await res.text()).trim()), u = new Uint8Array(b.length);
+    for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+    buf = u.buffer;
+  } else buf = await res.arrayBuffer();
   const dv = new DataView(buf);
   if (String.fromCharCode(dv.getUint8(0), dv.getUint8(1), dv.getUint8(2), dv.getUint8(3)) !== 'HCPB') throw new Error('bad brain data');
   const jl = dv.getUint32(4, true);

@@ -1,9 +1,9 @@
 ---
-// 02 · 왜 중요한가: 두 임상 개척지 (숫자는 출처가 있는 값만)
+// 02 · 두 시스템, 하나의 모델링 문제: 운동 회로(가까운 시험대) · 해마 기억(먼 개척지) (숫자는 출처가 있는 값만)
 //   Parkinson’s: 2050년 2,520만 명 (2021년 1,190만 명의 두 배 이상) — BMJ 2025, GBD 2021 모델
 //   Dementia: 2021년 5,700만 명, 알츠하이머가 60–70% — WHO 치매 팩트시트
 // 알츠하이머는 사람에게서 확립된 사실처럼 쓰지 않고 질문으로 둬요.
-// 끝에 실제 해부 데이터 뇌 위의 세 표적 (지금 M1 · 파킨슨 STN · 알츠하이머 해마).
+// 카드 아래 bridge: 한 줄 (두 시스템에 같은 질문). 끝에 실제 해부 데이터 뇌 위의 표적과 회로.
 import Anatomy from './Design.astro';
 import { site, md } from '../lib/content';
 const w = site.why ?? {};
@@ -60,6 +60,8 @@ const dots = Array.from({ length: 60 }, (_, i) => ({ x: 14 + (i % 15) * 19, y: 1
       })}
     </div>
 
+    {w.bridge && <p class="bridge mono"><span class="br-l" aria-hidden="true"></span><span class="br-t" set:html={md(w.bridge)} /><span class="br-l" aria-hidden="true"></span></p>}
+
     {w.sources?.length > 0 && (
       <p class="src mono">
         {w.sources.map((x: any) => <a href={x.url} target="_blank" rel="noreferrer">{x.label} ↗</a>)}
@@ -97,6 +99,10 @@ const dots = Array.from({ length: 60 }, (_, i) => ({ x: 14 + (i % 15) * 19, y: 1
   .c-aim::before { content: '→ '; color: var(--acc); }
   .c-tg { margin-top: auto; align-self: flex-start; background: none; border: 0; border-bottom: 1px solid #3a3a3a; color: #bdbdbd; padding: 14px 0 2px; cursor: pointer; letter-spacing: .08em; text-transform: uppercase; }
   .c-tg:hover { color: var(--acc); border-color: var(--acc); }
+  .bridge { display: flex; align-items: center; gap: 16px; margin: 0; padding: 16px 0; border-bottom: 1px solid #1a1a1a; color: var(--acc); letter-spacing: .06em; text-align: center; }
+  .br-l { flex: 1; min-width: 16px; height: 1px; background: linear-gradient(90deg, transparent, #3a4a5e); }
+  .br-l:last-child { background: linear-gradient(90deg, #3a4a5e, transparent); }
+  .br-t { flex: none; max-width: 80%; }
   .src { display: flex; flex-wrap: wrap; gap: 6px 24px; margin: 10px 0 0; }
   .src a { color: #6a6a6a; text-decoration: none; }
   .src a:hover { color: #fff; }

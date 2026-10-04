@@ -1,10 +1,13 @@
 ---
-// 01 · 질문: 한 사람의 뇌를 예측하고 제어할 수 있을까?
-// 소프트웨어 뇌 모델이 중심, 하드웨어는 감지(뇌 → 모델)와 작용(모델 → 뇌)의 두 통로.
-// 글과 도안 안의 단어는 src/content/site.yaml 의 question: 에서 고쳐요.
+// 01 · 질문: 한 사람의 뇌를 개입했을 때의 반응을 예측할 만큼 배울 수 있을까?
+// 대표 도식은 고리(Loop.astro): 측정 → 추정 → 예측·선택 → 개입, 가운데 이 사람의 모델 θᵢ.
+// 글은 src/content/site.yaml 의 question: (고리는 question: → loop:) 에서 고쳐요.
+// 예전 상자 도안은 question: 에 diagram: 이나 diagram_image: 를 넣었을 때만 보여요.
+import Loop from './Loop.astro';
 import { site, md, url } from '../lib/content';
 const q = site.question ?? {};
 const d = q.diagram ?? {};
+const oldDiagram = !!(q.diagram || q.diagram_image);
 ---
 <section class="question" id="question" aria-labelledby="question-h">
   <div class="wrap">
@@ -12,7 +15,9 @@ const d = q.diagram ?? {};
     <h2 id="question-h">{q.title}</h2>
     {q.text && <p class="dek" set:html={md(q.text)} />}
 
-    {q.diagram_image ? (
+    {q.loop && <Loop loop={q.loop} />}
+
+    {oldDiagram && (q.diagram_image ? (
       <figure class="arch"><img src={url(q.diagram_image)} alt={q.title} /></figure>
     ) : (
     <figure class="arch" aria-label="A state model of one person predicts responses and chooses stimulation. Measurements come in through sensing; stimulation goes out to the brain; the observed response refits the model to this person.">
@@ -62,7 +67,7 @@ const d = q.diagram ?? {};
         <circle class="p" r="4"><animateMotion dur="6s" repeatCount="indefinite"><mpath href="#q-upd" /></animateMotion></circle>
       </svg>
     </figure>
-    )}
+    ))}
     {q.note && <p class="note" set:html={md(q.note)} />}
   </div>
 </section>

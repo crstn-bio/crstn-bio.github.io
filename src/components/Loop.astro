@@ -1,0 +1,154 @@
+---
+// 사이트의 대표 도식: 측정 → 추정 → 예측·선택 → 개입 → 다시 측정. 가운데는 이 사람의 모델(θᵢ), 느린 고리로 업데이트.
+// 단계(원)마다 설명 한 줄 + 실제로 한 프로젝트. 아직 비어 있는 단계는 next 줄로 정직하게 표시해요.
+// 글은 src/content/site.yaml 의 question: → loop: 와 projects: 에서. 원의 개수는 자유(고리 위에 고르게 놓임).
+import Status from './Status.astro';
+import ProjectDialogs from './ProjectDialogs.astro';
+import { md, url, projects } from '../lib/content';
+interface Props { loop: any }
+const { loop } = Astro.props;
+const list = projects();
+const N = Math.max(1, (loop.steps ?? []).length);
+const steps = (loop.steps ?? []).map((p: any, i: number) => {
+  const a = (i * 2 * Math.PI) / N;
+  return { ...p, n: String(i + 1).padStart(2, '0'), left: 50 + 34 * Math.sin(a), top: 50 - 34 * Math.cos(a) };
+});
+const arrows = Array.from({ length: N }, (_, i) => ((i + 0.5) * 360) / N);
+const c = loop.center ?? [];
+---
+<div class="loop" id="loop">
+  <div class="grid">
+    <div class="ring" aria-hidden="true">
+      <svg viewBox="0 0 400 400">
+        <circle class="r-track" cx="200" cy="200" r="140" />
+        {arrows.map((a) => {
+          const r = (a * Math.PI) / 180, x = 200 + 140 * Math.sin(r), y = 200 - 140 * Math.cos(r);
+          return <path class="r-arrow" d="M-5 -5 L3 0 L-5 5" transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${a})`} />;
+        })}
+        <g class="r-orbit"><circle class="r-dot" cx="200" cy="60" r="5" /></g>
+        <text class="r-c1" x="200" y="190" text-anchor="middle">{c[0]}</text>
+        <text class="r-c2" x="200" y="211" text-anchor="middle">{c[1]}</text>
+        <text class="r-c3" x="200" y="234" text-anchor="middle">{c[2]}</text>
+      </svg>
+      {steps.map((p: any, i: number) => (
+        <button type="button" class="node" data-piece={p.id} style={`--d:${((i * 8) / N).toFixed(2)}s;left:${p.left.toFixed(2)}%;top:${p.top.toFixed(2)}%`} tabindex="-1">
+          <span class="n-name">{p.name}</span>
+          <span class="n-field mono">{p.field}</span>
+        </button>
+      ))}
+    </div>
+
+    <ol class="blocks">
+      {steps.map((p: any) => (
+        <li class="blk" data-piece={p.id}>
+          <div class="b-h">
+            <span class="b-n mono">{p.n}</span>
+            <span class="b-name">{p.name}</span>
+            <span class="b-field mono">{p.field}</span>
+          </div>
+          {p.text && <p class="b-how" set:html={md(p.text)} />}
+          <ul class="b-proj">
+            {list.filter((x: any) => x.piece === p.id).map((x: any) => (
+              <li>
+                <button type="button" class="prow" data-open={x.id} aria-haspopup="dialog">
+                  <span class="p-title">{x.title}</span>
+                  <Status kind={x.status} text={x.status_label} />
+                  <span class="p-line">{x.summary}</span>
+                  <span class="p-go mono" aria-hidden="true">→</span>
+                </button>
+              </li>
+            ))}
+            {p.next && (
+              <li><a class="prow nx" href={url(p.next.url)}><span class="p-title">{p.next.label}</span><span class="p-go mono" aria-hidden="true">→</span></a></li>
+            )}
+          </ul>
+        </li>
+      ))}
+    </ol>
+  </div>
+
+  {(loop.closing || loop.formula) && (
+    <div class="close">
+      {loop.closing && <p class="c-line" set:html={md(loop.closing)} />}
+      {loop.formula && <p class="c-f mono">{loop.formula}</p>}
+    </div>
+  )}
+  <ProjectDialogs />
+</div>
+
+<style>
+  .loop { --acc: #a8c8ff; margin-top: clamp(40px, 6vw, 72px); }
+  .grid { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: clamp(28px, 5vw, 72px); align-items: center; }
+
+  .ring { position: relative; width: 100%; max-width: 460px; aspect-ratio: 1; margin-inline: auto; }
+  .ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .r-track { fill: none; stroke: #333; stroke-width: 1; stroke-dasharray: 2 5; }
+  .r-arrow { fill: none; stroke: #6a6a6a; stroke-width: 1.2; }
+  .r-dot { fill: var(--acc); }
+  .r-orbit { transform-box: view-box; transform-origin: 200px 200px; animation: orbit 8s linear infinite; }
+  .r-c1 { fill: #fff; font: 500 14px var(--mono); letter-spacing: .03em; }
+  .r-c2 { fill: #8a8a8a; font: 12.5px var(--mono); }
+  .r-c3 { fill: var(--acc); font: 12.5px var(--mono); }
+  .node { position: absolute; width: 29%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; display: grid; place-content: center; gap: 4px; text-align: center; padding: 6px; background: #050505; border: 1px solid #3a3a3a; color: #fff; font: inherit; cursor: pointer; transition: border-color .25s, background .25s; animation: node 8s infinite; animation-delay: var(--d, 0s); }
+  .node:hover, .node.on { border-color: var(--acc); background: #0a0f17; }
+  .n-name { font-size: clamp(14px, 1.4vw, 17px); letter-spacing: -0.01em; }
+  .n-field { color: var(--acc); }
+  @keyframes orbit { to { transform: rotate(360deg); } }
+  @keyframes node { 0%, 10% { border-color: var(--acc); } 20%, 100% { border-color: #3a3a3a; } }
+
+  .blocks { list-style: none; margin: 0; padding: 0; border-top: 1px solid #262626; }
+  .blk { padding: 16px 0 14px; border-bottom: 1px solid #1c1c1c; transition: opacity .25s; }
+  .blocks.filtered .blk:not(.on) { opacity: .3; }
+  .b-h { display: flex; align-items: baseline; gap: 12px; }
+  .b-n { color: var(--acc); }
+  .b-name { font-size: 20px; letter-spacing: -0.015em; }
+  .b-field { color: var(--acc); letter-spacing: .06em; margin-left: auto; }
+  .b-how { margin: 6px 0 0; color: #bdbdbd; font-size: 15.5px; line-height: 1.55; }
+  .b-proj { list-style: none; margin: 8px 0 0; padding: 0; }
+  .prow { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; grid-template-columns: auto auto minmax(0, 1fr) 18px; align-items: center; gap: 4px 12px; padding: 8px 0 8px 14px; border-left: 1px solid #2a2a2a; }
+  .prow:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+  .p-title { font-size: 15.5px; color: #fff; }
+  .p-line { grid-column: 1 / 4; color: #8a8a8a; font-size: 14px; line-height: 1.45; }
+  .p-go { grid-column: 4; grid-row: 1 / span 2; color: #5a5a5a; transition: transform .2s, color .2s; }
+  .prow:hover .p-title { color: var(--acc); }
+  .prow:hover .p-go { color: var(--acc); transform: translateX(3px); }
+  .prow:hover { border-left-color: var(--acc); }
+  .prow.nx { grid-template-columns: minmax(0, 1fr) 18px; border-left: 1px dashed #3a4a5e; }
+  .prow.nx .p-title { color: var(--acc); font-size: 14.5px; }
+  .prow.nx .p-go { grid-column: 2; grid-row: 1; }
+
+  .close { margin-top: clamp(28px, 4vw, 44px); padding-top: 18px; border-top: 1px solid #1a1a1a; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px 32px; }
+  .c-line { margin: 0; color: #fff; font-size: clamp(18px, 1.8vw, 22px); font-weight: 350; letter-spacing: -0.015em; }
+  .c-f { margin: 0; color: #8a8a8a; }
+
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+    .ring { max-width: 340px; }
+  }
+  @media (max-width: 560px) {
+    .n-name { font-size: 13.5px; }
+    .r-c1 { font-size: 15px; } .r-c2, .r-c3 { font-size: 14px; }
+    .prow { grid-template-columns: minmax(0, 1fr) 18px; }
+    .prow :global(.status) { grid-column: 1; justify-self: start; }
+    .p-line { grid-column: 1; }
+    .p-go { grid-column: 2; grid-row: 1 / span 3; }
+  }
+  @media (prefers-reduced-motion: reduce) { .r-orbit, .node { animation: none; } }
+</style>
+
+<script>
+  const sec = document.getElementById('loop');
+  if (sec) {
+    const list = sec.querySelector<HTMLElement>('.blocks');
+    const nodes = [...sec.querySelectorAll<HTMLButtonElement>('.node')];
+    const blks = [...sec.querySelectorAll<HTMLElement>('.blk')];
+    let cur = '';
+    nodes.forEach((n) => n.addEventListener('click', () => {
+      cur = cur === n.dataset.piece ? '' : n.dataset.piece || '';
+      nodes.forEach((m) => m.classList.toggle('on', m.dataset.piece === cur));
+      blks.forEach((b) => b.classList.toggle('on', b.dataset.piece === cur));
+      list?.classList.toggle('filtered', !!cur);
+      if (cur && window.innerWidth < 900) blks.find((b) => b.dataset.piece === cur)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }));
+  }
+</script>

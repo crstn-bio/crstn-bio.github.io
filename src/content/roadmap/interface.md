@@ -16,4 +16,4 @@ sources:
     url: https://www.neuropixels.org/probe-1-0-nhp-long
 ---
 
-If the information is needed, a chronic deep interface. If not, cortical or non-invasive signals may carry enough: subcortical β-burst dynamics have been reconstructed from cortical recordings (Yin et al., 2026).
+If the information is needed, a chronic deep interface. If not, cortical or non-invasive signals may carry enough: subcortical β-burst dynamics have been reconstructed from cortical recordings (Yin et al., 2026). Reconstruction is inference, not measurement: a reconstructed deep signal is a model’s estimate, and has to be checked against direct recordings before it can stand in for them.

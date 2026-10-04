@@ -31,4 +31,4 @@ sources:
     url: https://onlinelibrary.wiley.com/doi/10.1002/ana.23951
 ---
 
-Parkinson’s disease is the nearer-term testbed. Adaptive DBS already exists; the open question is how fast it can be personalized, and with how little sensing.
+Here *control* means a policy: a rule that maps the estimated state to the next stimulation setting, revised as the responses come in. Parkinson’s disease is the nearer-term testbed. Adaptive DBS already exists; the open question is how fast it can be personalized, and with how little sensing.

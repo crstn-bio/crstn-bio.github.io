@@ -9,4 +9,4 @@ mechanism: detect → predict → perturb → observe
 diagram: retrieval-failure
 ---
 
-A research framework for moving from decoding to causal testing. None of this exists yet; each step is a question.
+A research framework for moving from decoding to causal testing. A, B and C are competing hypotheses, not findings: the aim is to choose perturbations whose outcomes would tell them apart. None of this exists yet; each step is a question.

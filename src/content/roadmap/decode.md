@@ -15,4 +15,4 @@ evidence:
     project: eeg
 ---
 
-Raw recordings become features a model can use. Done so far: spike and spectral analysis of deep-brain and EEG/EMG recordings.
+Here a *state* is latent: not read off the recording, but inferred as the hidden variable that best explains the signals and predicts what comes next. Raw recordings first become features a model can use. Done so far: spike and spectral analysis of deep-brain and EEG/EMG recordings.
