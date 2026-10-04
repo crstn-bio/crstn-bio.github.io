@@ -2,24 +2,22 @@
 // 04 · Contact. 예전 About 내용을 여기로 합쳤어요 (큰 사진은 빼고 작은 사진 하나만).
 import fs from 'node:fs';
 import path from 'node:path';
-import { site } from '../data/site';
+import { site, md, url } from '../lib/content';
+const C = site.contact ?? {};
 const year = new Date().getFullYear();
-const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 // 이메일이 아직 예시 주소이거나 CV 파일이 없으면 버튼을 숨겨서 깨진 링크가 없게 해요.
 const hasEmail = !!site.email && !site.email.includes('your.email');
-const hasCv = fs.existsSync(path.join(process.cwd(), 'public', site.cv.replace(/^\//, '')));
+const hasCv = !!site.cv && fs.existsSync(path.join(process.cwd(), 'public', site.cv.replace(/^\//, '')));
 ---
 <footer id="contact" class="foot" aria-labelledby="contact-h">
   <div class="wrap">
-    <p class="kicker mono">06 / Collaborate</p>
+    <p class="kicker mono">{C.kicker}</p>
     <div class="foot-grid">
       <div class="copy">
-        <h2 id="contact-h">Open to building the next step with the right team.</h2>
-        <p class="who"><strong>{site.name}</strong><br />University of Toronto<br />Human neuromodulation · computational neuroscience</p>
-        <p class="lede">I want to work with human neural data on computational neuromodulation and closed-loop systems, as a researcher or research engineer.</p>
-        <ul class="meta mono">
-          <li>Research positions</li><li>Summer 2027</li><li>Collaborations</li><li>Computational neuroscience</li><li>Neurotechnology</li>
-        </ul>
+        <h2 id="contact-h">{C.title}</h2>
+        <p class="who"><strong>{site.name}</strong>{(C.who ?? []).map((l: string) => <><br />{l}</>)}</p>
+        {C.text && <p class="lede" set:html={md(C.text)} />}
+        {C.tags?.length > 0 && <ul class="meta mono">{C.tags.map((t: string) => <li>{t}</li>)}</ul>}
         {hasEmail && (
           <div class="mailbox">
             <span class="mb-k mono">Email</span>
@@ -28,17 +26,17 @@ const hasCv = fs.existsSync(path.join(process.cwd(), 'public', site.cv.replace(/
           </div>
         )}
         <div class="actions">
-          {hasEmail && <a class="btn primary" href={`mailto:${site.email}?subject=Project`}>Discuss a project →</a>}
-          {hasCv && <a class="btn" href={`${base}${site.cv}`}>View CV ↗</a>}
-          {site.links.map((l) => <a class="btn" href={l.href} rel="noopener" target="_blank">{l.label} ↗</a>)}
+          {hasEmail && <a class="btn primary" href={`mailto:${site.email}?subject=${encodeURIComponent(C.email_subject ?? '')}`}>{C.email_button}</a>}
+          {hasCv && <a class="btn" href={url(site.cv)}>{C.cv_button}</a>}
+          {(site.links ?? []).map((l: any) => <a class="btn" href={l.url} rel="noopener" target="_blank">{l.label} ↗</a>)}
         </div>
       </div>
-      <img class="avatar" src={`${base}/profile.jpg`} alt={`Portrait of ${site.name}`} width="570" height="731" loading="lazy" />
+      {C.photo && <img class="avatar" src={url(C.photo)} alt={`Portrait of ${site.name}`} width="570" height="731" loading="lazy" />}
     </div>
   </div>
   <div class="wrap foot-base mono">
     <span>© {year} {site.name}</span>
-    <span>Built by hand with Astro. Diagrams are drawn in code.</span>
+    <span>{C.footer}</span>
   </div>
 </footer>
 

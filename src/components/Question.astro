@@ -1,13 +1,20 @@
 ---
 // 01 · 질문: 한 사람의 뇌를 예측하고 제어할 수 있을까?
 // 소프트웨어 뇌 모델이 중심, 하드웨어는 감지(뇌 → 모델)와 작용(모델 → 뇌)의 두 통로.
+// 글과 도안 안의 단어는 src/content/site.yaml 의 question: 에서 고쳐요.
+import { site, md, url } from '../lib/content';
+const q = site.question ?? {};
+const d = q.diagram ?? {};
 ---
 <section class="question" id="question" aria-labelledby="question-h">
   <div class="wrap">
-    <p class="kicker mono">01 / The question</p>
-    <h2 id="question-h">Can we predict and control an individual brain?</h2>
-    <p class="dek">The same stimulation can produce different responses in different people. The core is a software model of one brain: hardware reads from it and writes to it, and every response updates the model.</p>
+    <p class="kicker mono">{q.kicker}</p>
+    <h2 id="question-h">{q.title}</h2>
+    {q.text && <p class="dek" set:html={md(q.text)} />}
 
+    {q.diagram_image ? (
+      <figure class="arch"><img src={url(q.diagram_image)} alt={q.title} /></figure>
+    ) : (
     <figure class="arch" aria-label="Research asks what we should learn. A software brain model predicts and controls. It reads the brain through sensing hardware and writes to it through stimulation hardware. The brain's response updates the model.">
       <svg viewBox="0 0 600 540" aria-hidden="true">
         <defs>
@@ -17,43 +24,44 @@
           <path id="q-dn" d="M300 162 V214 H470 V256 M470 338 V408 H338" />
           <path id="q-upd" d="M300 448 V500 H585 V122 H422" />
         </defs>
-        <text class="k" x="300" y="22" text-anchor="middle">RESEARCH</text>
-        <text class="v" x="300" y="48" text-anchor="middle">What should we learn?</text>
+        <text class="k" x="300" y="22" text-anchor="middle">{d.top}</text>
+        <text class="v" x="300" y="48" text-anchor="middle">{d.ask}</text>
         <path class="ln" d="M300 58 V80" marker-end="url(#qa)" />
 
         <rect class="m" x="180" y="82" width="240" height="80" />
-        <text class="t" x="300" y="118" text-anchor="middle">BRAIN MODEL</text>
-        <text class="k" x="300" y="144" text-anchor="middle">SOFTWARE</text>
+        <text class="t" x="300" y="118" text-anchor="middle">{d.model}</text>
+        <text class="k" x="300" y="144" text-anchor="middle">{d.model_sub}</text>
 
         <path class="ln" d="M300 162 V214 M130 214 H470" />
-        <text class="v" x="312" y="194">predict · control</text>
+        <text class="v" x="312" y="194">{d.verbs}</text>
         <path class="ln" d="M130 256 V218" marker-end="url(#qa)" />
         <path class="ln" d="M470 214 V254" marker-end="url(#qa)" />
-        <text class="t3" x="118" y="242" text-anchor="end">READ</text>
-        <text class="t3" x="482" y="242">WRITE</text>
+        <text class="t3" x="118" y="242" text-anchor="end">{d.read}</text>
+        <text class="t3" x="482" y="242">{d.write}</text>
 
         <rect class="b" x="40" y="256" width="180" height="82" />
-        <text class="t2" x="130" y="290" text-anchor="middle">SENSING</text>
-        <text class="s" x="130" y="316" text-anchor="middle">hardware</text>
+        <text class="t2" x="130" y="290" text-anchor="middle">{d.sensing}</text>
+        <text class="s" x="130" y="316" text-anchor="middle">{d.sensing_sub}</text>
         <rect class="b" x="380" y="256" width="180" height="82" />
-        <text class="t2" x="470" y="290" text-anchor="middle">STIMULATE</text>
-        <text class="s" x="470" y="316" text-anchor="middle">hardware</text>
+        <text class="t2" x="470" y="290" text-anchor="middle">{d.stimulate}</text>
+        <text class="s" x="470" y="316" text-anchor="middle">{d.stimulate_sub}</text>
 
         <path class="ln" d="M130 340 V408 H262" marker-start="url(#qa)" />
         <path class="ln" d="M470 338 V408 H338" marker-end="url(#qa)" />
         <path class="brain" d="M300 370 C276 370 262 382 262 400 C262 420 280 432 300 430 C320 432 338 420 338 400 C338 382 324 370 300 370 Z M300 372 V428 M276 390 C286 396 288 406 280 416 M324 390 C314 396 312 406 320 416" />
-        <text class="t2" x="288" y="468" text-anchor="end">BRAIN</text>
+        <text class="t2" x="288" y="468" text-anchor="end">{d.brain}</text>
 
         <path class="up" d="M300 432 V500 H585 V122 H424" marker-end="url(#qb)" />
-        <text class="s" x="312" y="468">response</text>
-        <text class="u" x="572" y="526" text-anchor="end">MODEL UPDATE</text>
+        <text class="s" x="312" y="468">{d.response}</text>
+        <text class="u" x="572" y="526" text-anchor="end">{d.update}</text>
 
         <circle class="p" r="5"><animateMotion dur="5s" repeatCount="indefinite"><mpath href="#q-up" /></animateMotion></circle>
         <circle class="p" r="5"><animateMotion dur="5s" begin="-2.5s" repeatCount="indefinite"><mpath href="#q-dn" /></animateMotion></circle>
         <circle class="p" r="4"><animateMotion dur="6s" repeatCount="indefinite"><mpath href="#q-upd" /></animateMotion></circle>
       </svg>
     </figure>
-    <p class="note">Control and memory are the same problem: what state is this brain in, and what information does it hold?</p>
+    )}
+    {q.note && <p class="note" set:html={md(q.note)} />}
   </div>
 </section>
 
@@ -68,7 +76,7 @@
   .dek { max-width: 54ch; margin: clamp(28px, 4vw, 40px) 0 0; color: #a9a9a9; font-size: clamp(17px, 1.5vw, 20px); line-height: 1.6; }
 
   .arch { margin: clamp(40px, 6vw, 72px) auto 0; max-width: 680px; }
-  .arch svg { display: block; width: 100%; height: auto; }
+  .arch svg, .arch img { display: block; width: 100%; height: auto; }
   .arch .m { fill: #060a10; stroke: var(--acc); stroke-width: 1.4; }
   .arch .b { fill: #050505; stroke: #bdbdbd; stroke-width: 1.1; }
   .arch .ln { fill: none; stroke: #8a8a8a; stroke-width: 1.2; }

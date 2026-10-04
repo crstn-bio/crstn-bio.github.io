@@ -1,21 +1,26 @@
 ---
-// 연구 단계 페이지: 질문 하나 · 기전 한 줄 · 주석 한 줄 · 도안. 앞뒤 단계로 이동.
+// 로드맵 페이지: src/content/roadmap/<이 주소>.md 하나가 이 페이지 하나예요.
+// 질문 · 기전 · 본문(마크다운) · 도안 · 출처. 앞뒤 이동과 위쪽 레일은 순서(order)에서 자동으로.
+import { render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Nav from '../../components/Nav.astro';
 import StageRail from '../../components/StageRail.astro';
 import StageFigure from '../../components/StageFigure.astro';
 import Status from '../../components/Status.astro';
 import ProjectDialogs from '../../components/ProjectDialogs.astro';
-import { stages, groupOf, type Stage } from '../../data/program';
+import { site, getRoadmap, homeUrl, url, type Node } from '../../lib/content';
 
-export function getStaticPaths() {
-  return stages.map((s, i) => ({ params: { slug: s.slug }, props: { s, prev: stages[i - 1], next: stages[i + 1] } }));
+export async function getStaticPaths() {
+  const nodes = await getRoadmap();
+  return nodes.map((s, i) => ({ params: { slug: s.slug }, props: { s, prev: nodes[i - 1], next: nodes[i + 1] } }));
 }
-const { s, prev, next } = Astro.props as { s: Stage; prev?: Stage; next?: Stage };
-const g = groupOf(s.slug);
-const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const { s, prev, next } = Astro.props as { s: Node; prev?: Node; next?: Node };
+const d = s.data;
+const L = site.roadmap ?? {};
+const C = site.contact ?? {};
+const { Content } = await render(s);
 ---
-<Base title={`${s.n} ${s.verb}`} description={`${s.q} ${s.mech}`} dark>
+<Base title={`${s.n} ${d.title}`} description={`${d.question} ${d.mechanism}`} dark>
   <div class="page">
     <Nav />
     <div class="wrap top">
@@ -25,38 +30,38 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     <main id="main" class="wrap">
       <header class="hd">
         <div class="id">
-          <p class="mono kick"><a href={`${base}/#approach`}>Approach</a><span>/</span>{g.label}<span>/</span>{s.n} {s.verb}</p>
-          <Status kind={s.status} text={s.statusText} />
+          <p class="mono kick"><a href={homeUrl('#approach')}>{L.crumb}</a>{d.group && <><span>/</span>{d.group}</>}<span>/</span>{s.n} {d.title}</p>
+          <Status kind={d.status} text={d.status_label} />
         </div>
-        <h1>{s.q}</h1>
+        <h1>{d.question}</h1>
         <div class="side">
-          <p class="mech mono">{s.mech}</p>
-          <p class="note">{s.note}</p>
-          {s.evidence && (
-            <p class="ev mono"><span>Evidence</span>{s.evidence.map((e) => <button type="button" data-open={e.open} aria-haspopup="dialog">{e.label} →</button>)}</p>
+          {d.mechanism && <p class="mech mono">{d.mechanism}</p>}
+          <div class="note"><Content /></div>
+          {d.evidence.length > 0 && (
+            <p class="ev mono"><span>{L.evidence}</span>{d.evidence.map((e) => <button type="button" data-open={e.project} aria-haspopup="dialog">{e.label} →</button>)}</p>
           )}
         </div>
       </header>
 
-      <div class="fig"><StageFigure slug={s.slug} /></div>
+      <div class="fig"><StageFigure data={d} /></div>
 
-      {s.sources && (
+      {d.sources.length > 0 && (
         <div class="src">
-          <p class="mono">Sources</p>
-          <div>{s.sources.map((x) => <a href={x.href} target="_blank" rel="noreferrer">{x.label} ↗</a>)}</div>
+          <p class="mono">{L.sources}</p>
+          <div>{d.sources.map((x) => <a href={url(x.url)} target="_blank" rel="noreferrer">{x.label} ↗</a>)}</div>
         </div>
       )}
 
       <nav class="pn" aria-label="Previous and next stage">
-        {prev ? <a class="p" href={`${base}/how/${prev.slug}/`}><span class="mono">← {prev.n}</span>{prev.verb}</a> : <a class="p" href={`${base}/#approach`}><span class="mono">←</span>Overview</a>}
-        <a class="all mono" href={`${base}/#approach`}>Back to approach</a>
-        {next ? <a class="n" href={`${base}/how/${next.slug}/`}><span class="mono">{next.n} →</span>{next.verb}</a> : <a class="n" href={`${base}/#questions`}><span class="mono">→</span>Questions</a>}
+        {prev ? <a class="p" href={url(`/how/${prev.slug}/`)}><span class="mono">← {prev.n}</span>{prev.data.title}</a> : <a class="p" href={homeUrl('#approach')}><span class="mono">←</span>{L.first}</a>}
+        <a class="all mono" href={homeUrl('#approach')}>{L.back}</a>
+        {next ? <a class="n" href={url(`/how/${next.slug}/`)}><span class="mono">{next.n} →</span>{next.data.title}</a> : <a class="n" href={homeUrl('#questions')}><span class="mono">→</span>{L.last}</a>}
       </nav>
     </main>
 
     <footer class="wrap foot mono">
-      <span>Christine Park</span>
-      <a href={`${base}/#contact`}>Discuss a project →</a>
+      <span>{site.name}</span>
+      <a href={homeUrl('#contact')}>{C.email_button}</a>
     </footer>
   </div>
   <ProjectDialogs />
@@ -74,7 +79,14 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   .kick span { color: #444; }
   h1 { margin: 0; font-size: clamp(30px, 4vw, 56px); font-weight: 300; letter-spacing: -0.035em; line-height: 1.06; text-wrap: balance; }
   .mech { margin: 0; color: var(--acc); letter-spacing: .04em; line-height: 1.6; }
-  .note { margin: 12px 0 0; color: #9a9a9a; font-size: 15.5px; line-height: 1.6; max-width: 54ch; }
+  .note { max-width: 54ch; }
+  .note > :global(*) { margin: 12px 0 0; color: #9a9a9a; font-size: 15.5px; line-height: 1.6; }
+  .note :global(a) { color: #d6d6d6; }
+  .note :global(strong) { color: #fff; font-weight: 500; }
+  .note :global(h2), .note :global(h3) { color: #fff; font-size: 18px; font-weight: 400; letter-spacing: -0.01em; margin-top: 22px; }
+  .note :global(ul), .note :global(ol) { padding-left: 1.2em; }
+  .note :global(img) { display: block; max-width: 100%; height: auto; border: 1px solid #1f1f1f; }
+  .note :global(blockquote) { border-left: 1px solid #3a4a5e; padding-left: 12px; margin-left: 0; }
   .ev { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 14px 0 0; }
   .ev span { color: #6a6a6a; letter-spacing: .12em; text-transform: uppercase; }
   .ev button { font: inherit; background: none; border: 0; border-bottom: 1px solid #3a3a3a; color: #e6e6e6; padding: 2px 0; cursor: pointer; }

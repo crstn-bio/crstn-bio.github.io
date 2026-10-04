@@ -1,29 +1,35 @@
 ---
-// 04 · 연구 질문: 목록은 src/data/questions.ts 에서 고쳐요. 비어 있으면 섹션이 숨겨져요.
-import { questions } from '../data/questions';
+// 04 · 연구 질문: 글은 src/content/site.yaml 의 questions: 에서. 목록이 비면 섹션이 숨겨져요.
+import Status from './Status.astro';
+import { site, md } from '../lib/content';
+const Q = site.questions ?? {};
+const list: string[] = Q.list ?? [];
+const nx = Q.next;
 ---
-{questions.length > 0 && (
+{(list.length > 0 || nx) && (
 <section class="next section" id="questions" aria-labelledby="next-h">
   <div class="wrap">
     <div class="head">
-      <div><p class="kicker mono">04 / Open questions</p><h2 id="next-h">What I want to test next.</h2></div>
+      <div><p class="kicker mono">{Q.kicker}</p><h2 id="next-h">{Q.title}</h2></div>
     </div>
-    <div class="nq">
-      <p class="nq-k mono">Next question <span class="status status--question">Research question</span></p>
-      <p class="nq-q">
-        <span><span class="mono">state</span>Can we perturb the correct state,</span>
-        <span><span class="mono">time</span>at the correct time,</span>
-        <span><span class="mono">direction</span>in the correct direction?</span>
-      </p>
-      <span class="nq-ar mono" aria-hidden="true">↓</span>
-      <p class="nq-p">Closed-loop<br />representation-guided<br />hippocampal neuromodulation</p>
-    </div>
+    {nx && (
+      <div class="nq">
+        <p class="nq-k mono">{nx.label} {nx.status && <Status kind={nx.status} text={nx.status_label} />}</p>
+        <p class="nq-q">
+          {(nx.lines ?? []).map((l: any) => <span><span class="mono">{l.tag}</span>{l.text}</span>)}
+        </p>
+        {nx.answer?.length > 0 && <span class="nq-ar mono" aria-hidden="true">↓</span>}
+        {nx.answer?.length > 0 && <p class="nq-p" set:html={nx.answer.map((x: string) => md(x)).join('<br />')} />}
+      </div>
+    )}
 
-    <ol class="qs">
-      {questions.map((q, i) => (
-        <li><span class="n mono">Q{i + 1}</span><span class="q">{q}</span></li>
-      ))}
-    </ol>
+    {list.length > 0 && (
+      <ol class="qs">
+        {list.map((q, i) => (
+          <li><span class="n mono">Q{i + 1}</span><span class="q" set:html={md(q)} /></li>
+        ))}
+      </ol>
+    )}
   </div>
 </section>
 )}

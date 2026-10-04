@@ -1,16 +1,11 @@
 ---
-// RESTORE: 기억 복원이 실제 개입이 되기 전에 과학적으로 풀려야 할 일곱 조건.
-// 계단의 마지막(복원)은 앞의 여섯이 풀린 뒤에만 시도할 수 있다는 뜻으로 점선 처리했어요.
+// 계단(steps) + 옆 상자(card). 내용은 로드맵 frontmatter의 steps: 와 card: 에서.
+// 계단의 마지막 단계는 앞 단계들이 풀린 뒤에만 시도할 수 있다는 뜻으로 점선 처리해요.
 import Status from './Status.astro';
-const reqs = [
-  ['Measure', 'signals at enough spatial and temporal resolution'],
-  ['Decode', 'activity tied to specific memory states and processes'],
-  ['Track', 'how representations change across encoding, consolidation and retrieval'],
-  ['Model', 'participant-specific links between state, behaviour, context and intervention'],
-  ['Distinguish', 'absent, degraded or inaccessible'],
-  ['Intervene', 'does precisely timed perturbation change retrieval probability?'],
-  ['Restore', 'only then: can useful function be recovered, reproducibly?'],
-];
+import { md } from '../lib/content';
+interface Props { steps: { name: string; text: string }[]; card?: any }
+const { steps, card } = Astro.props;
+const reqs = steps.map((x) => [x.name, x.text]);
 ---
 <div class="rs">
   <ol class="ladder" aria-label="Seven requirements, in order">
@@ -22,12 +17,15 @@ const reqs = [
       </li>
     ))}
   </ol>
-  <div class="front">
-    <div class="f-top"><span class="mono">Clinical frontier</span><Status kind="frontier" /></div>
-    <p class="f-name">Alzheimer’s disease</p>
-    <p class="f-fact">In mouse models of early Alzheimer’s, directly activating memory engram cells restored recall (Roy et al., <i>Nature</i> 2016). Whether anything comparable holds in people is unknown.</p>
-    <p class="f-beyond mono">Beyond neurodegeneration · reconsolidation · trauma · disordered memory</p>
-  </div>
+  {card && (
+    <div class="front">
+      <div class="f-top"><span class="mono">{card.label}</span>{card.status && <Status kind={card.status} text={card.status_label} />}</div>
+      {card.title && <p class="f-name">{card.title}</p>}
+      {card.text && <p class="f-fact" set:html={md(card.text)} />}
+      {card.rows?.map((r: any) => <p class="f-fact"><span class="mono">{r.label}</span> <span set:html={md(r.text)} /></p>)}
+      {card.note && <p class="f-beyond mono" set:html={md(card.note)} />}
+    </div>
+  )}
 </div>
 
 <style>

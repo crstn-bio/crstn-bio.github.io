@@ -5,59 +5,68 @@
 // 알츠하이머는 사람에게서 확립된 사실처럼 쓰지 않고 질문으로 둬요.
 // 끝에 실제 해부 데이터 뇌 위의 세 표적 (지금 M1 · 파킨슨 STN · 알츠하이머 해마).
 import Anatomy from './Design.astro';
+import { site, md } from '../lib/content';
+const w = site.why ?? {};
+// 선 그래프: 출처가 있는 점들만 직선으로 이어요 (중간 모양을 지어내지 않음).
+const lineOf = (pts: [number, number][]) => {
+  const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), span = y1 - y0 || 1;
+  const lo = y0 - span * (1.9 / 13.3), hi = y1 + span * (0.8 / 13.3);
+  const X = (v: number) => 8 + ((v - x0) / (x1 - x0 || 1)) * 284, Y = (v: number) => 72 - ((v - lo) / (hi - lo)) * 64;
+  const P = pts.map(([a, b]) => [X(a), Y(b)] as const);
+  return { P, d: 'M' + P.map(([a, b]) => `${a.toFixed(1)} ${b.toFixed(1)}`).join(' L') };
+};
+const dec = (n: unknown) => (String(n).split('.')[1] ?? '').length;
 let seed = 7;
 const rnd = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
 // 기억 표상: 대부분 흐려지지만 일부(파란 점)는 남아 있을 수 있다는 질문을 그림으로
 const dots = Array.from({ length: 60 }, (_, i) => ({ x: 14 + (i % 15) * 19, y: 14 + Math.floor(i / 15) * 19, e: [7, 19, 22, 36, 41, 53].includes(i), d: (rnd() * 3).toFixed(2) }));
-// 2021 → 2050: 1,190만 → 2,520만
-const px = (yr: number) => 8 + ((yr - 2021) / 29) * 284;
-const py = (m: number) => 72 - ((m - 10) / 16) * 64;
-// 두 출처 값(2021, 2050)만 이어요. 중간 모양을 지어내지 않도록 직선.
-const curve = `M${px(2021).toFixed(1)} ${py(11.9).toFixed(1)} L${px(2050).toFixed(1)} ${py(25.2).toFixed(1)}`;
 ---
 <section class="why-sec" id="why" aria-labelledby="why-h">
   <div class="wrap">
     <div class="head">
-      <div><p class="kicker mono">02 / Why it matters</p><h2 id="why-h">Two clinical frontiers.</h2></div>
-      <p>Parkinson’s is the nearer-term test of control. Alzheimer’s is the longer-term test of memory. Same model, two targets.</p>
+      <div><p class="kicker mono">{w.kicker}</p><h2 id="why-h">{w.title}</h2></div>
+      {w.text && <p set:html={md(w.text)} />}
     </div>
 
     <div class="cases">
-      <article class="case">
-        <div class="c-top mono"><span class="c-axis">Control</span><span>Nearer-term · testbed</span></div>
-        <h3>Parkinson’s disease</h3>
-        <p class="c-num"><span data-count="25.2" data-dec="1">25.2</span>M</p>
-        <p class="c-sub">people by 2050, more than double 2021</p>
-        <svg class="c-viz" viewBox="0 0 300 80" aria-hidden="true">
-          <path class="ax" d="M8 78 H292" />
-          <path class="ln draw" pathLength="1" d={curve} />
-          <circle class="pt" cx={px(2021)} cy={py(11.9)} r="3.5" />
-          <circle class="pt acc pulse" cx={px(2050)} cy={py(25.2)} r="4" />
-        </svg>
-        <div class="c-ax mono"><span>2021 · 11.9M</span><span>2050 · 25.2M</span></div>
-        <p class="c-aim">Adaptive stimulation, learned per patient.</p>
-        <button type="button" class="c-tg mono" data-goto="pd">Target · subthalamic nucleus →</button>
-      </article>
-
-      <article class="case">
-        <div class="c-top mono"><span class="c-axis">Memory</span><span>Long-term · frontier</span></div>
-        <h3>Alzheimer’s disease</h3>
-        <p class="c-num"><span data-count="57" data-dec="0">57</span>M</p>
-        <p class="c-sub">people living with dementia in 2021, 60–70% of it Alzheimer’s</p>
-        <svg class="c-viz" viewBox="0 0 300 80" aria-hidden="true">
-          {dots.map((d) => <circle class={d.e ? 'eng' : 'mem'} cx={d.x} cy={d.y} r={d.e ? 4 : 3.2} style={`--d:${d.d}s`} />)}
-        </svg>
-        <p class="c-aim">What remains when a memory can no longer be retrieved?</p>
-        <button type="button" class="c-tg mono" data-goto="ad">Target · hippocampus →</button>
-      </article>
+      {(w.cards ?? []).map((c: any) => {
+        const L = c.chart === 'line' && c.points?.length > 1 ? lineOf(c.points) : null;
+        return (
+          <article class="case">
+            <div class="c-top mono"><span class="c-axis">{c.axis}</span><span>{c.horizon}</span></div>
+            <h3>{c.title}</h3>
+            {c.number != null && <p class="c-num"><span data-count={c.number} data-dec={dec(c.number)}>{c.number}</span>{c.unit}</p>}
+            {c.caption && <p class="c-sub" set:html={md(c.caption)} />}
+            {L && (
+              <svg class="c-viz" viewBox="0 0 300 80" aria-hidden="true">
+                <path class="ax" d="M8 78 H292" />
+                <path class="ln draw" pathLength="1" d={L.d} />
+                {L.P.map(([x, y], i) => i === L.P.length - 1
+                  ? <circle class="pt acc pulse" cx={x} cy={y} r="4" />
+                  : <circle class="pt" cx={x} cy={y} r="3.5" />)}
+              </svg>
+            )}
+            {L && <div class="c-ax mono">{c.points.map((p: [number, number]) => <span>{p[0]} · {p[1]}{c.unit}</span>)}</div>}
+            {c.chart === 'dots' && (
+              <svg class="c-viz" viewBox="0 0 300 80" aria-hidden="true">
+                {dots.map((d) => <circle class={d.e ? 'eng' : 'mem'} cx={d.x} cy={d.y} r={d.e ? 4 : 3.2} style={`--d:${d.d}s`} />)}
+              </svg>
+            )}
+            {c.aim && <p class="c-aim" set:html={md(c.aim)} />}
+            {c.target && <button type="button" class="c-tg mono" data-goto={c.target.view}>{c.target.label}</button>}
+          </article>
+        );
+      })}
     </div>
 
-    <p class="src mono">
-      <a href="https://bmjgroup.com/cases-of-parkinsons-disease-set-to-reach-25-million-worldwide-by-2050/" target="_blank" rel="noreferrer">BMJ 2025 · GBD 2021 projections ↗</a>
-      <a href="https://www.who.int/news-room/fact-sheets/detail/dementia" target="_blank" rel="noreferrer">WHO · dementia fact sheet ↗</a>
-    </p>
+    {w.sources?.length > 0 && (
+      <p class="src mono">
+        {w.sources.map((x: any) => <a href={x.url} target="_blank" rel="noreferrer">{x.label} ↗</a>)}
+      </p>
+    )}
 
-    <div class="targets"><Anatomy title="Three targets on one brain" /></div>
+    <div class="targets"><Anatomy /></div>
   </div>
 </section>
 

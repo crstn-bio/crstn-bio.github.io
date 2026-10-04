@@ -1,15 +1,16 @@
 ---
 // 단계 페이지 위쪽의 작은 레일: 11단계 점 · 번호 · 동사. 지금 단계는 강조, 누르면 그 단계 페이지로.
-import { stages } from '../data/program';
+// 노드 목록 · 이름 · 순서 · 상태는 src/content/roadmap/*.md 의 frontmatter에서 와요.
+import { getRoadmap, url } from '../lib/content';
 interface Props { current: string }
 const { current } = Astro.props;
-const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const stages = (await getRoadmap()).map((e) => ({ slug: e.slug, n: e.n, verb: e.data.title, status: e.data.status }));
 ---
-<nav class="rail" aria-label="Research program stages">
+<nav class="rail" aria-label="Research program stages" style={`--count:${stages.length}`}>
   <ol>
     {stages.map((x) => (
       <li class={`r-${x.status} ${x.slug === current ? 'is-cur' : ''}`}>
-        <a href={`${base}/how/${x.slug}/`} aria-current={x.slug === current ? 'page' : undefined}>
+        <a href={url(`/how/${x.slug}/`)} aria-current={x.slug === current ? 'page' : undefined}>
           <span class="r-dot" aria-hidden="true"></span>
           <span class="r-n mono">{x.n}</span>
           <span class="r-v">{x.verb}</span>
@@ -21,7 +22,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 <style>
   .rail { --acc: #a8c8ff; }
-  .rail ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); position: relative; }
+  .rail ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--count), minmax(0, 1fr)); position: relative; }
   .rail ol::before { content: ''; position: absolute; left: 0; right: 0; top: 5px; height: 1px; background: #2a2a2a; }
   .rail a { display: grid; gap: 3px; padding-right: 8px; text-decoration: none; color: inherit; }
   .r-dot { width: 11px; height: 11px; border-radius: 50%; background: #000; border: 1px solid #6a6a6a; margin-bottom: 8px; position: relative; z-index: 1; }

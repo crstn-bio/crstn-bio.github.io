@@ -1,5 +1,7 @@
 ---
-// 단계마다 도안 하나 (Interface만 두 개: 분기 + 하드웨어 개념).
+// 로드맵 페이지의 도안. frontmatter의 diagram: 을 읽어요.
+//   내장 도안 이름 (아래 BUILTIN) · 또는 /images/… 그림 파일 · 여러 개면 목록으로.
+//   steps: 가 있으면 계단 + 상자, 아니면 card: 는 도안 아래 상자로.
 import Pipeline from './Pipeline.astro';
 import PredictControl from './PredictControl.astro';
 import ControlTestbed from './ControlTestbed.astro';
@@ -8,28 +10,46 @@ import RetrievalFailure from './RetrievalFailure.astro';
 import InterfaceBranch from './InterfaceBranch.astro';
 import Hardware from './Hardware.astro';
 import Restore from './Restore.astro';
-interface Props { slug: string }
-const { slug } = Astro.props;
+import { url, md } from '../lib/content';
+interface Props { data: any }
+const { data: d } = Astro.props;
+const list: string[] = d.diagram == null || d.diagram === 'none' ? [] : Array.isArray(d.diagram) ? d.diagram : [d.diagram];
+const PIPE: Record<string, [string, string]> = {
+  measure: ['measure', 'Measure: deliver an intervention, record the response after a latency, and relate dose to response for this brain against the population.'],
+  decode: ['decode', 'Decode: multichannel signals, band-power and firing-rate features, and a low-dimensional state estimate z of t.'],
+  personalize: ['personalize', 'Personalize: a population prior, observations from one person arriving, and a personal model whose uncertainty narrows.'],
+  'adaptive-dbs': ['aidbs', "Concept for adaptive DBS: pretrain on many patients' local field potentials, personalize to one patient with little data, run the model on the device, and stimulate only when beta activity is high."],
+  minimize: ['minimize', 'Minimize: a high-dimensional channel space collapses to a few informative features, then a few state variables, then the minimum sufficient information for the model.'],
+  scale: ['scale', 'Scale: electrode signals, local populations, circuits, whole-brain networks, and one individual model over time.'],
+};
+const isFile = (x: string) => x.startsWith('/') || /^https?:/.test(x);
 ---
-{slug === 'measure' && <Pipeline kind="measure" label="Measure: deliver an intervention, record the response after a latency, and relate dose to response for this brain against the population." />}
-{slug === 'decode' && <Pipeline kind="decode" label="Decode: multichannel signals, band-power and firing-rate features, and a low-dimensional state estimate z of t." />}
-{slug === 'personalize' && <Pipeline kind="personalize" label="Personalize: a population prior, observations from one person arriving, and a personal model whose uncertainty narrows." />}
-{slug === 'predict' && <PredictControl />}
-{slug === 'control' && (
-  <div class="ctl">
-    <Pipeline kind="aidbs" label="Concept for adaptive DBS: pretrain on many patients' local field potentials, personalize to one patient with little data, run the model on the device, and stimulate only when beta activity is high." />
-    <p class="cap mono">Concept for personalized adaptive DBS. Not a built system.</p>
-    <ControlTestbed />
-  </div>
-)}
-{slug === 'memory' && <MemoryChain />}
-{slug === 'retrieval' && <RetrievalFailure />}
-{slug === 'minimize' && <Pipeline kind="minimize" label="Minimize: a high-dimensional channel space collapses to a few informative features, then a few state variables, then the minimum sufficient information for the model." />}
-{slug === 'interface' && <><InterfaceBranch /><Hardware /></>}
-{slug === 'scale' && <Pipeline kind="scale" label="Scale: electrode signals, local populations, circuits, whole-brain networks, and one individual model over time." />}
-{slug === 'restore' && <Restore />}
+{(() => {
+  const figs = list.map((x) => (
+    isFile(x) ? <figure class="img"><img src={url(x)} alt={d.diagram_caption ?? d.question} /></figure>
+    : PIPE[x] ? <Pipeline kind={PIPE[x][0] as any} label={PIPE[x][1]} />
+    : x === 'predict-control' ? <PredictControl />
+    : x === 'memory-chain' ? <MemoryChain />
+    : x === 'retrieval-failure' ? <RetrievalFailure />
+    : x === 'interface-branch' ? <InterfaceBranch />
+    : x === 'implant-hardware' ? <Hardware />
+    : <p class="cap mono">Unknown diagram “{x}”.</p>
+  ));
+  // 캡션이나 상자가 붙으면 한 묶음(촘촘한 간격), 아니면 도안들을 그대로 나열
+  if (d.steps) return <>{figs}<Restore steps={d.steps} card={d.card} /></>;
+  if (d.diagram_caption || d.card) return (
+    <div class="ctl">
+      {figs}
+      {d.diagram_caption && <p class="cap mono" set:html={md(d.diagram_caption)} />}
+      {d.card && <ControlTestbed card={d.card} />}
+    </div>
+  );
+  return <>{figs}</>;
+})()}
 
 <style>
   .ctl { display: grid; gap: 20px; }
   .cap { margin: -10px 0 0; color: #6a6a6a; }
+  .img { margin: 0; }
+  .img img { display: block; width: 100%; height: auto; }
 </style>

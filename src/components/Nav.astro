@@ -1,16 +1,9 @@
 ---
-import { site } from '../data/site';
-const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-const items = [
-  { label: 'Question', href: `${base}/#question` },
-  { label: 'Why', href: `${base}/#why` },
-  { label: 'Approach', href: `${base}/#approach` },
-  { label: 'Questions', href: `${base}/#questions` },
-  { label: 'Contact', href: `${base}/#contact` },
-];
+import { site, homeUrl, url } from '../lib/content';
+const items = (site.nav ?? []).map((i: any) => ({ label: i.label, href: homeUrl(i.href) }));
 ---
 <header class="nav wrap">
-  <a class="nav-name" href={`${base}/`}>{site.name}</a>
+  <a class="nav-name" href={url('/')}>{site.name}</a>
   <nav aria-label="Main">
     <ul>
       {items.map((i) => <li><a href={i.href}>{i.label}</a></li>)}

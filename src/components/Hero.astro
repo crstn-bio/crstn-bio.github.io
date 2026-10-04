@@ -1,5 +1,7 @@
 ---
 import Nav from './Nav.astro';
+import { site } from '../lib/content';
+const h = site.hero ?? {};
 ---
 <section class="hero" aria-labelledby="hero-h">
   <canvas id="brain" aria-hidden="true"></canvas>
@@ -18,13 +20,13 @@ import Nav from './Nav.astro';
     </dl>
 
     <div class="wrap hero-body">
-      <p class="eyebrow">Research program</p>
-      <h1 id="hero-h">Modelling the individual brain.</h1>
-      <p class="lede mono">measure neural state → predict the response → choose the intervention → learn from the individual</p>
-      <a class="btn" href="#question">Read the question</a>
+      <p class="eyebrow">{h.eyebrow}</p>
+      <h1 id="hero-h">{h.title}</h1>
+      {h.line && <p class="lede mono">{h.line}</p>}
+      {h.button && <a class="btn" href="#question">{h.button}</a>}
     </div>
 
-    <p class="wrap caption mono">Procedural point-cloud model, rendered live in the browser. Illustration only, not patient data.</p>
+    <p class="wrap caption mono">{h.caption}</p>
   </div>
 </section>
 

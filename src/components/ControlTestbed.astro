@@ -1,16 +1,20 @@
 ---
-// 05 Control 페이지: 파킨슨병은 가까운 시험대. 내가 만든 임상 시스템이 아님을 분명히 해요.
+// 상자 하나 (로드맵 frontmatter의 card:). 이름표 · 상태 · 제목 · 글 · 표 · 맺음말.
 import Status from './Status.astro';
+import { md } from '../lib/content';
+interface Props { card: any }
+const { card: c } = Astro.props;
 ---
 <div class="testbed">
-  <div class="tb-top"><span class="mono">Translational testbed</span><Status kind="question" /></div>
-  <p class="tb-name">Parkinson’s disease</p>
-  <dl>
-    <div><dt class="mono">Signal</dt><dd>β bursts in subthalamic LFP, 13–30 Hz</dd></div>
-    <div><dt class="mono">Today</dt><dd>Adaptive DBS that adjusts to brain signals was approved by the FDA in 2025.</dd></div>
-    <div><dt class="mono">Open</dt><dd>How fast can it be personalized, and with how little sensing?</dd></div>
-  </dl>
-  <p class="tb-not mono">I have not built a clinical adaptive DBS system.</p>
+  <div class="tb-top"><span class="mono">{c.label}</span>{c.status && <Status kind={c.status} text={c.status_label} />}</div>
+  {c.title && <p class="tb-name">{c.title}</p>}
+  {c.text && <p class="tb-text" set:html={md(c.text)} />}
+  {c.rows?.length > 0 && (
+    <dl>
+      {c.rows.map((r: any) => <div><dt class="mono">{r.label}</dt><dd set:html={md(r.text)} /></div>)}
+    </dl>
+  )}
+  {c.note && <p class="tb-not mono" set:html={md(c.note)} />}
 </div>
 
 <style>
@@ -22,6 +26,7 @@ import Status from './Status.astro';
   dl div { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid #161616; }
   dt { color: #7d7d7d; letter-spacing: 0.1em; text-transform: uppercase; padding-top: 2px; }
   dd { margin: 0; color: #d6d6d6; font-size: 15px; line-height: 1.5; }
+  .tb-text { margin: 10px 0 0; color: #bdbdbd; font-size: 15px; line-height: 1.6; }
   .tb-not { margin: 12px 0 0; color: #8a8a8a; }
   @media (max-width: 760px) { dl div { grid-template-columns: 1fr; gap: 2px; } }
 </style>

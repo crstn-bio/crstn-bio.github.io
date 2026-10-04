@@ -58,11 +58,9 @@ Stage pages `/how/<slug>/`: question · mechanism · one note · one figure · s
 
 ## E. Files
 
-- Data: `src/data/program.ts` (stages), `src/data/projects.ts` (evidence + build path).
-- New: `ProgramMap`, `StageFigure`, `ControlTestbed`, `ProjectDialogs`, `pages/how/[slug].astro`.
-- Rewritten: `How`, `BuildTrajectory`, `StageRail`, `NextQuestions`, `Why` (adds anatomy).
-- Restored: `Hero` + `scripts/brain.ts` (point-cloud brain).
-- Removed: `Stage.astro`.
+- Content (edit these): `src/content/site.yaml`, `src/content/roadmap/*.md`, `public/images/`. See `EDIT-ME.md`.
+- Loader: `src/lib/content.ts`. Components only render what it returns.
+- Roadmap pages: `src/pages/how/[slug].astro`, built from the roadmap collection (`src/content.config.ts`).
 
 ## G. Scientific QA
 

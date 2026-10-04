@@ -3,34 +3,21 @@
 // 실제 집단 평균 해부 데이터로 그린 뇌(HCP S1200, MNI152; src/scripts/hcpBrain.ts)에서
 // 탭을 누르면 해당 표적으로 돌아가요. 특정 환자의 데이터는 아니고, STN은 문헌상 대략적 위치예요.
 import Status, { type StatusKind } from './Status.astro';
-interface Props { title?: string }
-const { title = 'Where interfaces meet anatomy' } = Astro.props;
 
-const targets: { key: string; when: string; name: string; target: string; status: StatusKind; statusText?: string; title: string; line: string; spec: [string, string][] }[] = [
-  {
-    key: 'thesis', when: 'Now · current work', name: 'Motor cortex', target: 'M1 · focused ultrasound', status: 'current',
-    title: 'Primary motor cortex',
-    line: 'Where my current work intervenes: focused ultrasound delivered from the scalp.',
-    spec: [['Modality', 'a-tbTUS, paired with FES'], ['Depth', 'cortical surface, about 1–2 cm under the scalp']],
-  },
-  {
-    key: 'pd', when: 'Parkinson’s · control', name: 'Deep nucleus', target: 'STN · DBS lead', status: 'question', statusText: 'Translational testbed',
-    title: 'Subthalamic nucleus',
-    line: 'A clinical DBS lead can both record local field potentials and stimulate: the testbed for adaptive control.',
-    spec: [['Device', 'lead Ø 1.27 mm, 4 contacts, drawn to scale'], ['Signal', 'β bursts, 13–30 Hz']],
-  },
-  {
-    key: 'ad', when: 'Alzheimer’s · memory', name: 'Hippocampus', target: 'long-axis probe', status: 'frontier',
-    title: 'Hippocampus',
-    line: 'A long high-density probe could sample many cells along the hippocampal axis. A long-term concept, not current work.',
-    spec: [['Probe', 'Neuropixels 1.0 NHP Long · 45 mm · 384 of 4,416 sites'], ['Role', 'discovery, not a chronic implant']],
-  },
-];
+import { site, md } from '../lib/content';
+// 글은 src/content/site.yaml 의 anatomy: 에서. view(thesis · pd · ad)는 아래 스크립트의 고정된 3D 시점과 연결돼요.
+const A = site.anatomy ?? {};
+const title = A.title;
+const targets: { key: string; when: string; name: string; target: string; status: StatusKind; statusText?: string; title: string; line: string; spec: [string, string][] }[] =
+  (A.targets ?? []).map((t: any) => ({
+    key: t.view, when: t.tab_label, name: t.tab_name, target: t.tab_sub, status: t.status, statusText: t.status_label,
+    title: t.title, line: t.text, spec: (t.facts ?? []).map((f: any) => [f.label, f.text]),
+  }));
 ---
 <div class="design" id="anatomy">
   <div class="a-head">
     <h3>{title}</h3>
-    <p class="mono">Group-average anatomy · HCP S1200 · MNI152 · drag to rotate</p>
+    <p class="mono">{A.meta}</p>
   </div>
 
   <div class="tabs" role="tablist" aria-label="Interface site">
@@ -70,7 +57,7 @@ const targets: { key: string; when: string; name: string; target: string; status
       ))}
     </div>
   </div>
-  <p class="ack mono">Brain model: data provided by the Human Connectome Project, WU-Minn Consortium (Principal Investigators: David Van Essen and Kamil Ugurbil; 1U54MH091657) funded by the 16 NIH Institutes and Centers that support the NIH Blueprint for Neuroscience Research; and by the McDonnell Center for Systems Neuroscience at Washington University. HCP-MMP1.0 area 4 (Glasser et al., 2016); STN at approximate literature coordinates. Built with <a href="https://github.com/crstn-bio/crstn-bio.github.io/tree/main/tools/brain-data" target="_blank" rel="noreferrer">tools/brain-data ↗</a></p>
+  <p class="ack mono" set:html={md(A.credit)} />
 </div>
 
 <style>
@@ -113,7 +100,7 @@ const targets: { key: string; when: string; name: string; target: string; status
   .spec dt { color: #7d7d7d; letter-spacing: 0.1em; text-transform: uppercase; padding-top: 2px; }
   .spec dd { margin: 0; color: #d6d6d6; font-size: 14.5px; line-height: 1.5; }
   .ack { margin: 14px 0 0; color: #5a5a5a; line-height: 1.6; max-width: 110ch; }
-  .ack a { color: #8a8a8a; }
+  .ack :global(a) { color: #8a8a8a; }
 
   @media (max-width: 960px) {
     .stage { grid-template-columns: 1fr; }

@@ -3,37 +3,39 @@
 // 조각(원)을 누르면 오른쪽 해당 블록이 강조돼요. 프로젝트를 누르면 방법 상세 창.
 import Status from './Status.astro';
 import ProjectDialogs from './ProjectDialogs.astro';
-import { projects } from '../data/projects';
-const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-
-const pieces = [
-  { key: 'read', n: '01', name: 'Read', field: 'Signals', pos: 'top', how: 'Record brain and muscle signals at the resolution the question needs.' },
-  { key: 'model', n: '02', name: 'Model', field: 'AI & statistics', pos: 'right', how: 'Estimate this person’s brain state and predict how it will respond.' },
-  { key: 'control', n: '03', name: 'Control', field: 'Hardware', pos: 'bottom', how: 'Close the loop: sense, compute and act in real time.' },
-  { key: 'stimulate', n: '04', name: 'Stimulate', field: 'Neuromodulation', pos: 'left', how: 'Intervene, then measure what changed: non-invasive (TUS) or implanted (DBS).' },
-] as const;
+import { site, md, url, getRoadmap, projects } from '../lib/content';
+// 글은 src/content/site.yaml 의 approach: 와 projects: 에서. 원은 개수에 맞춰 고리 위에 고르게 놓여요.
+const ap = site.approach ?? {};
+const list = projects();
+const N = Math.max(1, (ap.pieces ?? []).length);
+const pieces = (ap.pieces ?? []).map((p: any, i: number) => {
+  const a = (i * 2 * Math.PI) / N;
+  return { ...p, n: String(i + 1).padStart(2, '0'), left: 50 + 34 * Math.sin(a), top: 50 - 34 * Math.cos(a) };
+});
+const arrows = Array.from({ length: N }, (_, i) => ((i + 0.5) * 360) / N);
+const first = (await getRoadmap())[0];
 ---
 <section class="ap section" id="approach" aria-labelledby="ap-h">
   <div class="wrap">
     <div class="head">
-      <div><p class="kicker mono">03 / Approach</p><h2 id="ap-h">One closed loop, built piece by piece.</h2></div>
-      <p>Read the brain, model it, choose an intervention, deliver it, and learn from the response. Each piece already has work behind it.</p>
+      <div><p class="kicker mono">{ap.kicker}</p><h2 id="ap-h">{ap.title}</h2></div>
+      {ap.text && <p set:html={md(ap.text)} />}
     </div>
 
     <div class="grid">
       <div class="ring" aria-hidden="true">
         <svg viewBox="0 0 400 400">
           <circle class="r-track" cx="200" cy="200" r="140" />
-          {[45, 135, 225, 315].map((a) => {
+          {arrows.map((a) => {
             const r = (a * Math.PI) / 180, x = 200 + 140 * Math.sin(r), y = 200 - 140 * Math.cos(r);
             return <path class="r-arrow" d="M-5 -5 L3 0 L-5 5" transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${a})`} />;
           })}
           <g class="r-orbit"><circle class="r-dot" cx="200" cy="60" r="5" /></g>
-          <text class="r-c1" x="200" y="194" text-anchor="middle">one brain</text>
-          <text class="r-c2" x="200" y="216" text-anchor="middle">model z(t)</text>
+          <text class="r-c1" x="200" y="194" text-anchor="middle">{ap.center?.[0]}</text>
+          <text class="r-c2" x="200" y="216" text-anchor="middle">{ap.center?.[1]}</text>
         </svg>
-        {pieces.map((p, i) => (
-          <button type="button" class={`node ${p.pos}`} data-piece={p.key} style={`--i:${i}`} tabindex="-1">
+        {pieces.map((p: any, i: number) => (
+          <button type="button" class="node" data-piece={p.id} style={`--i:${i};--d:${((i * 8) / N).toFixed(2)}s;left:${p.left.toFixed(2)}%;top:${p.top.toFixed(2)}%`} tabindex="-1">
             <span class="n-name">{p.name}</span>
             <span class="n-field mono">{p.field}</span>
           </button>
@@ -41,21 +43,21 @@ const pieces = [
       </div>
 
       <ol class="blocks">
-        {pieces.map((p) => (
-          <li class="blk" data-piece={p.key}>
+        {pieces.map((p: any) => (
+          <li class="blk" data-piece={p.id}>
             <div class="b-h">
               <span class="b-n mono">{p.n}</span>
               <span class="b-name">{p.name}</span>
               <span class="b-field mono">{p.field}</span>
             </div>
-            <p class="b-how">{p.how}</p>
+            <p class="b-how" set:html={md(p.text)} />
             <ul class="b-proj">
-              {projects.filter((x) => x.piece === p.key).map((x) => (
+              {list.filter((x: any) => x.piece === p.id).map((x: any) => (
                 <li>
                   <button type="button" class="prow" data-open={x.id} aria-haspopup="dialog">
                     <span class="p-title">{x.title}</span>
-                    <Status kind={x.status} text={x.statusText} />
-                    <span class="p-line">{x.line}</span>
+                    <Status kind={x.status} text={x.status_label} />
+                    <span class="p-line">{x.summary}</span>
                     <span class="p-go mono" aria-hidden="true">→</span>
                   </button>
                 </li>
@@ -66,7 +68,7 @@ const pieces = [
       </ol>
     </div>
 
-    <p class="more mono"><a href={`${base}/how/measure/`}>The method, step by step →</a></p>
+    {first && ap.link && <p class="more mono"><a href={url(`/how/${first.slug}/`)}>{ap.link}</a></p>}
   </div>
   <ProjectDialogs />
 </section>
@@ -88,8 +90,7 @@ const pieces = [
   .r-orbit { transform-box: view-box; transform-origin: 200px 200px; animation: orbit 8s linear infinite; }
   .r-c1 { fill: #fff; font: 18px var(--sans); }
   .r-c2 { fill: var(--acc); font: 15px var(--mono); }
-  .node { position: absolute; width: 32%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; display: grid; place-content: center; gap: 4px; text-align: center; padding: 6px; background: #050505; border: 1px solid #3a3a3a; color: #fff; font: inherit; cursor: pointer; transition: border-color .25s, background .25s; animation: node 8s infinite; animation-delay: calc(var(--i) * 2s); }
-  .node.top { left: 50%; top: 16%; } .node.right { left: 84%; top: 50%; } .node.bottom { left: 50%; top: 84%; } .node.left { left: 16%; top: 50%; }
+  .node { position: absolute; width: 32%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; display: grid; place-content: center; gap: 4px; text-align: center; padding: 6px; background: #050505; border: 1px solid #3a3a3a; color: #fff; font: inherit; cursor: pointer; transition: border-color .25s, background .25s; animation: node 8s infinite; animation-delay: var(--d, 0s); }
   .node:hover, .node.on { border-color: var(--acc); background: #0a0f17; }
   .n-name { font-size: clamp(15px, 1.5vw, 18px); letter-spacing: -0.01em; }
   .n-field { color: #8a8a8a; }

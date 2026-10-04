@@ -1,0 +1,273 @@
+# ─────────────────────────────────────────────────────────────
+# SITE TEXT — edit anything in quotes, save, done.
+# Tips:
+#   • Keep the indentation (spaces) exactly as it is.
+#   • If a line contains a colon ":" put the whole text in "quotes".
+#   • In longer texts you can use *italic*, **bold** and [links](https://…).
+#   • Roadmap pages live in src/content/roadmap/ (one .md file each).
+# ─────────────────────────────────────────────────────────────
+
+# ── Whole site ──
+name: Christine Park
+title: Modelling the individual brain            # browser tab text
+description: "A research program on modelling the individual brain: measure neural state, predict the response to intervention, and learn from each person. Parkinson’s is the nearer-term test of control; Alzheimer’s the longer-term test of memory. Current work: a-tbTUS with FES at the Krembil Brain Institute, UHN."
+email: christine.park2@uhn.ca
+cv: /cv.pdf                                      # put the file at public/cv.pdf and a "View CV" button appears
+links:
+  - label: LinkedIn
+    url: https://www.linkedin.com/in/christine-park-7ab9ab427
+
+nav:
+  - { label: Question, href: "#question" }
+  - { label: Why, href: "#why" }
+  - { label: Approach, href: "#approach" }
+  - { label: Questions, href: "#questions" }
+  - { label: Contact, href: "#contact" }
+
+# ── First screen (with the brain animation) ──
+hero:
+  eyebrow: My question
+  title: Modelling the individual brain.
+  line: measure neural state → predict the response → choose the intervention → learn from the individual
+  button: Read the question
+  caption: Procedural point-cloud model, rendered live in the browser. Illustration only, not patient data.
+
+# ── 01 · The question + the read/write diagram ──
+question:
+  kicker: 01 / My question
+  title: Can we predict and control an individual brain?
+  text: |-
+    The same intervention moves different brains, and the same brain in different states, in different directions.
+    The goal: predict the response before intervening.
+  diagram:                         # words inside the diagram
+    top: RESEARCH
+    ask: What should we learn?
+    model: BRAIN MODEL
+    model_sub: SOFTWARE
+    verbs: predict · control
+    read: READ
+    write: WRITE
+    sensing: SENSING
+    sensing_sub: hardware
+    stimulate: STIMULATE
+    stimulate_sub: hardware
+    brain: BRAIN
+    response: response
+    update: MODEL UPDATE
+  diagram_image:                   # optional: /images/my-diagram.svg replaces the drawn diagram
+  note: "Control and memory are the same problem: what state is this brain in, and what information does it hold?"
+
+# ── 02 · Why it matters ──
+why:
+  kicker: 02 / Why it matters
+  title: Two clinical frontiers.
+  text: Parkinson’s is the nearer-term test of control. Alzheimer’s is the longer-term test of memory. Same model, two targets.
+  cards:
+    - axis: Control
+      horizon: Nearer-term · testbed
+      title: Parkinson’s disease
+      number: "25.2"
+      unit: M
+      caption: people by 2050, more than double 2021
+      chart: line                  # line = two points joined | dots = memory dots | none
+      points: [[2021, 11.9], [2050, 25.2]]
+      aim: Adaptive stimulation, learned per patient.
+      target: { label: "Target · subthalamic nucleus →", view: pd }
+    - axis: Memory
+      horizon: Long-term · frontier
+      title: Alzheimer’s disease
+      number: "57"
+      unit: M
+      caption: people living with dementia in 2021, 60–70% of it Alzheimer’s
+      chart: dots
+      aim: What remains when a memory can no longer be retrieved?
+      target: { label: "Target · hippocampus →", view: ad }
+  sources:
+    - label: BMJ 2025 · GBD 2021 projections
+      url: https://bmjgroup.com/cases-of-parkinsons-disease-set-to-reach-25-million-worldwide-by-2050/
+    - label: WHO · dementia fact sheet
+      url: https://www.who.int/news-room/fact-sheets/detail/dementia
+
+# ── Interactive brain: three targets (view = thesis | pd | ad, fixed camera views) ──
+anatomy:
+  title: Three targets on one brain
+  meta: Group-average anatomy · HCP S1200 · MNI152 · drag to rotate
+  targets:
+    - view: thesis
+      tab_label: Now · current work
+      tab_name: Motor cortex
+      tab_sub: M1 · focused ultrasound
+      status: current
+      title: Primary motor cortex
+      text: "Where my current work intervenes: focused ultrasound delivered from the scalp."
+      facts:
+        - { label: Modality, text: "a-tbTUS, paired with FES" }
+        - { label: Depth, text: "cortical surface, about 1–2 cm under the scalp" }
+    - view: pd
+      tab_label: Parkinson’s · control
+      tab_name: Deep nucleus
+      tab_sub: STN · DBS lead
+      status: question
+      status_label: Translational testbed
+      title: Subthalamic nucleus
+      text: "A clinical DBS lead can both record local field potentials and stimulate: the testbed for adaptive control."
+      facts:
+        - { label: Device, text: "lead Ø 1.27 mm, 4 contacts, drawn to scale" }
+        - { label: Signal, text: "β bursts, 13–30 Hz" }
+    - view: ad
+      tab_label: Alzheimer’s · memory
+      tab_name: Hippocampus
+      tab_sub: long-axis probe
+      status: frontier
+      title: Hippocampus
+      text: A long high-density probe could sample many cells along the hippocampal axis. A long-term concept, not current work.
+      facts:
+        - { label: Probe, text: "Neuropixels 1.0 NHP Long · 45 mm · 384 of 4,416 sites" }
+        - { label: Role, text: "discovery, not a chronic implant" }
+  # Required data acknowledgement for the HCP brain model. Keep it.
+  credit: "Brain model: data provided by the Human Connectome Project, WU-Minn Consortium (Principal Investigators: David Van Essen and Kamil Ugurbil; 1U54MH091657) funded by the 16 NIH Institutes and Centers that support the NIH Blueprint for Neuroscience Research; and by the McDonnell Center for Systems Neuroscience at Washington University. HCP-MMP1.0 area 4 (Glasser et al., 2016); STN at approximate literature coordinates. Built with [tools/brain-data ↗](https://github.com/crstn-bio/crstn-bio.github.io/tree/main/tools/brain-data)"
+
+# ── 03 · Approach: the closed-loop ring ──
+approach:
+  kicker: 03 / Approach
+  title: One closed loop, built piece by piece.
+  text: Read the brain, model it, choose an intervention, deliver it, and learn from the response. Each piece already has work behind it.
+  center: [one brain, model z(t)]
+  link: The method, step by step →    # opens the first roadmap page
+  pieces:                              # circles on the ring, clockwise from the top
+    - id: read
+      name: Read
+      field: Signals
+      text: Record brain and muscle signals at the resolution the question needs.
+    - id: model
+      name: Model
+      field: AI & statistics
+      text: Estimate this person’s brain state and predict how it will respond.
+    - id: control
+      name: Control
+      field: Hardware
+      text: "Close the loop: sense, compute and act in real time."
+    - id: stimulate
+      name: Stimulate
+      field: Neuromodulation
+      text: "Intervene, then measure what changed: non-invasive (TUS) or implanted (DBS)."
+
+# ── Projects (listed under a ring piece; click opens the method window) ──
+#   piece:   which ring circle it belongs to (id above)
+#   status:  current | done | build | next | question | concept | frontier
+#   diagram: tus | spikes | eeg | adni | imu  (built-in method drawing) or /images/… file
+projects:
+  - id: thesis
+    piece: stimulate
+    title: a-tbTUS + FES
+    status: current
+    summary: How perturbation changes human motor-system function.
+    category: Measure · intervene
+    stage: "01"
+    diagram: tus
+    diagram_text: "Thesis method: accelerated theta-burst transcranial ultrasound to primary motor cortex, functional electrical stimulation of the matching muscle in the same session, and the response measured before and after."
+    facts:
+      - { label: Role, text: "Honours thesis student and research assistant, Krembil Brain Institute, UHN" }
+      - { label: Question, text: "Effects of combining a-tbTUS with functional electrical stimulation" }
+  - id: mer
+    piece: read
+    title: Deep-brain microelectrode recordings
+    status: done
+    status_label: Completed · workshop
+    summary: Spikes and spectral features from deep-brain recordings.
+    category: Decode
+    stage: "02"
+    diagram: spikes
+    diagram_text: "Method: microelectrode recordings from four deep nuclei (Vim, STN, SNr, Rt), band-pass filtered 300 to 3000 Hz, spikes detected at minus 10 times the median absolute deviation, rasters across 115 recordings, population firing rate with a 10 ms Gaussian kernel, and LFP power spectra with Welch’s method."
+    facts:
+      - { label: Setting, text: "NeuroTech coding workshop" }
+      - { label: Data, text: "Milosevic lab, Toronto Western Hospital (public) · LFP: Paulk et al." }
+      - { label: Next, text: "state → policy → simulated stimulation (not built yet)" }
+  - id: eeg
+    piece: read
+    title: EEG / EMG state analysis
+    status: done
+    summary: Spectral features from scalp and muscle signals.
+    category: Decode
+    stage: "02"
+    diagram: eeg
+    diagram_text: "Method: EEG and EMG signals, windowed FFT, and power spectral density summarised as band power."
+    facts:
+      - { label: Field, text: "Behavioural neuroscience" }
+  - id: adni
+    piece: model
+    title: Plasma biomarkers → amyloid PET
+    status: done
+    summary: Visit-matched human data and out-of-sample evaluation in Alzheimer’s disease. Not memory decoding.
+    category: Human data · disease modelling
+    stage: "04"
+    diagram: adni
+    diagram_text: "Method: plasma and amyloid-PET visits matched one-to-one within participant up to 365 days; 1,524 observations from 1,236 participants; three logistic models; participant-grouped 5-fold cross-validation repeated 5 times; 1,000 participant-level bootstrap replicates. Adding Aβ42/40 raised AUC from 0.902 to 0.919 and specificity at 90% sensitivity from 0.713 to 0.803."
+    facts:
+      - { label: Question, text: "Does plasma Aβ42/40 add to p-tau217 for amyloid-PET positivity?" }
+      - { label: Cohort, text: "1,524 observations · 1,236 participants (ADNI, Mar 2026)" }
+      - { label: Result, text: "ΔAUC +0.017 (95% CI 0.010–0.026); larger in CU (+0.027) than CI (+0.012)" }
+    link: { label: Full report →, url: /research/plasma-abeta/ }
+  - id: imu
+    piece: control
+    title: Motion-controlled pan–tilt
+    status: build
+    summary: A physical control loop. Not a brain–computer interface.
+    category: Control-system engineering
+    stage: "05"
+    diagram: imu
+    diagram_text: "Build: an IMU senses tilt, the angle is mapped to a servo pulse width on an Arduino UNO R3, and two SG90 servos move the pan and tilt axes."
+    facts:
+      - { label: Parts, text: "Arduino UNO R3 · 2 × SG90 servos · IMU · 3D-printed mount" }
+      - { label: Principle, text: "sense a state → compute → act" }
+
+# ── 04 · Open questions ──
+questions:
+  kicker: 04 / Open questions
+  title: What I want to test next.
+  next:                              # the big highlighted box (delete this block to hide it)
+    label: Next question
+    status: question
+    lines:
+      - { tag: state, text: "Can we perturb the correct state," }
+      - { tag: time, text: "at the correct time," }
+      - { tag: direction, text: "in the correct direction?" }
+    answer: [Closed-loop, representation-guided, hippocampal neuromodulation]
+  list:                              # one question per line; empty list hides the section
+    - Does the brain’s state just before stimulation predict how much a-tbTUS with FES changes motor output?
+    - How much patient-specific LFP does a model need before it beats a population model at estimating motor state?
+    - Can cortical or non-invasive signals stand in for deep recordings when estimating that state in one patient?
+    - Which features of human hippocampal population activity follow one memory from encoding to retrieval?
+    - Can neural measurements tell a degraded representation from an inaccessible one?
+
+# ── Contact ──
+contact:
+  kicker: 06 / Collaborate
+  title: Open to building the next step with the right team.
+  who: [University of Toronto, Human neuromodulation · computational neuroscience]
+  text: I want to work with human neural data on computational neuromodulation and closed-loop systems, as a researcher or research engineer.
+  tags: [Research positions, Summer 2027, Collaborations, Computational neuroscience, Neurotechnology]
+  email_button: Discuss a project →
+  email_subject: Project
+  cv_button: View CV ↗
+  photo: /profile.jpg
+  footer: Built by hand with Astro. Diagrams are drawn in code.
+
+# ── Roadmap page labels ──
+roadmap:
+  crumb: Approach                   # first word of the path at the top of each roadmap page
+  first: Overview                   # "previous" link on the first page
+  last: Questions                   # "next" link on the last page
+  back: Back to approach
+  evidence: Evidence
+  sources: Sources
+
+# ── Status badge words ──
+status_labels:
+  current: Current work
+  done: Completed
+  build: Independent build
+  next: Next experiment
+  question: Research question
+  concept: Translational concept
+  frontier: Long-term frontier
