@@ -15,8 +15,8 @@ const d = q.diagram ?? {};
     {q.diagram_image ? (
       <figure class="arch"><img src={url(q.diagram_image)} alt={q.title} /></figure>
     ) : (
-    <figure class="arch" aria-label="Research asks what we should learn. A software brain model predicts and controls. It reads the brain through sensing hardware and writes to it through stimulation hardware. The brain's response updates the model.">
-      <svg viewBox="0 0 600 540" aria-hidden="true">
+    <figure class="arch" aria-label="A state model of one person predicts responses and chooses stimulation. Measurements come in through sensing; stimulation goes out to the brain; the observed response refits the model to this person.">
+      <svg viewBox={d.top || d.ask ? "0 0 600 540" : "0 70 600 470"} aria-hidden="true">
         <defs>
           <marker id="qa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9" fill="none" stroke="#8a8a8a" stroke-width="1.4" /></marker>
           <marker id="qb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9" fill="none" stroke="#a8c8ff" stroke-width="1.4" /></marker>
@@ -24,9 +24,11 @@ const d = q.diagram ?? {};
           <path id="q-dn" d="M300 162 V214 H470 V256 M470 338 V408 H338" />
           <path id="q-upd" d="M300 448 V500 H585 V122 H422" />
         </defs>
-        <text class="k" x="300" y="22" text-anchor="middle">{d.top}</text>
-        <text class="v" x="300" y="48" text-anchor="middle">{d.ask}</text>
-        <path class="ln" d="M300 58 V80" marker-end="url(#qa)" />
+        {(d.top || d.ask) && <>
+          <text class="k" x="300" y="22" text-anchor="middle">{d.top}</text>
+          <text class="v" x="300" y="48" text-anchor="middle">{d.ask}</text>
+          <path class="ln" d="M300 58 V80" marker-end="url(#qa)" />
+        </>}
 
         <rect class="m" x="180" y="82" width="240" height="80" />
         <text class="t" x="300" y="118" text-anchor="middle">{d.model}</text>

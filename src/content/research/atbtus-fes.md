@@ -17,11 +17,7 @@ status: ongoing
 
 ## Question
 
-Transcranial focused ultrasound can reach deep and cortical targets non-invasively, and theta-burst patterning is known to produce lasting changes in excitability. Functional electrical stimulation drives the periphery. This project asks what happens when the two are delivered together, in an accelerated schedule.
-
-## What the pattern looks like
-
-Theta-burst stimulation groups pulses into short high-frequency bursts that repeat at a theta rhythm — the trace at the top of this site is a sketch of that pattern: bursts of three pulses at 50 Hz, repeating at 5 Hz.
+Transcranial focused ultrasound can reach cortical and deep targets non-invasively, and theta-burst focused ultrasound has been reported to increase motor-cortex excitability for tens of minutes ([Zeng et al., 2022](https://onlinelibrary.wiley.com/doi/abs/10.1002/ana.26294)). Functional electrical stimulation drives the periphery. This project asks what happens when the two are delivered together, in an accelerated schedule.
 
 ## My role
 

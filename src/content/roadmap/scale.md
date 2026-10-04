@@ -2,7 +2,7 @@
 title: Scale
 order: 10
 published: true
-status: question
+status: frontier
 group: Frontier
 question: Can this become a multiscale model of one person’s brain?
 mechanism: signals → local populations → circuits → networks → individual model

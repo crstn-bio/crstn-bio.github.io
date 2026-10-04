@@ -9,8 +9,8 @@
 
 # ── Whole site ──
 name: Christine Park
-title: Modelling the individual brain            # browser tab text
-description: "A research program on modelling the individual brain: measure neural state, predict the response to intervention, and learn from each person. Parkinson’s is the nearer-term test of control; Alzheimer’s the longer-term test of memory. Current work: a-tbTUS with FES at the Krembil Brain Institute, UHN."
+title: Predicting how one brain responds to stimulation   # browser tab text
+description: "I study whether brain state predicts the response to stimulation, so it can one day be chosen per person. Current work: theta-burst focused ultrasound with FES at the Krembil Brain Institute, UHN. Motor circuits first; memory is the long-term direction."
 email: christine.park2@uhn.ca
 cv: /cv.pdf                                      # put the file at public/cv.pdf and a "View CV" button appears
 links:
@@ -28,40 +28,41 @@ nav:
 hero:
   eyebrow: My question
   title: Modelling the individual brain.
-  line: measure neural state → predict the response → choose the intervention → learn from the individual
+  line: measure activity → estimate state → predict response → choose stimulation → refit
   button: Read the question
+  button_method: See the method →     # second button; opens the first roadmap page (leave empty to hide)
   caption: Procedural point-cloud model, rendered live in the browser. Illustration only, not patient data.
 
 # ── 01 · The question + the read/write diagram ──
 question:
   kicker: 01 / My question
-  title: Can we predict and control an individual brain?
+  title: Can brain state predict each person’s response to stimulation?
   text: |-
-    The same intervention moves different brains, and the same brain in different states, in different directions.
-    The goal: predict the response before intervening.
+    The same stimulation can move different brains, or one brain in different states, in different directions.
+    The goal is to predict the response before stimulating.
   diagram:                         # words inside the diagram
-    top: RESEARCH
-    ask: What should we learn?
-    model: BRAIN MODEL
-    model_sub: SOFTWARE
-    verbs: predict · control
-    read: READ
-    write: WRITE
-    sensing: SENSING
-    sensing_sub: hardware
+    top:                           # leave top and ask empty to hide the box above the model
+    ask:
+    model: STATE MODEL
+    model_sub: ONE PERSON
+    verbs: predict · choose
+    read: SENSE
+    write: ACT
+    sensing: MEASURE
+    sensing_sub: EEG · LFP
     stimulate: STIMULATE
-    stimulate_sub: hardware
-    brain: BRAIN
-    response: response
-    update: MODEL UPDATE
+    stimulate_sub: TUS · DBS
+    brain: BRAIN + BEHAVIOUR
+    response: observed response
+    update: REFIT TO THIS PERSON
   diagram_image:                   # optional: /images/my-diagram.svg replaces the drawn diagram
-  note: "Control and memory are the same problem: what state is this brain in, and what information does it hold?"
+  note: Motor control and memory share a method, estimating a hidden state from noisy recordings, not a problem.
 
 # ── 02 · Why it matters ──
 why:
   kicker: 02 / Why it matters
   title: Two clinical frontiers.
-  text: Parkinson’s is the nearer-term test of control. Alzheimer’s is the longer-term test of memory. Same model, two targets.
+  text: Parkinson’s is the nearer-term test of control. Alzheimer’s is the longer-term test of memory. Same approach, two very different targets.
   cards:
     - axis: Control
       horizon: Nearer-term · testbed
@@ -71,7 +72,7 @@ why:
       caption: people by 2050, more than double 2021
       chart: line                  # line = two points joined | dots = memory dots | none
       points: [[2021, 11.9], [2050, 25.2]]
-      aim: Adaptive stimulation, learned per patient.
+      aim: "Aim: stimulation adapted to each patient."
       target: { label: "Target · subthalamic nucleus →", view: pd }
     - axis: Memory
       horizon: Long-term · frontier
@@ -99,7 +100,7 @@ anatomy:
       tab_sub: M1 · focused ultrasound
       status: current
       title: Primary motor cortex
-      text: "Where my current work intervenes: focused ultrasound delivered from the scalp."
+      text: "Target of the thesis study I work on: focused ultrasound delivered from the scalp."
       facts:
         - { label: Modality, text: "a-tbTUS, paired with FES" }
         - { label: Depth, text: "cortical surface, about 1–2 cm under the scalp" }
@@ -120,29 +121,30 @@ anatomy:
       tab_sub: long-axis probe
       status: frontier
       title: Hippocampus
-      text: A long high-density probe could sample many cells along the hippocampal axis. A long-term concept, not current work.
+      text: In people, hippocampal neurons are recorded only in clinical settings; high-density probes are a discovery tool in animals. A long-term concept, not current work.
       facts:
         - { label: Probe, text: "Neuropixels 1.0 NHP Long · 45 mm · 384 of 4,416 sites" }
-        - { label: Role, text: "discovery, not a chronic implant" }
+        - { label: Role, text: "discovery tool in animals, not a human implant" }
   # Required data acknowledgement for the HCP brain model. Keep it.
   credit: "Brain model: data provided by the Human Connectome Project, WU-Minn Consortium (Principal Investigators: David Van Essen and Kamil Ugurbil; 1U54MH091657) funded by the 16 NIH Institutes and Centers that support the NIH Blueprint for Neuroscience Research; and by the McDonnell Center for Systems Neuroscience at Washington University. HCP-MMP1.0 area 4 (Glasser et al., 2016); STN at approximate literature coordinates. Built with [tools/brain-data ↗](https://github.com/crstn-bio/crstn-bio.github.io/tree/main/tools/brain-data)"
 
 # ── 03 · Approach: the closed-loop ring ──
 approach:
   kicker: 03 / Approach
-  title: One closed loop, built piece by piece.
-  text: Read the brain, model it, choose an intervention, deliver it, and learn from the response. Each piece already has work behind it.
-  center: [one brain, model z(t)]
-  link: The method, step by step →    # opens the first roadmap page
+  title: Four things a closed loop needs, and where I have started.
+  text: Read the brain, model it, choose an intervention, deliver it, and learn from the response. Each piece has a first piece of work behind it.
+  center: [one brain, "goal: z(t)"]
+  link: The method, step by step →    # button under the ring; opens the first roadmap page
+  method_label: The method · step by step   # title above the row of roadmap buttons (leave empty to hide the row)
   pieces:                              # circles on the ring, clockwise from the top
     - id: read
       name: Read
       field: Signals
-      text: Record brain and muscle signals at the resolution the question needs.
+      text: Extract usable features from brain and muscle recordings.
     - id: model
       name: Model
       field: AI & statistics
-      text: Estimate this person’s brain state and predict how it will respond.
+      text: Predict from human data, and test the prediction honestly out of sample.
     - id: control
       name: Control
       field: Hardware
@@ -150,7 +152,7 @@ approach:
     - id: stimulate
       name: Stimulate
       field: Neuromodulation
-      text: "Intervene, then measure what changed: non-invasive (TUS) or implanted (DBS)."
+      text: "Intervene, then measure what changed. Now: non-invasive (TUS) in my thesis study."
 
 # ── Projects (listed under a ring piece; click opens the method window) ──
 #   piece:   which ring circle it belongs to (id above)
@@ -175,7 +177,7 @@ projects:
     status: done
     status_label: Completed · workshop
     summary: Spikes and spectral features from deep-brain recordings.
-    category: Decode
+    category: Signal processing
     stage: "02"
     diagram: spikes
     diagram_text: "Method: microelectrode recordings from four deep nuclei (Vim, STN, SNr, Rt), band-pass filtered 300 to 3000 Hz, spikes detected at minus 10 times the median absolute deviation, rasters across 115 recordings, population firing rate with a 10 ms Gaussian kernel, and LFP power spectra with Welch’s method."
@@ -185,10 +187,10 @@ projects:
       - { label: Next, text: "state → policy → simulated stimulation (not built yet)" }
   - id: eeg
     piece: read
-    title: EEG / EMG state analysis
+    title: EEG / EMG spectral analysis
     status: done
     summary: Spectral features from scalp and muscle signals.
-    category: Decode
+    category: Signal processing
     stage: "02"
     diagram: eeg
     diagram_text: "Method: EEG and EMG signals, windowed FFT, and power spectral density summarised as band power."
@@ -226,13 +228,13 @@ questions:
   kicker: 04 / Open questions
   title: What I want to test next.
   next:                              # the big highlighted box (delete this block to hide it)
-    label: Next question
-    status: question
+    label: Long-term question
+    status: frontier
     lines:
       - { tag: state, text: "Can we perturb the correct state," }
       - { tag: time, text: "at the correct time," }
       - { tag: direction, text: "in the correct direction?" }
-    answer: [Closed-loop, representation-guided, hippocampal neuromodulation]
+    answer: [Closed-loop, state-timed, hippocampal stimulation]
   list:                              # one question per line; empty list hides the section
     - Does the brain’s state just before stimulation predict how much a-tbTUS with FES changes motor output?
     - How much patient-specific LFP does a model need before it beats a population model at estimating motor state?

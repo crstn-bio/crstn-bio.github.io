@@ -17,6 +17,7 @@ Save, push, and the site rebuilds. To preview on your computer first: `npm insta
 Find the section (`hero:`, `question:`, `why:`, `anatomy:`, `approach:`, `projects:`, `questions:`, `contact:`) and change the text.
 
 - **Hero title:** `hero:` → `title:`
+- **Method buttons:** `hero:` → `button_method:` (second button on the first screen) and `approach:` → `method_label:` (row of roadmap buttons). Leave either empty to hide it. The row lists your published roadmap pages automatically.
 - **The big question:** `question:` → `title:`
 - **Research questions:** `questions:` → `list:` (one question per line, starting with `- `)
 - **A project:** copy one block under `projects:` and edit it. `piece:` decides which ring circle it sits under.

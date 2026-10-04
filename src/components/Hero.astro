@@ -1,7 +1,8 @@
 ---
 import Nav from './Nav.astro';
-import { site } from '../lib/content';
+import { site, getRoadmap, url } from '../lib/content';
 const h = site.hero ?? {};
+const firstNode = (await getRoadmap())[0];
 ---
 <section class="hero" aria-labelledby="hero-h">
   <canvas id="brain" aria-hidden="true"></canvas>
@@ -23,7 +24,10 @@ const h = site.hero ?? {};
       <p class="eyebrow">{h.eyebrow}</p>
       <h1 id="hero-h">{h.title}</h1>
       {h.line && <p class="lede mono">{h.line}</p>}
-      {h.button && <a class="btn" href="#question">{h.button}</a>}
+      <div class="btns">
+        {h.button && <a class="btn" href="#question">{h.button}</a>}
+        {h.button_method && firstNode && <a class="btn ghost" href={url(`/how/${firstNode.slug}/`)}>{h.button_method}</a>}
+      </div>
     </div>
 
     <p class="wrap caption mono">{h.caption}</p>
@@ -73,6 +77,9 @@ const h = site.hero ?? {};
     transition: background 200ms, color 200ms;
   }
   .btn:hover { background: #fff; color: #000; }
+  .btns { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn.ghost { border-color: rgba(168, 200, 255, .7); color: #a8c8ff; }
+  .btn.ghost:hover { background: #a8c8ff; color: #000; border-color: #a8c8ff; }
 
   .caption { color: rgba(255, 255, 255, 0.36); padding-bottom: 26px; padding-top: 28px; margin-block: 0; }
 

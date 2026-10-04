@@ -4,7 +4,7 @@ order: 3
 published: true
 status: question
 group: Build the model
-question: How quickly can a model learn a new brain?
+question: How quickly can a model fit one person’s response?
 mechanism: population prior → individual data → personal model
 diagram: personalize
 ---

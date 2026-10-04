@@ -13,7 +13,8 @@ const pieces = (ap.pieces ?? []).map((p: any, i: number) => {
   return { ...p, n: String(i + 1).padStart(2, '0'), left: 50 + 34 * Math.sin(a), top: 50 - 34 * Math.cos(a) };
 });
 const arrows = Array.from({ length: N }, (_, i) => ((i + 0.5) * 360) / N);
-const first = (await getRoadmap())[0];
+const nodes = await getRoadmap();
+const first = nodes[0];
 ---
 <section class="ap section" id="approach" aria-labelledby="ap-h">
   <div class="wrap">
@@ -21,6 +22,19 @@ const first = (await getRoadmap())[0];
       <div><p class="kicker mono">{ap.kicker}</p><h2 id="ap-h">{ap.title}</h2></div>
       {ap.text && <p set:html={md(ap.text)} />}
     </div>
+
+    {ap.method_label && nodes.length > 0 && (
+      <nav class="method" aria-label={ap.method_label}>
+        <p class="m-k mono">{ap.method_label}</p>
+        <ol>
+          {nodes.map((n) => (
+            <li><a class={`m-${n.data.status}`} href={url(`/how/${n.slug}/`)}>
+              <span class="m-dot" aria-hidden="true"></span><span class="m-n mono">{n.n}</span><span class="m-t">{n.data.title}</span>
+            </a></li>
+          ))}
+        </ol>
+      </nav>
+    )}
 
     <div class="grid">
       <div class="ring" aria-hidden="true">
@@ -68,7 +82,7 @@ const first = (await getRoadmap())[0];
       </ol>
     </div>
 
-    {first && ap.link && <p class="more mono"><a href={url(`/how/${first.slug}/`)}>{ap.link}</a></p>}
+    {first && ap.link && <p class="more"><a class="more-btn mono" href={url(`/how/${first.slug}/`)}>{ap.link}</a></p>}
   </div>
   <ProjectDialogs />
 </section>
@@ -116,9 +130,22 @@ const first = (await getRoadmap())[0];
   .prow:hover { border-left-color: var(--acc); }
 
   .more { margin: clamp(24px, 4vw, 40px) 0 0; }
-  .more a { color: #bdbdbd; text-decoration: none; border-bottom: 1px solid #3a3a3a; padding-bottom: 2px; letter-spacing: .06em; }
-  .more a:hover { color: var(--acc); border-color: var(--acc); }
 
+
+  .method { margin: 0 0 clamp(32px, 5vw, 56px); }
+  .m-k { margin: 0 0 12px; color: #7d7d7d; letter-spacing: .14em; text-transform: uppercase; }
+  .method ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .method a { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: 1px solid #2c2c2c; background: #050505; color: #e6e6e6; text-decoration: none; transition: border-color .2s, background .2s, color .2s; }
+  .method a:hover, .method a:focus-visible { border-color: var(--acc); background: #0a0f17; color: #fff; outline: none; }
+  .m-dot { width: 8px; height: 8px; border-radius: 50%; border: 1px solid #6a6a6a; flex: none; }
+  .m-current .m-dot { background: #fff; border-color: #fff; }
+  .m-done .m-dot { background: #8a8a8a; border-color: #8a8a8a; }
+  .m-question .m-dot, .m-next .m-dot { border-color: var(--acc); border-style: dashed; }
+  .m-concept .m-dot, .m-frontier .m-dot { border-style: dotted; }
+  .m-n { color: #6a6a6a; }
+  .m-t { font-size: 15px; }
+  .more-btn { display: inline-block; padding: 14px 22px; border: 1px solid var(--acc); color: var(--acc); text-decoration: none; letter-spacing: .1em; text-transform: uppercase; transition: background .2s, color .2s; }
+  .more-btn:hover { background: var(--acc); color: #000; }
   @media (max-width: 900px) {
     .head, .grid { grid-template-columns: 1fr; }
     .ring { max-width: 340px; }
