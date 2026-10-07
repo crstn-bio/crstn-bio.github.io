@@ -1,28 +1,46 @@
 ---
+// 위쪽 메뉴. 홈에서는 화면 위에 고정되고, 내려가면 반투명 검정 바탕이 생겨요 (fixed).
 import { site, homeUrl, url } from '../lib/content';
+interface Props { fixed?: boolean }
+const { fixed = false } = Astro.props;
 const items = (site.nav ?? []).map((i: any) => ({ label: i.label, href: homeUrl(i.href) }));
 ---
-<header class="nav wrap">
-  <a class="nav-name" href={url('/')}>{site.name}</a>
-  <nav aria-label="Main">
-    <ul>
-      {items.map((i) => <li><a href={i.href}>{i.label}</a></li>)}
-    </ul>
-  </nav>
+<header class:list={['nav', { fixed }]} data-nav>
+  <div class="wrap nav-in">
+    <a class="nav-name" href={url('/')}>{site.name}</a>
+    <nav aria-label="Main">
+      <ul>
+        {items.map((i) => <li><a href={i.href}>{i.label}</a></li>)}
+      </ul>
+    </nav>
+  </div>
 </header>
 
+{fixed && (
+  <script>
+    const n = document.querySelector<HTMLElement>('[data-nav].fixed');
+    if (n) {
+      const on = () => n.classList.toggle('solid', window.scrollY > 24);
+      on(); window.addEventListener('scroll', on, { passive: true });
+    }
+  </script>
+)}
+
 <style>
-  .nav {
-    display: flex; justify-content: space-between; align-items: center;
-    gap: 16px; padding-block: 22px; position: relative; z-index: 2;
-  }
-  .nav a { color: var(--on-dark); text-decoration: none; }
-  .nav a:hover { color: #fff; }
-  .nav-name { font-size: 14px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; }
-  ul { display: flex; gap: clamp(14px, 3vw, 40px); list-style: none; margin: 0; padding: 0; font-size: 12.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
-  .nav a { opacity: 0.86; } .nav a:hover { opacity: 1; }
+  .nav { position: relative; z-index: 20; }
+  .nav.fixed { position: fixed; inset: 0 0 auto; transition: background-color .3s, border-color .3s; border-bottom: 1px solid transparent; }
+  .nav.fixed.solid { background: rgba(0, 0, 0, 0.86); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); border-bottom-color: rgba(255, 255, 255, 0.06); }
+  .nav-in { display: flex; justify-content: space-between; align-items: center; gap: 16px; height: 64px; }
+  .nav a { color: #fff; text-decoration: none; }
+  .nav-name { font-size: 15px; font-weight: 500; letter-spacing: -0.01em; }
+  ul { display: flex; gap: clamp(18px, 3vw, 36px); list-style: none; margin: 0; padding: 0; font-size: 14px; font-weight: 400; }
+  ul a { color: rgba(255, 255, 255, 0.72); transition: color .2s; }
+  ul a:hover { color: #fff; }
   @media (max-width: 560px) {
-    .nav { flex-direction: column; align-items: flex-start; gap: 10px; }
-    ul { gap: 8px 16px; font-size: 11px; letter-spacing: 0.1em; flex-wrap: wrap; }
+    .nav-in { height: 56px; }
+    .nav-name { font-size: 14px; }
+    ul { gap: 14px; font-size: 13px; }
   }
+  @media (max-width: 380px) { ul li:nth-child(3) { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .nav.fixed, ul a { transition: none; } }
 </style>

@@ -1,7 +1,8 @@
 ---
 // 만들고 싶은 도구: 칩 + 로봇 삽입. 모두 코드로 그린 그림이에요.
 // ① 칩: 배터리, 신호처리 칩, 유연 리드, 전극 배열이 떨어졌다가 조립됨
-// ② 삽입: 로봇 삽입 헤드(유연 전극 실) 또는 Neuropixels 1.0 NHP Long (45 mm, 384 / 4,416 지점)
+// ② 삽입: 로봇 삽입 헤드(유연 전극 실) · Neuropixels 1.0 NHP Long (45 mm, 384 / 4,416 지점) · 주입형 메시 전자소자
+//   메시: 말린 그물을 바늘로 주입 → 조직 안에서 펼쳐짐 → 조직이 그물 사이로 자람 → 같은 뉴런을 몇 달 기록 (생쥐 연구 단계)
 ---
 <div class="hw" aria-labelledby="hw-h">
     <div class="hw-head">
@@ -21,18 +22,20 @@
         <canvas id="hw-insert" aria-hidden="true"></canvas>
         <figcaption>
           <div class="cap-row">
-            <strong>Robot</strong>
+            <strong>Insertion</strong>
             <div class="probe-toggle" role="group" aria-label="Electrode type">
               <button type="button" data-probe="threads" aria-pressed="true">Robotic insertion</button>
               <button type="button" data-probe="np2" aria-pressed="false">Neuropixels 1.0 Long</button>
+              <button type="button" data-probe="mesh" aria-pressed="false">Mesh · injected</button>
             </div>
           </div>
           <span data-probe-show="threads">Would place each electrode at its target, one at a time.</span>
           <span data-probe-show="np2" hidden>A 45 mm probe reaches deep targets and records 384 of 4,416 sites at once.</span>
+          <span data-probe-show="mesh" hidden>A rolled mesh of 16–32 electrodes, each about the size of a cell body (15 µm), is injected through a needle and unfolds; tissue grows through it. In mice, single units in cortex, striatum, midbrain and hippocampus stayed stable for up to about 18 months (Zhao et al., 2023). Animal research stage.</span>
         </figcaption>
       </figure>
     </div>
-    <p class="hw-note mono">Drawn in code for illustration, not a real device or procedure. Probe figures follow the Neuropixels 1.0 NHP Long specification.</p>
+    <p class="hw-note mono">Drawn in code for illustration, not a real device or procedure. Probe figures follow the Neuropixels 1.0 NHP Long specification; mesh figures follow Zhao et al., 2023 (mice; 16–32 channels; same units identified by stable waveforms for up to ~18 months).</p>
 </div>
 
 <style>
@@ -49,7 +52,7 @@
   figcaption span { color: #8d8d8d; font-size: 14.5px; line-height: 1.55; }
   .hw-note { color: #5a5a5a; margin: 16px 0 0; }
   .cap-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 4px; }
-  .probe-toggle { display: inline-flex; border: 1px solid #333; padding: 2px; }
+  .probe-toggle { display: inline-flex; flex-wrap: wrap; border: 1px solid #333; padding: 2px; }
   .probe-toggle button { font: inherit; font-size: 12.5px; color: #8d8d8d; background: transparent; border: 0; padding: 6px 11px; cursor: pointer; }
   .probe-toggle button[aria-pressed='true'] { background: #fff; color: #000; }
   .probe-toggle button[aria-pressed='false']:hover { color: #fff; }
@@ -508,21 +511,159 @@
     hud(ctx, rows);
   }
 
+
+  // ── (c) 주입형 메시 전자소자: 말린 그물 → 바늘로 주입 → 펼쳐짐 → 조직과 섞임 → 같은 뉴런을 몇 달 ──
+  // 수치는 생쥐 연구 기준 (16–32채널, 같은 세포를 몇 달 이상: Zhao et al., Nat Neurosci 2023)
+  const M_CYCLE = 17, M_IN = [1.0, 3.6], M_OUT = [4.2, 7.6], M_REC = 9.2, M_END = 16.2;
+  const M_DEPTH = 0.6, M_R = 0.15, M_LEN = 0.52;
+  const MONTHS = [1, 3, 6, 12, 18];
+  const somata = Array.from({ length: 46 }, (_, i) => {
+    const a = hash(i * 3.1) * Math.PI * 2, r = 0.05 + 0.32 * Math.sqrt(hash(i * 7.7)), y = -0.08 - hash(i * 5.3) * 0.75;
+    return [Math.cos(a) * r, y, Math.sin(a) * r * 0.9] as [number, number, number];
+  });
+  const unitShape = (u: number) => -Math.exp(-(((u - 0.32) / 0.06) ** 2)) + 0.42 * Math.exp(-(((u - 0.5) / 0.11) ** 2));
+
+  function drawMesh(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
+    const small = w < 420;
+    const s = Math.min(w * 0.36, h * 0.44);
+    const P = projector(-0.42 + 0.06 * Math.sin(t * 0.2), 0.5, w * (small ? 0.5 : 0.44), h * 0.5, s);
+    const k = t % M_CYCLE;
+    slab(ctx, P, 12);
+    const y0 = surfY(0, 0), bottom = y0 - M_DEPTH;
+
+    // 단계
+    let needleTip: number, open: number, state: string;          // open: 아래에서부터 펼쳐진 정도(0–1)
+    if (k < M_IN[0]) { needleTip = y0 + 0.5 - 0.5 * ease(k / M_IN[0]); open = 0; state = 'aligning'; }
+    else if (k < M_IN[1]) { needleTip = y0 - M_DEPTH * ease((k - M_IN[0]) / (M_IN[1] - M_IN[0])); open = 0; state = 'inserting'; }
+    else if (k < M_OUT[0]) { needleTip = bottom; open = 0; state = 'injecting'; }
+    else if (k < M_OUT[1]) { const u = (k - M_OUT[0]) / (M_OUT[1] - M_OUT[0]); needleTip = bottom + (M_DEPTH + 0.6) * ease(u); open = clamp01(u * 1.15); state = 'withdrawing'; }
+    else if (k < M_REC) { needleTip = y0 + 0.6 + 1; open = 1; state = 'unfolding'; }
+    else if (k < M_END) { needleTip = 9; open = 1; state = 'recording'; }
+    else { needleTip = 9; open = 1 - ease((k - M_END) / (M_CYCLE - M_END)); state = 'reset'; }
+    const fadeOut = k >= M_END ? 1 - ease((k - M_END) / (M_CYCLE - M_END)) : 1;
+    const meshIn = k >= M_IN[0] ? 1 : 0;
+    const grow = clamp01((k - M_OUT[1]) / 1.6);                  // 조직이 그물 사이로 들어옴
+
+    // 뉴런(세포체): 펼쳐진 뒤 그물 안팎에 섞여 보임
+    for (const [x, y, z] of somata) {
+      const [px, py, d] = P(x, y0 + y, z);
+      const inside = Math.hypot(x, z) < M_R && y0 + y > bottom && y0 + y < bottom + M_LEN;
+      const a = (0.16 + 0.22 * clamp01((d + 1) / 2)) * (inside ? 0.4 + 0.6 * grow : 1) * fadeOut;
+      ctx.strokeStyle = `rgba(255,255,255,${a.toFixed(3)})`; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(px, py, 2.4, 0, 6.2832); ctx.stroke();
+    }
+
+    // 그물: 두 방향 나선이 만드는 마름모 격자. 바늘 끝보다 아래쪽만 펼쳐짐
+    if (meshIn && fadeOut > 0.02) {
+      const yTop = bottom + M_LEN, Nh = 9, steps = 40;
+      const radiusAt = (y: number) => {
+        const behind = needleTip > y + 0.02;                     // 바늘이 이미 지나간 곳
+        const local = behind ? clamp01((needleTip - y) / 0.18) : 0;
+        return 0.012 + (M_R - 0.012) * ease(local) * (open > 0 ? 1 : 0);
+      };
+      for (const dir of [1, -1]) for (let j = 0; j < Nh; j++) {
+        let prev: [number, number, number] | null = null;
+        for (let i = 0; i <= steps; i++) {
+          const y = bottom + (M_LEN * i) / steps;
+          if (y > Math.min(yTop, needleTip > yTop ? yTop : 99)) break;
+          const r = radiusAt(y), th = (j / Nh) * Math.PI * 2 + dir * (y - bottom) * 9;
+          const q = P(Math.cos(th) * r, y, Math.sin(th) * r);
+          if (prev) {
+            const front = (q[2] + prev[2]) / 2 > 0;
+            ctx.strokeStyle = `rgba(255,255,255,${((front ? 0.75 : 0.28) * fadeOut).toFixed(3)})`;
+            ctx.beginPath(); ctx.moveTo(prev[0], prev[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
+          }
+          prev = q;
+        }
+      }
+      // 기록 지점: 격자 위 작은 네모. 기록 중이면 깜빡임
+      const sites: [number, number][] = [];
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) sites.push([bottom + 0.08 + r * 0.11, (c / 4) * Math.PI * 2 + r * 0.6]);
+      sites.forEach(([y, th], n) => {
+        if (y > needleTip && open < 1) return;
+        const r = radiusAt(y), q = P(Math.cos(th) * r, y, Math.sin(th) * r);
+        const on = state === 'recording' && !reduce && hash(Math.floor(k * 9) * 3.7 + n * 11.3) > 0.82;
+        ctx.fillStyle = on ? '#fff' : `rgba(255,255,255,${(0.65 * fadeOut).toFixed(3)})`;
+        ctx.fillRect(q[0] - (on ? 2 : 1.5), q[1] - (on ? 2 : 1.5), on ? 4 : 3, on ? 4 : 3);
+      });
+      // 위쪽: 그물 리본이 표면 밖으로 나와 연결부까지 (바늘이 빠진 뒤)
+      if (open > 0.6) {
+        const a = clamp01((open - 0.6) / 0.4) * fadeOut;
+        const [rx0, ry0] = P(0, yTop, 0), [rx1, ry1] = P(0, y0 + 0.02, 0), [cx2, cy2] = P(0.75, y0 + 0.35, -0.2);
+        ctx.strokeStyle = `rgba(255,255,255,${(0.7 * a).toFixed(3)})`;
+        for (const o of [-2, 0, 2]) {
+          ctx.beginPath(); ctx.moveTo(rx0 + o, ry0); ctx.lineTo(rx1 + o, ry1);
+          ctx.bezierCurveTo(rx1 + o, ry1 - 30, cx2 - 40, cy2 + 10 + o, cx2 - 14, cy2 + o); ctx.stroke();
+        }
+        ctx.fillStyle = '#000'; ctx.strokeStyle = `rgba(255,255,255,${a.toFixed(3)})`;
+        ctx.fillRect(cx2 - 14, cy2 - 10, 34, 20); ctx.strokeRect(cx2 - 13.5, cy2 - 9.5, 33, 19);
+        ctx.fillStyle = `rgba(255,255,255,${(0.8 * a).toFixed(3)})`;
+        for (let i = 0; i < 5; i++) ctx.fillRect(cx2 - 9 + i * 6, cy2 - 3, 3, 6);
+      }
+    }
+
+    // 주입 바늘(유리 모세관) + 주사기 몸통
+    if (needleTip < y0 + 1.3) {
+      const [nx, ny] = P(0, needleTip, 0), [ux, uy] = P(0, needleTip + 0.95, 0);
+      const half = 5;
+      ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(ux - half, uy); ctx.lineTo(nx - half, ny - 6); ctx.lineTo(nx, ny); ctx.lineTo(nx + half, ny - 6); ctx.lineTo(ux + half, uy); ctx.closePath(); ctx.fill(); ctx.stroke();
+      // 안에 말린 그물 (아직 주입 전 부분)
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+      ctx.beginPath(); ctx.moveTo(nx - 1.5, ny - 8); ctx.lineTo(ux - 1.5, uy); ctx.moveTo(nx + 1.5, ny - 8); ctx.lineTo(ux + 1.5, uy); ctx.stroke();
+      // 주사기 몸통 + 플런저
+      ctx.fillStyle = '#000'; ctx.strokeStyle = '#fff';
+      ctx.fillRect(ux - 12, uy - 48, 24, 48); ctx.strokeRect(ux - 11.5, uy - 47.5, 23, 47);
+      const push = state === 'withdrawing' ? clamp01((k - M_OUT[0]) / (M_OUT[1] - M_OUT[0])) : 0;
+      ctx.beginPath(); ctx.moveTo(ux - 11.5, uy - 40 + 26 * push); ctx.lineTo(ux + 11.5, uy - 40 + 26 * push); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ux, uy - 40 + 26 * push); ctx.lineTo(ux, uy - 64 + 26 * push); ctx.moveTo(ux - 9, uy - 64 + 26 * push); ctx.lineTo(ux + 9, uy - 64 + 26 * push); ctx.stroke();
+    }
+
+    // 같은 뉴런, 다른 날: 파형이 그대로 (기록 단계)
+    const day = state === 'recording' ? MONTHS[Math.min(MONTHS.length - 1, Math.floor(((k - M_REC) / (M_END - M_REC)) * MONTHS.length))] : 0;
+    if (!small) {
+      const bw = 120, bh = 92, bx = w - bw - 14, by = 58;
+      ctx.fillStyle = '#000'; ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+      ctx.fillRect(bx, by, bw, bh); ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
+      ctx.font = MONO; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillText('SAME UNIT', bx, by - 5);
+      const shown = state === 'recording' ? MONTHS.filter((d) => d <= day) : [];
+      shown.forEach((d, i) => {
+        const last = i === shown.length - 1;
+        ctx.strokeStyle = last ? '#fff' : 'rgba(255,255,255,0.25)'; ctx.lineWidth = last ? 1.4 : 1;
+        ctx.beginPath();
+        for (let q = 0; q <= 40; q++) {
+          const u = q / 40, jit = (hash(d * 1.7 + q) - 0.5) * 0.04;
+          const x = bx + 10 + u * (bw - 20), y = by + 40 - (unitShape(u) + jit) * 30;
+          q ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        }
+        ctx.stroke();
+      });
+      ctx.textBaseline = 'alphabetic'; ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      ctx.fillText(day ? `month ${day}` : '—', bx + 10, by + bh - 10);
+      ctx.lineWidth = 1;
+    }
+
+    const rows: [string, string][] = [['MESH', small ? 'injectable' : 'injectable · 16–32 ch · 15 µm'], ['STATE', state]];
+    if (day) rows.push(['MONTH', String(day)]);
+    hud(ctx, rows);
+  }
+
   // ── 모드 전환 ──
-  let probe: 'np2' | 'threads' = 'threads';
+  let probe: 'np2' | 'threads' | 'mesh' = 'threads';
   let switchAt = 0, pending = false;
-  const STILL = { np2: T_SETTLE + BANK_DUR * 1.4, threads: N * PER + 1.5 };
+  const STILL = { np2: T_SETTLE + BANK_DUR * 1.4, threads: N * PER + 1.5, mesh: M_REC + 5.5 };
   const insert = mount('hw-insert', (ctx, w, h, t) => {
     if (pending) { switchAt = t; pending = false; }
     ctx.clearRect(0, 0, w, h);
     grid(ctx, w, h);
     const tt = reduce ? STILL[probe] : t - switchAt;
-    (probe === 'np2' ? drawNP : drawThreads)(ctx, w, h, tt);
+    (probe === 'np2' ? drawNP : probe === 'mesh' ? drawMesh : drawThreads)(ctx, w, h, tt);
   }, 0);
 
   const probeButtons = document.querySelectorAll<HTMLButtonElement>('.probe-toggle button');
   probeButtons.forEach((b) => b.addEventListener('click', () => {
-    probe = b.dataset.probe as 'np2' | 'threads';
+    probe = b.dataset.probe as 'np2' | 'threads' | 'mesh';
     pending = true;
     probeButtons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     document.querySelectorAll<HTMLElement>('[data-probe-show]').forEach((el) => { el.hidden = el.dataset.probeShow !== probe; });

@@ -1,334 +1,211 @@
 ---
+// 첫 화면: 실제 해부 데이터(HCP S1200 집단 평균)로 그린 뇌.
+// MRI처럼 뒤에서 앞으로 한 번 스캔되며 나타나고, 사이트의 세 표적(M1 · STN · 해마)이 차례로 켜져요.
+// 그 뒤에는 아주 천천히 돌기만 해요. 마우스를 움직이면 살짝 따라 돌아요.
+// 글은 src/content/site.yaml 의 hero: 에서.
 import Nav from './Nav.astro';
 import { site, getRoadmap, url } from '../lib/content';
 const h = site.hero ?? {};
 const firstNode = (await getRoadmap())[0];
+const targets = h.targets ?? [];
 ---
-<section class="hero" aria-labelledby="hero-h">
-  <canvas id="brain" aria-hidden="true"></canvas>
-  <div class="vignette" aria-hidden="true"></div>
+<section class="hero" aria-labelledby="hero-h" data-targets={JSON.stringify(targets)}>
+  <canvas id="hero-gl" aria-hidden="true"></canvas>
+  <canvas id="hero-ov" aria-hidden="true"></canvas>
+  <div class="shade" aria-hidden="true"></div>
 
-  <div class="hero-inner">
-    <Nav />
+  <Nav fixed />
 
-    <dl class="hud mono" aria-hidden="true">
-      <div><dt>model</dt><dd>cortical point cloud</dd></div>
-      <div><dt>points</dt><dd data-hud="points">0</dd></div>
-      <div><dt>edges</dt><dd data-hud="edges">0</dd></div>
-      <div><dt>yaw</dt><dd data-hud="yaw">0.0°</dd></div>
-      <div><dt>slice</dt><dd data-hud="slice">–</dd></div>
-      <div><dt>state</dt><dd data-hud="state">assembling</dd></div>
-    </dl>
-
-    <div class="wrap hero-body">
-      <p class="eyebrow">{h.eyebrow}</p>
-      <h1 id="hero-h">{h.title}</h1>
-      {h.line && <p class="lede mono">{h.line}</p>}
-      <div class="btns">
-        {h.button && <a class="btn" href="#question">{h.button}</a>}
-        {h.button_method && firstNode && <a class="btn ghost" href={url(`/how/${firstNode.slug}/`)}>{h.button_method}</a>}
-      </div>
+  <div class="wrap hero-body">
+    <h1 id="hero-h">{h.title}</h1>
+    {h.line && <p class="lede">{h.line}</p>}
+    <div class="actions">
+      {h.button && <a class="btn" href="#question">{h.button}</a>}
+      {h.button_method && firstNode && <a class="btn-text" href={url(`/how/${firstNode.slug}/`)}>{h.button_method}</a>}
     </div>
-
-    <p class="wrap caption mono">{h.caption}</p>
   </div>
+
+  {h.caption && <p class="credit">{h.caption}</p>}
 </section>
 
 <style>
   .hero {
-    position: relative;
-    background: #000;
-    color: #fff;
-    min-height: max(640px, min(100svh, 1000px));
-    overflow: hidden;
-    isolation: isolate;
+    position: relative; isolation: isolate; overflow: hidden;
+    background: #000; color: #fff;
+    min-height: max(680px, min(100svh, 1040px));
+    display: flex; flex-direction: column;
   }
   canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; }
-  .vignette {
+  #hero-ov { z-index: -1; }
+  /* 글 뒤를 어둡게: 왼쪽 아래만 */
+  .shade {
     position: absolute; inset: 0; z-index: -1; pointer-events: none;
     background:
-      radial-gradient(120% 90% at 60% 45%, transparent 55%, rgba(0, 0, 0, 0.85) 100%),
-      linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, transparent 38%);
+      linear-gradient(90deg, rgba(0,0,0,.7) 0%, rgba(0,0,0,.25) 36%, transparent 54%),
+      linear-gradient(0deg, #000 0%, rgba(0,0,0,.6) 22%, transparent 48%);
   }
-  .hero-inner { min-height: inherit; display: flex; flex-direction: column; }
 
-  .hud {
-    position: absolute; bottom: 92px; right: var(--gutter);
-    display: grid; grid-template-columns: auto auto; gap: 5px 18px; margin: 0;
-    padding: 14px 0 0; border-top: 1px solid rgba(255, 255, 255, 0.22);
-    min-width: 230px;
+  .hero-body { margin-top: auto; padding-bottom: clamp(56px, 9vh, 104px); }
+  h1 {
+    font-size: clamp(48px, 7.6vw, 116px); font-weight: 300; line-height: 0.96; letter-spacing: -0.05em;
+    max-width: 9.5ch; margin: 0;
   }
-  .hud div { display: contents; }
-  .hud dt { color: rgba(255, 255, 255, 0.42); }
-  .hud dd { margin: 0; color: rgba(255, 255, 255, 0.86); text-align: right; font-variant-numeric: tabular-nums; }
+  .lede { margin: clamp(20px, 2.4vw, 30px) 0 0; max-width: 38ch; color: #b3b3b3; font-size: clamp(17px, 1.45vw, 20px); line-height: 1.5; font-weight: 350; }
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; margin-top: clamp(28px, 3.4vw, 40px); }
 
-  .hero-body { margin-top: auto; padding-bottom: 20px; }
-  .eyebrow {
-    color: rgba(255, 255, 255, 0.62); font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase;
-    margin-bottom: 18px;
+  .credit {
+    position: absolute; right: var(--gutter); bottom: 22px; margin: 0;
+    max-width: 52ch; text-align: right; color: #5c5c5c; font-size: 12px; line-height: 1.45;
   }
-  h1 { font-size: clamp(40px, 6.4vw, 96px); font-weight: 300; letter-spacing: -0.045em; line-height: 0.98; color: #fff; max-width: 12ch; }
-  .lede { max-width: 56ch; color: #a8c8ff; margin: 24px 0 30px; line-height: 1.7; letter-spacing: 0.04em; }
 
-  .btn {
-    display: inline-block; color: #fff; text-decoration: none;
-    border: 1.5px solid #fff; padding: 15px 30px;
-    font-size: 13px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
-    transition: background 200ms, color 200ms;
-  }
-  .btn:hover { background: #fff; color: #000; }
-  .btns { display: flex; flex-wrap: wrap; gap: 12px; }
-  .btn.ghost { border-color: rgba(168, 200, 255, .7); color: #a8c8ff; }
-  .btn.ghost:hover { background: #a8c8ff; color: #000; border-color: #a8c8ff; }
-
-  .caption { color: rgba(255, 255, 255, 0.36); padding-bottom: 26px; padding-top: 28px; margin-block: 0; }
-
-  @media (max-width: 1100px) {
-    .hud { display: none; }
-  }
   @media (max-width: 760px) {
-    .hero { min-height: max(700px, 100svh); }
-    .vignette {
-      background:
-        radial-gradient(130% 70% at 50% 30%, transparent 50%, rgba(0, 0, 0, 0.85) 100%),
-        linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.92) 34%, transparent 58%);
-    }
+    .hero { min-height: max(720px, 100svh); }
+    .shade { background: linear-gradient(0deg, #000 0%, rgba(0,0,0,.92) 40%, transparent 62%); }
+    .hero-body { padding-bottom: 64px; }
+    .credit { right: auto; left: var(--gutter); text-align: left; bottom: 20px; }
   }
-  @media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
 </style>
 
 <script>
-  import { buildBrain, buildNetwork, makeRng, randomDir, REGION } from '../scripts/brain';
+  import { loadBrain, createRenderer, makeCamera, project, type BrainData, type Pass, type Renderer, type V3 } from '../scripts/hcpBrain';
 
-  // ──────────────────────────────────────────────────────────────
-  // 점 구름으로 만든 뇌 모델
-  // 1) 흩어진 점들이 스캔 평면이 지나갈 때마다 뇌 표면의 제자리로 모여요.
-  // 2) 조립이 끝나면 일부 점(노드)을 잇는 네트워크가 나타나고,
-  //    신호가 선을 따라 이동하며 노드를 점화시켜요.
-  // 3) 몇 초마다 단면 스캔이 한 번씩 지나가요 (MRI 슬라이스처럼).
-  // 모든 모양은 코드로 생성해요. 실제 환자 데이터가 아니에요.
-  // ──────────────────────────────────────────────────────────────
-  const canvas = document.getElementById('brain') as HTMLCanvasElement | null;
+  const hero = document.querySelector<HTMLElement>('.hero');
+  const glc0 = document.getElementById('hero-gl') as HTMLCanvasElement | null;
+  const ov = document.getElementById('hero-ov') as HTMLCanvasElement | null;
 
-  if (canvas) {
-    const ctx = canvas.getContext('2d')!;
+  if (hero && glc0 && ov) {
+    const ctx = ov.getContext('2d')!;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const hud = (k: string) => document.querySelector<HTMLElement>(`[data-hud="${k}"]`);
-    const hudEls = { points: hud('points'), edges: hud('edges'), yaw: hud('yaw'), slice: hud('slice'), state: hud('state') };
+    const ACC: V3 = [168 / 255, 200 / 255, 1];
+    type T = { id: 'm1' | 'stn' | 'hpc'; name: string; note?: string };
+    let TG: T[] = [];
+    try { TG = JSON.parse(hero.dataset.targets || '[]'); } catch { /* 이름표 없이 */ }
 
-    const R = makeRng(4242);                                   // 흩어진 시작 위치용 난수
-
-    type Pt = { tx: number; ty: number; tz: number; sx: number; sy: number; sz: number; b: number; delay: number };
-
-    let pts: Pt[] = [];
-    let nodes: number[] = [];
-    let edges: [number, number][] = [];
-
-    function build(count: number) {
-      const model = buildBrain(count);                         // 공통 뇌 모델 (src/scripts/brain.ts)
-      pts = model.map((p) => {
-        const s = randomDir(R), r = 1.55 + R() * 0.45;         // 시작점: 구 껍질 위에 흩어짐
-        return {
-          tx: p.x, ty: p.y, tz: p.z, sx: s[0] * r, sy: s[1] * r, sz: s[2] * r, b: p.b,
-          delay: 0.35 + ((1 - p.x) / 2) * 1.9 + R() * 0.12,   // 뒤→앞 순서로 자리 잡음
-        };
-      });
-      // 네트워크: 대뇌 표면 점 일부를 노드로 골라 가까운 노드끼리 연결
-      const cortex = model.flatMap((p, i) => (p.r === REGION.cortex ? [i] : []));
-      ({ nodes, edges } = buildNetwork(model, cortex, 240, R));
-    }
-
-    // 화면 배치
-    let w = 0, h = 0, dpr = 1, cx = 0, cy = 0, scale = 1, dot = 1.2;
+    let data: BrainData | null = null, renderer: Renderer | null = null, glc = glc0;
+    let w = 0, h = 0, dpr = 1, mobile = false;
     function layout() {
+      const r = hero!.getBoundingClientRect();
+      w = r.width; h = r.height; mobile = w < 760;
       dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const r = canvas!.getBoundingClientRect();
-      w = r.width; h = r.height;
-      canvas!.width = Math.round(w * dpr); canvas!.height = Math.round(h * dpr);
+      ov!.width = Math.round(w * dpr); ov!.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const mobile = w < 760;
-      cx = mobile ? w * 0.5 : w * 0.67;
-      cy = mobile ? h * 0.31 : h * 0.4;
-      scale = mobile ? Math.min(w * 0.36, h * 0.22) : Math.min(w * 0.2, h * 0.29);
-      dot = mobile ? 1.1 : 1.25;
+      renderer?.resize(w, h, dpr);
     }
 
-    const ease = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
-    const DUR = 1.5;
-    const ASSEMBLED = 0.35 + 1.9 + 0.12 + DUR;               // 모든 점이 자리 잡는 시각
-    const SWEEP_EVERY = 9, SWEEP_LEN = 3.2;
+    // 시간표 (초): 스캔 0–2.8 → 표적이 하나씩 켜짐
+    const SWEEP = 3.2, ON = { m1: 3.0, stn: 3.6, hpc: 4.2 } as const, FADE = 0.9;
+    const ease = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : 1 - (1 - x) ** 3);
+    const inout = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+    const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 
-    type Pulse = { e: number; dir: 1 | -1; t0: number; dur: number };
-    let pulses: Pulse[] = [];
-    let glow = new Float32Array(0);
-    let lastSpawn = 0;
+    // 마우스를 따라 살짝 도는 양 (부드럽게 따라감)
+    let mx = 0, mxS = 0, my = 0, myS = 0;
+    if (!reduce) window.addEventListener('pointermove', (e) => { mx = e.clientX / window.innerWidth - 0.5; my = e.clientY / window.innerHeight - 0.5; }, { passive: true });
 
-    // 투영 결과를 담아 둘 버퍼
-    let PX = new Float32Array(0), PY = new Float32Array(0), PZ = new Float32Array(0);
-    const BUCKETS = 10;
+    const C: V3 = [0, -17, 12];          // 뇌 가운데 (MNI mm)
+    function draw(t: number) {
+      if (!data || !renderer) return;
+      mxS += (mx - mxS) * 0.04; myS += (my - myS) * 0.04;
+      const az = 0.42 + (reduce ? 0 : 0.2 * Math.sin(t * 0.07)) + mxS * 0.35;
+      const el = 0.16 + (reduce ? 0 : 0.03 * Math.sin(t * 0.05)) - myS * 0.12;
+      const k = mobile ? Math.min((0.94 * w) / 172, (0.44 * h) / 150) : Math.min((0.52 * w) / 172, (0.78 * h) / 150);
+      const cam = makeCamera(az, el, C, k, mobile ? w * 0.5 : w * 0.66, mobile ? h * 0.3 : h * 0.46);
 
-    function frameAt(t: number) {
-      const yaw = -0.42 + 0.5 * Math.sin(t * 0.11);
-      const pitch = -0.14;
-      const cyw = Math.cos(yaw), syw = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+      const s = clamp01(t / SWEEP);
+      const reveal = -112 + 194 * inout(s);
+      const band = s < 1 ? 0.16 * Math.sin(Math.PI * s) : 0;
+      const on = (id: keyof typeof ON) => ease((t - ON[id]) / FADE);
+      const g = 1.15;                                       // 피질 밝기
+      const passes: Pass[] = [
+        { part: 'ctxL', mode: 'cortex', gain: g },
+        { part: 'ctxR', mode: 'cortex', gain: g * 0.55 },
+        { part: 'm1', mode: 'cortex', gain: g * (1 - on('m1')) },
+        { part: 'm1', mode: 'accent', gain: 0.22 * on('m1'), color: ACC, glow: true },
+        { part: 'cb', mode: 'faint', gain: 0.09 },
+        { part: 'bs', mode: 'faint', gain: 0.1, cutZ: -60 },
+        { part: 'thal', mode: 'faint', gain: 0.06 },
+        { part: 'hpcL', mode: 'faint', gain: 0.07 * (1 - on('hpc')) },
+        { part: 'hpcR', mode: 'faint', gain: 0.07 },
+        { part: 'hpcL', mode: 'accent', gain: 0.42 * on('hpc'), color: ACC, glow: true },
+        { part: 'stnL', mode: 'accent', gain: 0.26 * on('stn'), color: ACC, glow: true },
+      ];
+      renderer.draw(cam, passes, mobile ? 0.6 : 1, { reveal, band });
 
-      // 스캔 평면 위치 (모델 x 좌표)
-      let slice: number | null = null;
-      if (t < ASSEMBLED) {
-        slice = 1 - ((t - 0.35 - DUR * 0.6) / 1.9) * 2;       // 조립 중: 점들이 자리 잡는 선을 따라감
-        if (slice > 1.15 || slice < -1.15) slice = null;
-      } else {
-        const k = (t - ASSEMBLED) % SWEEP_EVERY;
-        if (k < SWEEP_LEN) slice = 1.1 - (k / SWEEP_LEN) * 2.2;
-      }
-
+      // 이름표: 표적에서 짧은 선을 그어 오른쪽에
       ctx.clearRect(0, 0, w, h);
-      const buckets: number[][] = Array.from({ length: BUCKETS }, () => []);
-      const hot: number[] = [];
-
-      for (let i = 0; i < pts.length; i++) {
-        const p = pts[i];
-        const e = ease((t - p.delay) / DUR);
-        let x = p.sx + (p.tx - p.sx) * e, y = p.sy + (p.ty - p.sy) * e, z = p.sz + (p.tz - p.sz) * e;
-        // 회전
-        const x1 = x * cyw + z * syw, z1 = -x * syw + z * cyw;
-        const y2 = y * cp - z1 * sp, z2 = y * sp + z1 * cp;
-        const s = 4.2 / (4.2 - z2);
-        PX[i] = cx - x1 * scale * s;                           // 앞쪽이 화면 왼쪽을 보도록
-        PY[i] = cy - y2 * scale * s;
-        PZ[i] = z2;
-
-        const depth = 0.3 + 0.7 * Math.min(1, Math.max(0, (z2 + 1.1) / 2.2));
-        const settle = 0.35 + 0.65 * e;
-        let a = p.b * depth * settle;
-        if (slice !== null && e > 0.98 && Math.abs(p.tx - slice) < 0.022) { hot.push(i); continue; }
-        a = Math.min(0.999, a);
-        buckets[Math.floor(a * BUCKETS)].push(i);
-      }
-
-      for (let k = 0; k < BUCKETS; k++) {
-        const list = buckets[k];
-        if (!list.length) continue;
-        ctx.fillStyle = `rgba(255,255,255,${((k + 0.5) / BUCKETS).toFixed(3)})`;
-        for (const i of list) ctx.fillRect(PX[i], PY[i], dot, dot);
-      }
-      if (hot.length) {
-        ctx.fillStyle = '#fff';
-        for (const i of hot) ctx.fillRect(PX[i] - 0.4, PY[i] - 0.4, dot + 0.9, dot + 0.9);
-      }
-
-      // 스캔 평면 윤곽
-      if (slice !== null) {
-        const corners = [[slice, 0.86, -0.86], [slice, 0.86, 0.86], [slice, -0.86, 0.86], [slice, -0.86, -0.86]].map(([x, y, z]) => {
-          const x1 = x * cyw + z * syw, z1 = -x * syw + z * cyw;
-          const y2 = y * cp - z1 * sp, z2 = y * sp + z1 * cp;
-          const s = 4.2 / (4.2 - z2);
-          return [cx - x1 * scale * s, cy - y2 * scale * s];
-        });
-        ctx.strokeStyle = 'rgba(255,255,255,0.13)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        corners.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
-        ctx.closePath(); ctx.stroke();
-      }
-
-      // 네트워크 선과 신호
-      const netAlpha = Math.min(1, Math.max(0, (t - ASSEMBLED + 0.4) / 1.4));
-      if (netAlpha > 0) {
-        ctx.strokeStyle = `rgba(255,255,255,${(0.1 * netAlpha).toFixed(3)})`;
-        ctx.lineWidth = 0.7;
-        ctx.beginPath();
-        for (const [a, b] of edges) {
-          const i = nodes[a], j = nodes[b];
-          ctx.moveTo(PX[i], PY[i]); ctx.lineTo(PX[j], PY[j]);
-        }
+      if (!TG.length) return;
+      const lm = data.landmarks;
+      const at: Record<T['id'], V3> = { m1: lm.m1.target, stn: lm.stn.L, hpc: lm.hpc.L.centroid };
+      // 이름표 자리 (표적에서의 거리, px): 겹치지 않게 손으로 정했어요
+      const off: Record<T['id'], [number, number]> = mobile
+        ? { m1: [34, -40], stn: [70, -8], hpc: [56, 40] }
+        : { m1: [64, -72], stn: [150, -28], hpc: [118, 70] };
+      ctx.save();
+      ctx.textBaseline = 'middle'; ctx.lineWidth = 1;
+      for (const tg of TG) {
+        const a = on(tg.id);
+        if (a <= 0.01 || !at[tg.id]) continue;
+        const [px, py] = project(cam, at[tg.id]);
+        let [dx, dy] = off[tg.id];
+        // 이름표가 화면 오른쪽 밖으로 나가면 왼쪽으로 뒤집어요
+        ctx.font = `400 ${mobile ? 12 : 13}px "Geist Variable", system-ui, sans-serif`;
+        const tw = ctx.measureText(tg.name).width;
+        const flip = px + dx + 8 + tw > w - 12;
+        if (flip) dx = -Math.min(Math.abs(dx), Math.max(14, px - tw - 26));
+        const lx = px + dx, ly = py + dy, run = Math.min(1, a * 1.4);
+        ctx.globalAlpha = a;
+        ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+        ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI * 2); ctx.stroke();
+        // 꺾인 선: 비스듬히 → 가로
+        const kx = px + dx * 0.55, ky = ly;
+        ctx.beginPath(); ctx.moveTo(px + (dx > 0 ? 3 : -3), py + (dy > 0 ? 2.5 : -2.5));
+        ctx.lineTo(px + (kx - px) * run, py + (ky - py) * run);
+        if (run >= 1) ctx.lineTo(lx, ly);
         ctx.stroke();
-
-        if (!reduce && t - lastSpawn > 0.16 && edges.length) {
-          lastSpawn = t;
-          pulses.push({ e: Math.floor(Math.random() * edges.length), dir: Math.random() < 0.5 ? 1 : -1, t0: t, dur: 0.55 + Math.random() * 0.5 });
-        }
-        pulses = pulses.filter((p) => t - p.t0 < p.dur);
-        for (const p of pulses) {
-          const [a, b] = edges[p.e];
-          const from = nodes[p.dir === 1 ? a : b], to = nodes[p.dir === 1 ? b : a];
-          const u = (t - p.t0) / p.dur;
-          const u0 = Math.max(0, u - 0.25);
-          const hx = PX[from] + (PX[to] - PX[from]) * u, hy = PY[from] + (PY[to] - PY[from]) * u;
-          const tx = PX[from] + (PX[to] - PX[from]) * u0, ty = PY[from] + (PY[to] - PY[from]) * u0;
-          ctx.strokeStyle = `rgba(255,255,255,${(0.75 * netAlpha).toFixed(3)})`;
-          ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(hx, hy); ctx.stroke();
-          if (u > 0.92) glow[p.dir === 1 ? b : a] = 1;
-        }
-        for (let n = 0; n < nodes.length; n++) {
-          const i = nodes[n];
-          const g = glow[n];
-          const depth = 0.4 + 0.6 * Math.min(1, Math.max(0, (PZ[i] + 1.1) / 2.2));
-          if (g > 0.02) {
-            ctx.fillStyle = `rgba(255,255,255,${(0.16 * g * netAlpha).toFixed(3)})`;
-            ctx.beginPath(); ctx.arc(PX[i], PY[i], 7 * g + 2, 0, 6.2832); ctx.fill();
-            glow[n] *= 0.93;
-          }
-          ctx.fillStyle = `rgba(255,255,255,${(Math.min(1, 0.55 * depth + g) * netAlpha).toFixed(3)})`;
-          ctx.fillRect(PX[i] - 1, PY[i] - 1, 2, 2);
+        ctx.font = `400 ${mobile ? 12 : 13}px "Geist Variable", system-ui, sans-serif`;
+        ctx.fillStyle = 'rgba(255,255,255,0.88)';
+        ctx.textAlign = flip ? 'right' : 'left';
+        const tx = flip ? lx - 8 : lx + 8;
+        ctx.fillText(tg.name, tx, ly - (tg.note ? 7 : 0));
+        if (tg.note) {
+          ctx.font = `400 ${mobile ? 11 : 12}px "Geist Variable", system-ui, sans-serif`;
+          ctx.fillStyle = 'rgba(168,200,255,0.85)';
+          ctx.fillText(tg.note, tx, ly + 10);
         }
       }
-
-      // 조준 프레임
-      const bx = scale * 1.34, by = scale * 1.1, L = 14;
-      ctx.strokeStyle = 'rgba(255,255,255,0.32)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
-        const x0 = cx + sx * bx, y0 = cy + sy * by;
-        ctx.moveTo(x0, y0 - sy * L); ctx.lineTo(x0, y0); ctx.lineTo(x0 - sx * L, y0);
-      }
-      ctx.stroke();
-
-      // HUD 수치
-      if (hudEls.points && (Math.floor(t * 8) !== lastHud)) {
-        lastHud = Math.floor(t * 8);
-        const placed = pts.reduce((n, p) => n + (t - p.delay > DUR ? 1 : 0), 0);
-        hudEls.points.textContent = placed.toLocaleString('en-US');
-        if (hudEls.edges) hudEls.edges.textContent = netAlpha > 0 ? String(edges.length) : '0';
-        if (hudEls.yaw) hudEls.yaw.textContent = `${((yaw * 180) / Math.PI).toFixed(1)}°`;
-        if (hudEls.slice) hudEls.slice.textContent = slice === null ? '–' : `x = ${slice.toFixed(2)}`;
-        if (hudEls.state) hudEls.state.textContent = t < ASSEMBLED ? 'assembling' : 'tracking signal';
-      }
-    }
-    let lastHud = -1;
-
-    function init() {
-      layout();
-      build(w < 760 ? 5200 : 9000);
-      PX = new Float32Array(pts.length); PY = new Float32Array(pts.length); PZ = new Float32Array(pts.length);
-      glow = new Float32Array(nodes.length);
+      ctx.restore();
     }
 
-    init();
-    let resizeTimer = 0;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(() => { layout(); if (reduce) frameAt(ASSEMBLED + 1); }, 150);
-    });
+    layout();
+    let rt = 0;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = window.setTimeout(() => { layout(); if (reduce) draw(99); }, 150); });
 
-    if (reduce) {
-      frameAt(ASSEMBLED + 1.5);                               // 움직임 줄이기: 완성된 한 장면만
-    } else {
-      const start = performance.now();
-      let running = true;
-      let pausedAt = 0, pausedTotal = 0;
-      const loop = (now: number) => {
-        if (!running) return;
-        frameAt((now - start - pausedTotal) / 1000);
-        requestAnimationFrame(loop);
-      };
-      new IntersectionObserver(([e]) => {
-        if (e.isIntersecting && !running) { pausedTotal += performance.now() - pausedAt; running = true; requestAnimationFrame(loop); }
-        else if (!e.isIntersecting && running) { running = false; pausedAt = performance.now(); }
-      }).observe(canvas);
-      requestAnimationFrame(loop);
-    }
+    let t0 = 0, running = false, visible = true, paused = 0, pausedAt = 0;
+    const frame = (now: number) => {
+      if (!running) return;
+      if (!document.querySelector('dialog[open]')) draw((now - t0 - paused) / 1000);
+      requestAnimationFrame(frame);
+    };
+    const start = () => {
+      if (reduce || !data || running || !visible) return;
+      if (pausedAt) { paused += performance.now() - pausedAt; pausedAt = 0; }
+      running = true; requestAnimationFrame(frame);
+    };
+    new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible) start(); else if (running) { running = false; pausedAt = performance.now(); }
+    }).observe(hero);
+
+    (async () => {
+      try {
+        const file = import.meta.env.PUBLIC_BRAIN_FILE || 'brain/hcp-mni152.bin';
+        data = await loadBrain(`${import.meta.env.BASE_URL.replace(/\/?$/, '/')}${file}`);
+        const made = createRenderer(glc, data); renderer = made.renderer; glc = made.canvas;
+        layout();
+        if (document.fonts?.ready) await document.fonts.ready;
+        t0 = performance.now();
+        if (reduce) draw(99); else start();
+      } catch { /* 데이터를 못 받으면 글만 보여요 */ }
+    })();
   }
 </script>

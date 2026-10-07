@@ -1,0 +1,88 @@
+---
+// "같은 자극, 다른 반응" 도식 (01 질문 바로 아래).
+// 같은 자극 뒤 일곱 사람의 반응: 올라가는 사람도, 거의 안 변하는 사람도, 반대로 내려가는 사람도 있어요.
+// 평균(점선)은 거의 평평해서, 평균만 보면 효과가 작아 보여요. 한 사람(파란 선)을 따로 표시해요.
+// 모양만 보여주는 도식이에요. 실제 데이터가 아니에요. 글은 site.yaml 의 question: → variability: 에서.
+interface Props { v: any }
+const { v } = Astro.props;
+const L = v.labels ?? {};
+const X0 = 64, BASE = 118;
+// [크기(+ 위로, − 아래로), 지연, 폭]
+const people: [number, number, number][] = [[72, 10, 46], [48, 30, 60], [22, 0, 40], [8, 50, 70], [-18, 20, 50], [-38, 40, 60], [-58, 10, 44]];
+const HL = 1;                                       // 파란 선으로 보여줄 한 사람
+const curve = (A: number, lag: number, w: number) => 'M' + Array.from({ length: 122 }, (_, i) => {
+  const x = X0 + i * 4, u = (x - X0 - lag) / w;
+  return `${x} ${(BASE - (u > 0 ? A * u * Math.exp(1 - u) : 0)).toFixed(1)}`;
+}).join(' L');
+const meanA = people.reduce((s, p) => s + p[0], 0) / people.length;
+---
+<div class="vs" data-vs>
+  <div class="vs-t">
+    <p class="vs-h">{v.title}</p>
+    {v.text && <p class="vs-x">{v.text}</p>}
+  </div>
+  <figure class="vs-f">
+    <p class="ax-y" aria-hidden="true">{L.y}</p>
+    <svg viewBox="40 30 512 166" role="img" aria-label={`${L.note}. ${v.title}`}>
+      <path class="ax" d={`M${X0 - 8} ${BASE} H548`} />
+      <rect class="stim" x={X0 - 4} y={BASE - 46} width="5" height="46" />
+      {people.map(([A, lag, w], i) => i !== HL && <path class="ind" style={`--d:${(i * 0.09).toFixed(2)}s`} pathLength="1" d={curve(A, lag, w)} />)}
+      <path class="mean" d={curve(meanA, 28, 52)} />
+      <path class="one" pathLength="1" d={curve(...people[HL])} />
+    </svg>
+    <p class="ax-x" aria-hidden="true">{L.x}</p>
+    <figcaption class="lg">
+      <span><i class="k-stim"></i>{L.stim}</span>
+      <span><i class="k-one"></i>{L.person}</span>
+      <span><i class="k-ind"></i>Other people</span>
+      <span><i class="k-mean"></i>{L.mean}</span>
+      <span class="note">{L.note}</span>
+    </figcaption>
+  </figure>
+</div>
+
+<script>
+  // 화면에 들어오면 한 번만 그려져요 (움직임 줄이기 설정이면 바로 완성된 그림)
+  document.querySelectorAll<HTMLElement>('[data-vs]').forEach((el) => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { el.classList.add('on', 'still'); return; }
+    new IntersectionObserver(([e], o) => { if (e.isIntersecting) { el.classList.add('on'); o.disconnect(); } }, { threshold: 0.35 }).observe(el);
+  });
+</script>
+
+<style>
+  .vs { --acc: #a8c8ff; display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.3fr); gap: 28px clamp(28px, 4vw, 64px); align-items: center; margin-top: clamp(64px, 8vw, 112px); }
+  .vs-h { margin: 0; font-size: clamp(22px, 2.2vw, 30px); font-weight: 300; line-height: 1.2; letter-spacing: -0.025em; color: #fff; text-wrap: balance; }
+  .vs-x { margin: 14px 0 0; color: #8a8a8a; font-size: clamp(15.5px, 1.25vw, 17px); line-height: 1.5; max-width: 36ch; }
+
+  .vs-f { margin: 0; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .ax-y, .ax-x { margin: 0; color: #5a5a5a; font-size: 12.5px; }
+  .ax-x { text-align: right; margin-top: 2px; }
+  .ax { stroke: #333; stroke-width: 1; fill: none; }
+  .stim { fill: #fff; }
+  .ind, .one, .mean { fill: none; vector-effect: non-scaling-stroke; }
+  .ind { stroke: rgba(255,255,255,.34); stroke-width: 1.1; stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .one { stroke: var(--acc); stroke-width: 2; stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .mean { stroke: #fff; stroke-width: 1.4; stroke-dasharray: 5 5; opacity: 0; }
+  .vs.on .ind { animation: draw 1.4s cubic-bezier(.3,.6,.2,1) var(--d) forwards; }
+  .vs.on .one { animation: draw 1.6s cubic-bezier(.3,.6,.2,1) .7s forwards; }
+  .vs.on .mean { animation: fade .8s ease 1.6s forwards; }
+  .vs.still .ind, .vs.still .one { animation: none; stroke-dashoffset: 0; }
+  .vs.still .mean { animation: none; opacity: 1; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  @keyframes fade { to { opacity: 1; } }
+
+  .lg { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 14px; color: #8a8a8a; font-size: 13px; }
+  .lg span { display: inline-flex; align-items: center; gap: 8px; }
+  .lg i { display: inline-block; width: 18px; height: 0; border-top: 1.5px solid; }
+  .k-stim { width: 4px !important; height: 12px !important; border: 0 !important; background: #fff; }
+  .k-one { border-color: var(--acc) !important; border-top-width: 2px !important; }
+  .k-ind { border-color: rgba(255,255,255,.4) !important; }
+  .k-mean { border-top-style: dashed !important; border-color: #fff !important; }
+  .lg .note { color: #4f4f4f; margin-left: auto; }
+
+  @media (max-width: 860px) {
+    .vs { grid-template-columns: 1fr; }
+    .lg .note { margin-left: 0; }
+  }
+</style>

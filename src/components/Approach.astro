@@ -1,11 +1,20 @@
 ---
-// 03 · Method: 세 원칙(적은 데이터 · 더 나은 모델 · 최소한의 인터페이스) + 11단계 방법 버튼.
+// 02 · Method: 세 원칙(충분한 최소 정보 · 더 나은 모델 · 최소한의 인터페이스) + 단계 버튼.
+// 단계 버튼은 중심 줄(측정 → 모델 → 예측 → 개입 → 학습: spine_groups)을 크게, 나머지 갈래는 묶음별로 작게.
 // 원칙 카드는 해당 방법 페이지로 이어져요 (page: 에 roadmap 파일 이름).
 // 글은 src/content/site.yaml 의 approach: 에서. 방법 버튼은 공개된 roadmap 페이지를 자동으로 나열해요.
 import { site, md, url, getRoadmap } from '../lib/content';
 const ap = site.approach ?? {};
 const nodes = await getRoadmap();
 const bySlug = new Map(nodes.map((n) => [n.slug, n]));
+const spineGroups: string[] = ap.spine_groups ?? [];
+const main = spineGroups.length ? nodes.filter((n) => spineGroups.includes(n.data.group ?? '')) : nodes;
+const rest = spineGroups.length ? nodes.filter((n) => !spineGroups.includes(n.data.group ?? '')) : [];
+const restGroups = [...new Set(rest.map((n) => n.data.group ?? ''))].map((g) => ({ g, items: rest.filter((n) => (n.data.group ?? '') === g) }));
+// 모든 단계를 묶음별 세로 칸으로 (중심 줄 묶음이 먼저)
+const groups = [...new Set(nodes.map((n) => n.data.group ?? ''))].map((g) => ({ g, items: nodes.filter((n) => (n.data.group ?? '') === g) }));
+// 제목은 문장마다 한 줄씩
+const titleLines = String(ap.title ?? '').split(/(?<=\.)\s+/);
 const principles = (ap.principles ?? []).map((p: any) => {
   const node = p.page ? bySlug.get(p.page) : undefined;
   return { ...p, href: node ? url(`/how/${node.slug}/`) : null, n: node?.n, step: node?.data.title };
@@ -13,73 +22,83 @@ const principles = (ap.principles ?? []).map((p: any) => {
 ---
 <section class="ap section" id="approach" aria-labelledby="ap-h">
   <div class="wrap">
-    <div class="head">
-      <div><p class="kicker mono">{ap.kicker}</p><h2 id="ap-h">{ap.title}</h2></div>
-      {ap.text && <p set:html={md(ap.text)} />}
-    </div>
+    <h2 id="ap-h">{titleLines.map((l) => <span>{l}</span>)}</h2>
 
     {principles.length > 0 && (
       <ul class="pr">
-        {principles.map((p: any) => {
-          const inner = (
-            <>
-              <span class="pr-t">{p.title}</span>
-              {p.text && <span class="pr-x" set:html={md(p.text)} />}
-              {p.step && <span class="pr-go mono">{p.n} · {p.step} <span aria-hidden="true">→</span></span>}
-            </>
-          );
-          return <li>{p.href ? <a class="pr-c" href={p.href}>{inner}</a> : <div class="pr-c">{inner}</div>}</li>;
-        })}
+        {principles.map((p: any) => (
+          <li>
+            <h3 class="pr-t">{p.title}</h3>
+            {p.text && <p class="pr-x" set:html={md(p.text)} />}
+            {p.href && <a class="pr-go btn-text" href={p.href}>{p.step}</a>}
+          </li>
+        ))}
       </ul>
     )}
 
-    {ap.method_label && nodes.length > 0 && (
-      <nav class="method" aria-label={ap.method_label}>
-        <p class="m-k mono">{ap.method_label}</p>
-        <ol>
-          {nodes.map((n) => (
-            <li><a class={`m-${n.data.status}`} href={url(`/how/${n.slug}/`)}>
-              <span class="m-dot" aria-hidden="true"></span><span class="m-n mono">{n.n}</span><span class="m-t">{n.data.title}</span>
-            </a></li>
+    {nodes.length > 0 && (
+      <nav class="method" aria-labelledby="m-h">
+        <div class="m-head">
+          <h3 id="m-h" class="m-k">{ap.method_label}</h3>
+          {ap.text && <p class="m-x" set:html={md(ap.text)} />}
+        </div>
+        <div class="m-cols" style={`--g:${groups.length}`}>
+          {groups.map(({ g, items }) => (
+            <div class="m-g">
+              <p class="m-gk">{g}</p>
+              <ol>
+                {items.map((n) => (
+                  <li><a class={`m-${n.data.status}`} href={url(`/how/${n.slug}/`)}>
+                    <span class="m-n">{n.n}</span><span class="m-t">{n.data.title}</span><span class="m-dot" aria-hidden="true"></span>
+                  </a></li>
+                ))}
+              </ol>
+            </div>
           ))}
-        </ol>
+        </div>
       </nav>
     )}
   </div>
 </section>
 
 <style>
-  .ap { --acc: #a8c8ff; background: #000; color: #fff; border-top: 1px solid var(--rule); }
-  .head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px var(--gutter); align-items: end; margin-bottom: clamp(32px, 5vw, 56px); }
-  .kicker { color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 14px; }
-  .head h2 { margin: 0; font-size: clamp(32px, 4.2vw, 56px); font-weight: 300; letter-spacing: -0.035em; line-height: 1.05; }
-  .head > p { margin: 0; color: #a9a9a9; font-size: 17px; line-height: 1.65; max-width: 46ch; }
+  .ap { --acc: #a8c8ff; background: #000; color: #fff; }
+  h2 { margin: 0; display: grid; font-size: clamp(44px, 7vw, 108px); font-weight: 300; letter-spacing: -0.055em; line-height: 0.98; }
+  h2 span:nth-child(2) { color: #8a8a8a; }
+  h2 span:nth-child(3) { color: #4f4f4f; }
 
-  .pr { list-style: none; margin: 0 0 clamp(36px, 5vw, 56px); padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid #262626; border-left: 1px solid #262626; }
-  .pr li { display: flex; }
-  .pr-c { flex: 1; display: flex; flex-direction: column; gap: 10px; padding: clamp(20px, 2.4vw, 30px); border-right: 1px solid #262626; border-bottom: 1px solid #262626; color: #fff; text-decoration: none; transition: background .2s; }
-  a.pr-c:hover, a.pr-c:focus-visible { background: #0a0f17; outline: none; }
-  .pr-t { font-size: clamp(22px, 2.2vw, 30px); font-weight: 300; letter-spacing: -0.025em; line-height: 1.1; }
-  .pr-x { color: #a9a9a9; font-size: 16px; line-height: 1.5; }
-  .pr-go { margin-top: auto; padding-top: 10px; color: #6a6a6a; letter-spacing: .08em; text-transform: uppercase; transition: color .2s; }
-  a.pr-c:hover .pr-go { color: var(--acc); }
+  .pr { list-style: none; margin: clamp(64px, 8vw, 112px) 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px clamp(24px, 3.6vw, 56px); }
+  .pr li { display: flex; flex-direction: column; gap: 12px; padding-top: 20px; border-top: 1px solid #262626; }
+  .pr-t { margin: 0; font-size: clamp(22px, 2vw, 28px); font-weight: 400; letter-spacing: -0.025em; line-height: 1.15; }
+  .pr-x { margin: 0; color: #9a9a9a; font-size: 16px; line-height: 1.5; max-width: 32ch; }
+  .pr-go { margin-top: 8px; align-self: flex-start; font-size: 14px; }
 
-  .method { margin: 0; }
-  .m-k { margin: 0 0 12px; color: #7d7d7d; letter-spacing: .14em; text-transform: uppercase; }
-  .method ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
-  .method a { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: 1px solid #2c2c2c; background: #050505; color: #e6e6e6; text-decoration: none; transition: border-color .2s, background .2s, color .2s; }
-  .method a:hover, .method a:focus-visible { border-color: var(--acc); background: #0a0f17; color: #fff; outline: none; }
-  .m-dot { width: 8px; height: 8px; border-radius: 50%; border: 1px solid #6a6a6a; flex: none; }
-  .m-current .m-dot { background: #fff; border-color: #fff; }
+  .method { margin-top: clamp(96px, 11vw, 152px); }
+  .m-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px var(--gutter); align-items: end; margin-bottom: 28px; }
+  .m-k { margin: 0; font-size: clamp(24px, 2.3vw, 32px); font-weight: 300; letter-spacing: -0.03em; }
+  .m-x { margin: 0; color: #7a7a7a; font-size: 15px; max-width: 44ch; justify-self: end; }
+  .m-cols { display: grid; grid-template-columns: repeat(var(--g, 5), minmax(0, 1fr)); gap: 32px clamp(16px, 2.4vw, 32px); border-top: 1px solid #262626; padding-top: 22px; }
+  .m-gk { margin: 0 0 12px; color: #6a6a6a; font-size: 13px; }
+  .method ol { list-style: none; margin: 0; padding: 0; }
+  .method a { display: grid; grid-template-columns: 28px minmax(0, 1fr) 8px; align-items: center; gap: 8px; padding: 9px 0; color: #d6d6d6; text-decoration: none; border-bottom: 1px solid #141414; transition: color .2s; }
+  .method a:hover .m-t { color: #fff; text-decoration: underline; text-decoration-color: #555; text-underline-offset: 4px; }
+  .method a:focus-visible { outline: 1.5px solid #fff; outline-offset: 2px; }
+  .m-n { color: #4f4f4f; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .m-t { font-size: 16px; letter-spacing: -0.01em; }
+  .m-dot { width: 7px; height: 7px; border-radius: 50%; border: 1px solid #4a4a4a; justify-self: end; }
+  .m-current .m-dot { background: var(--acc); border-color: var(--acc); }
   .m-done .m-dot { background: #8a8a8a; border-color: #8a8a8a; }
-  .m-question .m-dot, .m-next .m-dot { border-color: var(--acc); border-style: dashed; }
-  .m-concept .m-dot, .m-frontier .m-dot { border-style: dotted; }
-  .m-n { color: #6a6a6a; }
-  .m-t { font-size: 15px; }
-  @media (max-width: 900px) {
-    .head { grid-template-columns: 1fr; }
+  .m-question .m-dot, .m-next .m-dot { border-color: var(--acc); }
+  .m-concept .m-dot, .m-frontier .m-dot { border-style: dashed; }
+
+  @media (max-width: 1100px) {
+    .m-cols { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
   @media (max-width: 760px) {
-    .pr { grid-template-columns: 1fr; }
+    .pr { grid-template-columns: 1fr; gap: 32px; }
+    .m-head { grid-template-columns: 1fr; }
+    .m-x { justify-self: start; }
+    .m-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
+  @media (max-width: 420px) { .m-cols { grid-template-columns: 1fr; } }
 </style>

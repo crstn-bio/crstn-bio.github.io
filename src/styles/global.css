@@ -53,8 +53,7 @@ strong { font-weight: 560; }
 
 .wrap { width: 100%; max-width: var(--max); margin-inline: auto; padding-inline: var(--gutter); }
 
-.section { padding-block: clamp(72px, 11vw, 144px); }
-.section + .section { border-top: 1px solid var(--rule); }
+.section { padding-block: clamp(88px, 10vw, 144px); }
 
 .section-head {
   display: grid;
@@ -90,3 +89,24 @@ strong { font-weight: 560; }
 .status--question { color: #a8c8ff; border-color: #a8c8ff; border-style: dashed; }
 .status--concept { color: #a9a9a9; border-color: #6a6a6a; border-style: dashed; }
 .status--frontier { color: #a9a9a9; border-color: #6a6a6a; border-style: dotted; }
+
+/* ── 공통 버튼: 흰 바탕 하나(주 동작) + 밑줄 글자(보조 동작) ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; height: 48px; padding: 0 24px;
+  background: #fff; color: #000; border: 1px solid #fff; border-radius: 2px;
+  font-size: 15px; font-weight: 500; letter-spacing: -0.005em; text-decoration: none; white-space: nowrap;
+  transition: background-color .2s, color .2s;
+}
+.btn:hover { background: transparent; color: #fff; }
+.btn-text {
+  color: #fff; font-size: 15px; font-weight: 400; text-decoration: underline; text-decoration-color: rgba(255,255,255,.35);
+  text-underline-offset: 6px; transition: text-decoration-color .2s;
+}
+.btn-text:hover { color: #fff; text-decoration-color: #fff; }
+button.btn-text { all: unset; cursor: pointer; color: #fff; font-size: 15px; text-decoration: underline; text-decoration-color: rgba(255,255,255,.35); text-underline-offset: 6px; }
+button.btn-text:hover { text-decoration-color: #fff; }
+button.btn-text:focus-visible { outline: 1.5px solid #fff; outline-offset: 3px; }
+
+/* 작은 설명 글자: 대문자 꼬리표 대신 (문장형, 회색) */
+.label { color: #7a7a7a; font-size: 13px; line-height: 1.4; letter-spacing: 0; }
+@media (prefers-reduced-motion: reduce) { .btn, .btn-text { transition: none; } }

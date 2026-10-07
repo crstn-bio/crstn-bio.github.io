@@ -1,57 +1,138 @@
 ---
-// 04 · 연구 질문: 글은 src/content/site.yaml 의 questions: 에서. 목록이 비면 섹션이 숨겨져요.
-import Status from './Status.astro';
-import { site, md } from '../lib/content';
+// 03 · 다음에 시험하고 싶은 것. 위계: 작은 표시(장기 질문) → 큰 질문 → 파란 아래 화살표 → NEXT / PROPOSED
+//   → 중간 크기의 실행 가능한 질문 → 작은 식 z(t) + u(t) → z(t+1). 나머지 질문은 아래에 작게(“Other open questions”).
+// 맨 위의 아주 작은 줄: 지금의 시험대(운동) → 다음 시스템(해마) → 장기(개인 맞춤 폐회로).
+// 글은 src/content/site.yaml 의 questions: 에서. 제안 단계 실험은 아직 하지 않은 것으로만 표시해요.
+import { site, md, url } from '../lib/content';
 const Q = site.questions ?? {};
+const M = site.maturity ?? {};
 const list: string[] = Q.list ?? [];
+const long = Q.long;
 const nx = Q.next;
+const path: any[] = Q.path ?? [];
+// 식 안의 _X 를 아래첨자로 (예: y_M → y<sub>M</sub>)
+const sub = (t: string) => md(t).replace(/_\{([^}]+)\}/g, '<sub>$1</sub>').replace(/_([A-Za-z0-9θ]+)/g, '<sub>$1</sub>');
 ---
-{(list.length > 0 || nx) && (
+{(list.length > 0 || long || nx) && (
 <section class="next section" id="questions" aria-labelledby="next-h">
   <div class="wrap">
-    <div class="head">
-      <div><p class="kicker mono">{Q.kicker}</p><h2 id="next-h">{Q.title}</h2></div>
-    </div>
-    {nx && (
-      <div class="nq">
-        <p class="nq-k mono">{nx.label} {nx.status && <Status kind={nx.status} text={nx.status_label} />}</p>
-        <p class="nq-q">
-          {(nx.lines ?? []).map((l: any) => <span><span class="mono">{l.tag}</span>{l.text}</span>)}
+    <h2 id="next-h">{Q.title}</h2>
+
+    {path.length > 0 && (
+      <ol class="path" aria-label="From current work to the frontier" style={`--n:${path.length}`}>
+        {path.map((p) => (
+          <li class={`p-${p.stage}`}>
+            <span class="p-dot" aria-hidden="true"></span>
+            <span class="p-k">{p.k}</span>
+            <span class="p-v">{p.v}</span>
+            {p.d && <span class="p-d">{p.d}</span>}
+          </li>
+        ))}
+      </ol>
+    )}
+
+    {long && (
+      <div class="lt">
+        {long.label && <p class="lt-k">{long.label}</p>}
+        <p class="lt-q">
+          {(long.lines ?? []).map((l: any) => <span><span class="lt-tag">{l.tag}</span>{l.text}</span>)}
         </p>
-        {nx.answer?.length > 0 && <span class="nq-ar mono" aria-hidden="true">↓</span>}
-        {nx.answer?.length > 0 && <p class="nq-p" set:html={nx.answer.map((x: string) => md(x)).join('<br />')} />}
+      </div>
+    )}
+
+    {nx && (
+      <div class="nx">
+        <p class="nx-k"><span class="m-next">{M.next ?? 'Proposed next'}</span>{nx.note && <span class="nx-note">{nx.note}</span>}</p>
+        <p class="nx-q" set:html={md(nx.question)} />
+        <div class="nx-sci">
+          {nx.formula && <p class="nx-f mono" set:html={sub(nx.formula)} />}
+          {nx.terms?.length > 0 && (
+            <dl class="nx-t">
+              {nx.terms.map((t: any) => <div><dt>{t.k}</dt><dd set:html={sub(t.v)} /></div>)}
+            </dl>
+          )}
+        </div>
+        {nx.link && <p class="nx-l"><a class="btn-text" href={url(nx.link.url)}>{nx.link.label}</a></p>}
       </div>
     )}
 
     {list.length > 0 && (
-      <ol class="qs">
-        {list.map((q, i) => (
-          <li><span class="n mono">Q{i + 1}</span><span class="q" set:html={md(q)} /></li>
-        ))}
-      </ol>
+      <details class="others">
+        <summary class="o-k">{Q.others_label ?? 'Other open questions'} <span class="o-n">{list.length}</span><span class="o-i" aria-hidden="true">+</span></summary>
+        <ol class="qs">
+          {list.map((q, i) => (
+            <li><span class="n">{i + 1}</span><span class="q" set:html={md(q)} /></li>
+          ))}
+        </ol>
+      </details>
     )}
   </div>
 </section>
 )}
 
 <style>
-  .next { --acc: #a8c8ff; background: #000; color: #fff; border-top: 1px solid var(--rule); }
-  .head { margin-bottom: clamp(24px, 4vw, 40px); }
-  .kicker { color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 14px; }
-  .head h2 { margin: 0; font-size: clamp(32px, 4.2vw, 56px); font-weight: 300; letter-spacing: -0.035em; line-height: 1.05; }
-  .nq { border: 1px dashed #3a4a5e; background: #04070b; padding: clamp(22px, 3.4vw, 44px); margin-bottom: clamp(28px, 4vw, 44px); display: grid; justify-items: start; }
-  .nq-k { margin: 0; display: flex; align-items: center; gap: 14px; color: #8d8d8d; letter-spacing: .14em; text-transform: uppercase; }
-  .nq-q { margin: 22px 0 0; display: grid; gap: 4px; font-size: clamp(24px, 3vw, 40px); font-weight: 300; letter-spacing: -0.025em; line-height: 1.2; color: #fff; }
-  .nq-q > span { display: grid; grid-template-columns: 100px auto; align-items: baseline; }
-  .nq-q .mono { color: var(--acc); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
-  .nq-ar { margin: 16px 0 0 100px; color: var(--acc); font-size: 20px; }
-  .nq-p { margin: 12px 0 0 100px; font-family: var(--mono); font-size: clamp(14px, 1.4vw, 17px); letter-spacing: .16em; text-transform: uppercase; color: var(--acc); line-height: 1.7; }
-  @media (max-width: 560px) {
-    .nq-q > span { grid-template-columns: 1fr; }
-    .nq-ar, .nq-p { margin-left: 0; }
+  .next { --acc: #a8c8ff; background: #000; color: #fff; }
+  h2 { margin: 0; font-size: clamp(36px, 4.6vw, 68px); font-weight: 300; letter-spacing: -0.042em; line-height: 1.04; }
+
+  /* 지금 → 다음 → 장기 → 최전선: 선 위의 점 (실제 순서라서 선으로) */
+  .path { list-style: none; margin: clamp(48px, 6vw, 80px) 0 clamp(96px, 11vw, 152px); padding: 0; display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); position: relative; }
+  .path::before { content: ''; position: absolute; left: 5px; right: 0; top: 5px; height: 1px; background: linear-gradient(90deg, #a8c8ff 0%, #3a3a3a 26%, #262626 100%); }
+  .path li { position: relative; display: grid; align-content: start; gap: 6px; padding: 30px 28px 0 0; min-width: 0; }
+  .p-dot { position: absolute; left: 0; top: 0; width: 11px; height: 11px; border-radius: 50%; border: 1px solid #555; background: #000; }
+  .p-current .p-dot { background: var(--acc); border-color: var(--acc); box-shadow: 0 0 0 5px rgba(168,200,255,.12); }
+  .p-next .p-dot { border-color: var(--acc); }
+  .p-frontier .p-dot { border-style: dashed; }
+  .p-k { color: #6a6a6a; font-size: 13px; }
+  .p-current .p-k, .p-next .p-k { color: var(--acc); }
+  .p-v { font-size: clamp(17px, 1.5vw, 20px); color: #e6e6e6; letter-spacing: -0.015em; line-height: 1.3; max-width: 18ch; }
+  .p-frontier .p-v, .p-long .p-v { color: #8d8d8d; }
+  .p-d { color: #6f6f6f; font-size: 13px; line-height: 1.5; }
+
+  /* 장기 질문: 크게, 상자 없이 */
+  .lt-k, .nx-k { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: #7a7a7a; }
+  .lt-q { margin: 20px 0 0; display: grid; gap: 2px; font-size: clamp(30px, 4vw, 58px); font-weight: 300; letter-spacing: -0.04em; line-height: 1.1; color: #fff; }
+  .lt-q > span { display: grid; grid-template-columns: 120px minmax(0, 1fr); align-items: baseline; }
+  .lt-tag { color: #4f4f4f; font-size: 13px; letter-spacing: 0; text-transform: capitalize; }
+
+  /* 다음 실험: 중간 크기 + 식 */
+  .nx { margin: clamp(56px, 7vw, 96px) 0 0 120px; padding-top: 28px; border-top: 1px solid #1a1a1a; max-width: 760px; }
+  .m-next { color: var(--acc); }
+  .nx-note { color: #5a5a5a; }
+  .nx-q { margin: 12px 0 0; max-width: 30ch; font-size: clamp(22px, 2.3vw, 32px); font-weight: 300; letter-spacing: -0.025em; line-height: 1.2; color: #fff; text-wrap: balance; }
+  .nx-sci { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 32px; margin-top: 20px; }
+  .nx-f { margin: 0; color: var(--acc); font-family: var(--mono); font-size: clamp(14px, 1.3vw, 16px); letter-spacing: .02em; }
+  .nx-f :global(sub), .nx-t :global(sub) { font-size: .72em; vertical-align: -0.25em; line-height: 0; }
+  .nx-t { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 13px; }
+  .nx-t div { display: flex; gap: 8px; align-items: baseline; }
+  .nx-t dt { color: #5f5f5f; }
+  .nx-t dd { margin: 0; color: #d6d6d6; }
+  .nx-l { margin: 22px 0 0; }
+
+  /* 나머지 질문: 접어 두기 */
+  .others { margin-top: clamp(80px, 9vw, 128px); }
+  .o-k { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 10px; padding: 16px 0; border-top: 1px solid #1f1f1f; border-bottom: 1px solid #1f1f1f; color: #bdbdbd; font-size: 15px; }
+  .o-k::-webkit-details-marker { display: none; }
+  .o-k:hover { color: #fff; }
+  .o-k:focus-visible { outline: 1.5px solid #fff; outline-offset: 3px; }
+  .o-n { color: #5a5a5a; font-variant-numeric: tabular-nums; }
+  .o-i { margin-left: auto; color: #fff; font-size: 20px; font-weight: 300; line-height: 1; transition: transform .25s; }
+  .others[open] .o-i { transform: rotate(45deg); }
+  .others[open] .o-k { border-bottom-color: transparent; }
+  .qs { list-style: none; margin: 0; padding: 0; }
+  .qs li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px 20px; align-items: baseline; padding: 13px 0; border-bottom: 1px solid #141414; }
+  .n { color: #4f4f4f; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .q { font-size: clamp(15.5px, 1.25vw, 17px); line-height: 1.45; color: #b3b3b3; font-weight: 350; }
+
+  @media (max-width: 1100px) and (min-width: 761px) {
+    .lt-q > span { grid-template-columns: 90px minmax(0, 1fr); }
+    .nx { margin-left: 90px; }
   }
-  .qs { list-style: none; margin: 0; padding: 0; border-top: 1px solid #262626; }
-  .qs li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px 20px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid #1c1c1c; }
-  .n { color: var(--acc); }
-  .q { font-size: clamp(16px, 1.5vw, 19px); line-height: 1.45; color: #e6e6e6; font-weight: 350; }
+  @media (max-width: 760px) {
+    .path { grid-template-columns: 1fr; gap: 0; }
+    .path::before { left: 5px; right: auto; top: 5px; bottom: 5px; width: 1px; height: auto; background: linear-gradient(180deg, #a8c8ff 0%, #3a3a3a 30%, #262626 100%); }
+    .path li { padding: 0 0 26px 30px; }
+    .lt-q > span { grid-template-columns: 1fr; }
+    .nx { margin-left: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .o-i { transition: none; } }
 </style>

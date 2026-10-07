@@ -18,7 +18,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   <header class="top">
     <Nav />
     <div class="wrap head">
-      <a class="back" href={`${base}/#research`}>All research</a>
+      <a class="back" href={`${base}/#question`}>All work</a>
       <h1>{d.title}</h1>
       <p class="sum">{d.summary}</p>
       <dl class="meta">
@@ -39,7 +39,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
         <ul>{d.methods.map((m) => <li>{m}</li>)}</ul>
         <h2>Tools</h2>
         <ul>{d.tools.map((m) => <li>{m}</li>)}</ul>
-        {d.links.length > 0 && (<><h2>Links</h2><ul>{d.links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul></>)}
+        {d.links.length > 0 && (<><h2>Links</h2><ul>{d.links.map((l) => <li><a href={l.href.startsWith('/') ? `${base}${l.href}` : l.href}>{l.label}</a></li>)}</ul></>)}
       </aside>
     </div>
     <a class="next" href={`${base}/research/${next.id}/`}>

@@ -246,9 +246,9 @@ const scLinks = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 0], [7, 1],
 type Step = { k: string; t: string; p: string; span?: number };
 const STEPS: Record<Kind, Step[]> = {
   tus: [
-    { k: 'tus', t: 'a-tbTUS', p: 'theta burst · 5 Hz', span: 2 },
-    { k: 'fes', t: 'FES', p: 'muscle · same session', span: 2 },
-    { k: 'meas', t: 'Measure', p: 'response · pre vs post', span: 2 },
+    { k: 'tus', t: 'a-tbTUS', p: 'real or sham · both M1', span: 2 },
+    { k: 'fes', t: 'FES', p: 'arm and hand · 45 min', span: 2 },
+    { k: 'meas', t: 'Measure', p: 'MEP · UPDRS-III · visit 1 vs 4', span: 2 },
   ],
   spikes: [
     { k: 'rec', t: 'Record', p: 'Vim · STN · SNr · Rt' },
@@ -274,8 +274,8 @@ const STEPS: Record<Kind, Step[]> = {
   ],
   eeg: [
     { k: 'sig', t: 'Signal', p: 'EEG · EMG', span: 2 },
-    { k: 'fft', t: 'FFT', p: 'windowed', span: 2 },
-    { k: 'bands', t: 'PSD', p: 'band power', span: 2 },
+    { k: 'fft', t: 'FFT', p: 'five bands · % power', span: 2 },
+    { k: 'bands', t: 'Normalize', p: 'EMG ÷ NREM mean', span: 2 },
   ],
   aidbs: [
     { k: 'pre', t: 'Pretrain', p: 'many patients’ LFP', span: 2 },

@@ -1,12 +1,14 @@
 ---
 // 01 · 대표 섹션: 질문 + 실제 뇌 위에서 돌아가는 고리.
-// 왼쪽: 고리의 네 단계(측정 → 추정 → 예측·선택 → 개입, 그리고 ↺ 업데이트). 지금 단계가 밝아지고, 누르면 그 단계로.
+// 왼쪽: 고리의 다섯 단계(Observe → Infer → Predict → Perturb → Update)와 각 단계의 식. 지금 단계가 밝아지고, 누르면 그 단계로.
 // 오른쪽: HCP 집단 평균 뇌(src/scripts/hcpBrain.ts). 단계마다 그 단계가 뇌 위에 그려져요.
 //   뇌 → (기록) → 모델 상자(θᵢ: 추정 z(t), 예측·선택 u*) → (자극) → 뇌 → 회로를 따라 하류로.
-// 탭: Motor(적응형 DBS 시험대) · Memory(먼 목표). 같은 고리, 기억은 "어떤 기억인가" 질문이 하나 더.
+// 탭: Motor(지금 하는 연구: M1의 a-tbTUS + FES, MEP 측정) · Hippocampus(다음에 제안하는 실험). 탭마다 성숙도 표시
+//   (CURRENT / TESTING · NEXT / PROPOSED)와 아래 근거 칸(질문 · 역할 · 분석 · 상태)이 바뀌어요.
 // 정지 화면만 봐도 네 단계가 다 읽히도록 ①–④ 표시는 늘 보이고, 자동 진행은 지금 단계를 밝혀 줄 뿐이에요.
 // 글은 src/content/site.yaml 의 question: (loop: · systems: · caption: · work_label:) 에서.
 import ProjectDialogs from './ProjectDialogs.astro';
+import Variability from './Variability.astro';
 import { site, md, url, projects, statusLabel, getRoadmap } from '../lib/content';
 const q = site.question ?? {};
 const L = q.loop ?? {};
@@ -17,13 +19,18 @@ const steps = (L.steps ?? []).map((s: any, i: number) => {
   return { ...s, n: String(i + 1).padStart(2, '0'), href: node ? url(`/how/${node.slug}/`) : '', mlabel: node ? `${node.n} ${node.data.title}` : '' };
 });
 const systems: any[] = q.systems ?? [];
+const M = site.maturity ?? {};
+// 식: _x 와 _{…} 를 아래첨자로 (작은 LaTeX 흉내)
+const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const fx = (t: string) => esc(t).replace(/_\{([^}]+)\}/g, '<sub>$1</sub>').replace(/_([A-Za-z0-9θ]+)/g, '<sub>$1</sub>');
 const work = projects();
 ---
-<section class="sig" id="question" aria-labelledby="sig-h" data-now={JSON.stringify(Object.fromEntries(systems.map((x) => [x.view, x.now ?? ''])))}>
+<section class="sig" id="question" aria-labelledby="sig-h" data-active={systems[0]?.view} data-now={JSON.stringify(Object.fromEntries(systems.map((x) => [x.view, x.now ?? ''])))}>
   <div class="wrap">
-    <p class="kicker mono">{q.kicker}</p>
     <h2 id="sig-h">{q.title}</h2>
+    {q.formal && <p class="formal" set:html={md(q.formal)} />}
     {q.text && <p class="dek" set:html={md(q.text)} />}
+    {q.variability && <Variability v={q.variability} />}
 
     {systems.length > 0 && (
       <div class="tabs" role="tablist" aria-label="System">
@@ -31,7 +38,9 @@ const work = projects();
           const st = typeof s.stat === 'object' && s.stat ? s.stat : { text: s.stat };
           return (
             <button type="button" role="tab" id={`sys-${s.view}`} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} data-sys={s.view}>
-              <span class="t-k mono">{s.label}</span>
+              {s.stage && M[s.stage] && <span class="t-m">{M[s.stage]}</span>}
+              <span class="t-k">{s.label}</span>
+              {s.approach && <span class="t-a"><span class="t-al">Approach</span>{s.approach}</span>}
               <span class="t-row">
                 {st.number && <span class="t-n">{st.number}</span>}
                 {st.text && <span class="t-s">{st.text}</span>}
@@ -42,28 +51,44 @@ const work = projects();
       </div>
     )}
 
+    {systems.map((s, j) => s.why && <p class="why" data-for={s.view} hidden={j !== 0}>{s.why}</p>)}
+
     <div class="stage">
       <div class="side">
         <div class="loop" data-loop>
+          <div class="l-body">
           <span class="l-back" aria-hidden="true"></span>
           <ol class="l-steps">
             {steps.map((st: any, i: number) => (
               <li>
-                <button type="button" class="l-step" data-step={i} data-piece={st.id} data-href={st.href} data-mlabel={st.mlabel} aria-current={i === 0 ? 'step' : undefined}>
+                <button type="button" class="l-step" data-step={i} data-piece={st.id} data-href={st.href} data-mlabel={st.mlabel}
+                  data-later={systems.filter((s) => (s.later ?? []).includes(st.id)).map((s) => s.view).join(' ')} aria-current={i === 0 ? 'step' : undefined}>
                   <span class="l-dot" aria-hidden="true"></span>
-                  <span class="l-n mono">{st.n}</span>
+                  <span class="l-n">{st.n}</span>
                   <span class="l-name">{st.name}</span>
-                  <span class="l-field mono">{st.field}</span>
-                  {systems.map((s, j) => <span class="l-text" data-for={s.view} hidden={j !== 0}>{s.steps?.[st.id]}</span>)}
                 </button>
               </li>
             ))}
           </ol>
-          <div class="l-foot">
-            {L.update && <p class="l-upd mono">{L.update}</p>}
-            <button type="button" class="l-play mono" data-play aria-pressed="false">Pause</button>
           </div>
-          {steps[0]?.href && <a class="l-method mono" data-method href={steps[0].href}>Method · <span data-mtext>{steps[0].mlabel}</span> →</a>}
+          <div class="l-det" aria-live="polite">
+            {steps.map((st: any, i: number) => (
+              <div class="l-d" data-d={i} hidden={i !== 0}>
+                {st.formula && <p class="l-f mono" set:html={fx(st.formula)} />}
+                {systems.map((s, j) => (
+                  <p class="l-text" data-for={s.view} hidden={j !== 0}>
+                    {s.steps?.[st.id]}
+                    {(s.thesis ?? []).includes(st.id) && <span class="l-th">In my thesis</span>}
+                    {(s.later ?? []).includes(st.id) && <span class="l-th l-lt">Later</span>}
+                  </p>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div class="l-foot">
+            {steps[0]?.href && <a class="l-method btn-text" data-method href={steps[0].href}>Method: <span data-mtext>{steps[0].mlabel}</span></a>}
+            <button type="button" class="l-play" data-play aria-pressed="false">Pause</button>
+          </div>
         </div>
 
       </div>
@@ -72,26 +97,47 @@ const work = projects();
         <div class="viewport">
           <canvas id="sig-brain" aria-hidden="true"></canvas>
           <canvas id="sig-ov" aria-hidden="true"></canvas>
-          <p class="v-status mono" data-status role="status">Loading HCP S1200 surface · 1.5 MB</p>
+          <p class="v-status" data-status role="status">Loading anatomy</p>
         </div>
         {(q.caption || q.sources?.length) && (
-          <p class="cap mono">
+          <p class="cap">
             {q.caption}
-            {(q.sources ?? []).map((x: any) => <> <a href={x.url} target="_blank" rel="noreferrer">{x.label} ↗</a></>)}
+            {(q.sources ?? []).map((x: any) => <> <a href={x.url} target="_blank" rel="noreferrer">{x.label}</a></>)}
           </p>
         )}
       </div>
     </div>
 
+    {systems.map((s, j) => s.brief && (
+      <div class="brief" data-for={s.view} hidden={j !== 0}>
+        <p class="b-k">{s.brief.k}{s.brief.status && <span class="b-s">{s.brief.status}</span>}</p>
+        <p class="b-v" set:html={md(s.brief.v)} />
+        {s.brief.open && <button type="button" class="b-go btn-text" data-open={s.brief.open} aria-haspopup="dialog">{s.brief.button ?? 'Details'}</button>}
+        {s.brief.link && <a class="b-go btn-text" href={url(s.brief.link)}>{s.brief.button ?? 'More'}</a>}
+      </div>
+    ))}
+
     {(work.length > 0 || q.work_next) && (
       <div class="work">
-        <p class="w-k mono">{q.work_label}</p>
-        <ul>
+        <p class="w-k">{q.work_label}</p>
+        <ol class="wl">
           {work.map((x: any) => (
-            <li><button type="button" class="chip" data-open={x.id} data-piece={x.piece} aria-haspopup="dialog"><span class="c-t">{x.title}</span><span class={`c-s mono s-${x.status}`}>{x.status_label || statusLabel(x.status)}</span></button></li>
+            <li><button type="button" class="chip" data-open={x.id} data-piece={x.piece} aria-haspopup="dialog">
+              <span class="w-d">{x.date}</span>
+              <span class="w-m">
+                <span class="c-t">{x.title}</span>
+                {x.outcome && <span class="w-o">{x.outcome}</span>}
+                {x.tags?.length > 0 && <span class="w-tags">{x.tags.map((t: string) => <span>{t}</span>)}</span>}
+              </span>
+              <span class={`c-s s-${x.status}`}>{x.status_label || statusLabel(x.status)}</span>
+            </button></li>
           ))}
-          {q.work_next && <li><a class="chip nx" data-piece={q.work_next.piece ?? 'estimate'} href={url(q.work_next.url)}><span class="c-t">{q.work_next.label}</span><span aria-hidden="true">→</span></a></li>}
-        </ul>
+          {q.work_next && <li><a class="chip nx" data-piece={q.work_next.piece ?? 'infer'} href={url(q.work_next.url)}>
+            <span class="w-d">Next</span>
+            <span class="w-m"><span class="c-t">{q.work_next.label}</span></span>
+            <span class="c-s"></span>
+          </a></li>}
+        </ol>
       </div>
     )}
   </div>
@@ -99,90 +145,119 @@ const work = projects();
 </section>
 
 <style>
-  .sig { --acc: #a8c8ff; background: #000; color: #fff; border-top: 1px solid var(--rule); padding-block: clamp(56px, 6.5vw, 88px) clamp(48px, 6vw, 80px); }
-  .kicker { color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 16px; }
-  h2 { margin: 0; font-size: clamp(32px, 3.9vw, 54px); font-weight: 300; line-height: 1.06; letter-spacing: -0.035em; text-wrap: balance; }
+  .sig { --acc: #a8c8ff; background: #000; color: #fff; padding-block: clamp(112px, 14vw, 184px) clamp(80px, 9vw, 128px); scroll-margin-top: 40px; }
+  h2 { margin: 0; max-width: 21ch; font-size: clamp(36px, 4.6vw, 68px); font-weight: 300; line-height: 1.04; letter-spacing: -0.042em; text-wrap: balance; }
+  .formal { max-width: 46ch; margin: clamp(22px, 2.6vw, 32px) 0 0; color: #9a9a9a; font-size: clamp(17px, 1.5vw, 21px); line-height: 1.45; font-weight: 350; text-wrap: pretty; }
   .dek { max-width: 80ch; margin: 12px 0 0; color: #a9a9a9; font-size: clamp(16px, 1.25vw, 18px); line-height: 1.55; }
 
-  .stage { display: grid; grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.7fr); gap: clamp(24px, 3.2vw, 44px); margin-top: 22px; align-items: start; }
-
-  /* 탭: 두 시스템, 사람 수는 크게 (출처는 아래 캡션) */
-  .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: clamp(26px, 3.4vw, 40px); border-bottom: 1px solid #222; }
-  .tabs button { font: inherit; text-align: left; color: #7d7d7d; background: none; border: 0; border-top: 1px solid #333; padding: 14px 20px 16px 0; cursor: pointer; display: grid; gap: 6px; position: relative; transition: color .2s; }
-  .tabs button::before { content: ''; position: absolute; left: 0; top: -1px; height: 2px; width: 0; background: #fff; transition: width .5s cubic-bezier(.2,.7,.2,1); }
+  /* 두 시스템: 고르는 칸. 지금 고른 쪽 위에 흰 선 */
+  .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 clamp(20px, 3vw, 44px); margin-top: clamp(64px, 8vw, 112px); }
+  .tabs button { font: inherit; text-align: left; color: #6a6a6a; background: none; border: 0; border-top: 1px solid #262626; padding: 18px 0 4px; cursor: pointer; display: grid; align-content: start; gap: 4px; position: relative; transition: color .25s; }
+  .tabs button::before { content: ''; position: absolute; left: 0; top: -1px; height: 1px; width: 0; background: #fff; transition: width .6s cubic-bezier(.2,.7,.2,1); }
   .tabs button[aria-selected='true'] { color: #fff; }
   .tabs button[aria-selected='true']::before { width: 100%; }
   .tabs button:hover { color: #fff; }
-  .t-k { letter-spacing: .12em; text-transform: uppercase; }
-  .tabs button[aria-selected='true'] .t-k { color: var(--acc); }
-  .t-row { display: flex; align-items: baseline; gap: 14px; min-width: 0; }
-  .t-n { font-size: clamp(34px, 3.6vw, 50px); font-weight: 250; letter-spacing: -0.045em; line-height: 1; font-variant-numeric: tabular-nums; }
-  .t-s { font-size: 14.5px; line-height: 1.4; color: #6f6f6f; max-width: 30ch; }
-  .tabs button[aria-selected='true'] .t-s { color: #a9a9a9; }
+  .tabs button:focus-visible { outline: 1.5px solid #fff; outline-offset: 4px; }
+  .t-m { font-size: 13px; color: #5f5f5f; }
+  .tabs button[aria-selected='true'] .t-m { color: var(--acc); }
+  .t-k { font-size: clamp(22px, 2.2vw, 30px); font-weight: 300; letter-spacing: -0.03em; line-height: 1.15; }
+  .t-a { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 15px; color: #6a6a6a; }
+  .t-al { color: #4a4a4a; }
+  .tabs button[aria-selected='true'] .t-a { color: #d6d6d6; }
+  .tabs button[aria-selected='true'] .t-al { color: #7a7a7a; }
+  .why { margin: 28px 0 0; max-width: 62ch; color: #9a9a9a; font-size: clamp(16px, 1.35vw, 18px); line-height: 1.5; }
+  .why[hidden] { display: none; }
+  .t-row { display: flex; align-items: baseline; gap: 14px; min-width: 0; margin-top: 14px; }
+  .t-n { font-size: clamp(40px, 4.4vw, 64px); font-weight: 250; letter-spacing: -0.05em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .t-s { font-size: 14px; line-height: 1.4; color: #5f5f5f; max-width: 26ch; }
+  .tabs button[aria-selected='true'] .t-s { color: #9a9a9a; }
 
-  /* 고리: 레일 위의 점 + 마지막에서 처음으로 돌아가는 괄호 */
-  .loop { position: relative; padding-left: 22px; }
-  .l-back { position: absolute; left: 0; top: 19px; bottom: 15px; width: 16px; border: 1px dashed #34404f; border-right: 0; transition: border-color .3s; }
-  .l-back::after { content: ''; position: absolute; right: -2px; top: -4px; border: 4px solid transparent; border-left: 6px solid #34404f; border-right: 0; transition: border-color .3s; }
+  .stage { display: grid; grid-template-columns: minmax(220px, 0.62fr) minmax(0, 1.9fr); gap: clamp(24px, 3.6vw, 56px); margin-top: clamp(36px, 4vw, 56px); align-items: center; }
+
+  /* 고리: 세로 선 위의 점, 마지막에서 처음으로 돌아가는 선 */
+  .l-body { position: relative; padding-left: 22px; }
+  .l-back { position: absolute; left: 0; top: 21px; bottom: 21px; width: 14px; border: 1px solid #262626; border-right: 0; transition: border-color .3s; }
+  .l-back::after { content: ''; position: absolute; right: -2px; top: -4px; border: 4px solid transparent; border-left: 6px solid #3a3a3a; border-right: 0; transition: border-color .3s; }
   .loop.upd .l-back { border-color: var(--acc); }
   .loop.upd .l-back::after { border-left-color: var(--acc); }
   .l-steps { list-style: none; margin: 0; padding: 0; position: relative; }
-  .l-steps::before { content: ''; position: absolute; left: 6px; top: 19px; bottom: 26px; width: 1px; background: #2a2a2a; }
-  .l-step { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; grid-template-columns: 14px 24px minmax(0, 1fr) auto; align-items: baseline; gap: 1px 8px; padding: 8px 0; position: relative; }
-  .l-step:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
-  .l-dot { width: 9px; height: 9px; border-radius: 50%; border: 1px solid #555; background: #000; align-self: center; margin-left: 2px; transition: background .3s, border-color .3s, box-shadow .3s; z-index: 1; }
-  .l-n { color: #5f5f5f; transition: color .3s; }
-  .l-name { font-size: 18px; letter-spacing: -0.015em; color: #a0a0a0; transition: color .3s; }
-  .l-field { color: #5f5f5f; transition: color .3s; }
-  .l-text { grid-column: 3 / 5; color: #6f6f6f; font-size: 14.5px; line-height: 1.4; transition: color .3s; }
-  .l-step[aria-current] .l-dot { background: var(--acc); border-color: var(--acc); box-shadow: 0 0 0 4px rgba(168,200,255,.14); }
-  .l-step[aria-current] .l-n, .l-step[aria-current] .l-field { color: var(--acc); }
-  .l-step[aria-current] .l-name { color: #fff; }
-  .l-step[aria-current] .l-text { color: #d0d0d0; }
-  .l-step:hover .l-name { color: #fff; }
-  .l-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 2px; }
-  .l-upd { margin: 0; color: #5f5f5f; transition: color .3s; }
-  .loop.upd .l-upd { color: var(--acc); }
-  .l-play { background: none; border: 1px solid #262626; color: #6f6f6f; padding: 2px 8px; cursor: pointer; letter-spacing: .08em; text-transform: uppercase; }
-  .l-play:hover { color: #fff; border-color: #555; }
-  .l-method { display: inline-block; margin-top: 12px; color: var(--acc); text-decoration: none; letter-spacing: .04em; border-bottom: 1px solid #2c3a4c; padding-bottom: 2px; }
-  .l-method:hover { border-color: var(--acc); }
+  .l-steps::before { content: ''; position: absolute; left: 6px; top: 21px; bottom: 21px; width: 1px; background: #262626; }
+  .l-step { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; grid-template-columns: 14px 26px minmax(0, 1fr); align-items: baseline; gap: 0 10px; padding: 9px 0; position: relative; transition: opacity .3s; }
+  .l-step:focus-visible { outline: 1.5px solid var(--acc); outline-offset: 2px; }
+  .l-dot { width: 9px; height: 9px; border-radius: 50%; border: 1px solid #4a4a4a; background: #000; align-self: center; margin-left: 2px; transition: background .3s, border-color .3s, box-shadow .3s; z-index: 1; }
+  .l-n { color: #4f4f4f; font-size: 13px; font-variant-numeric: tabular-nums; transition: color .3s; }
+  .l-name { font-size: clamp(20px, 1.8vw, 24px); font-weight: 300; letter-spacing: -0.02em; color: #6f6f6f; transition: color .3s; }
+  .l-step[aria-current] .l-dot { background: var(--acc); border-color: var(--acc); box-shadow: 0 0 0 5px rgba(168,200,255,.12); }
+  .l-step[aria-current] .l-n { color: var(--acc); }
+  .l-step[aria-current] .l-name, .l-step:hover .l-name { color: #fff; }
+  .sig[data-active="memory"] .l-step[data-later~="memory"] { opacity: .4; }
 
-  /* 지금까지 한 일: 한 줄 칩 (누르면 상세 창) */
-  .work { margin-top: clamp(20px, 2.6vw, 28px); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
-  .w-k { margin: 0; color: #7d7d7d; letter-spacing: .14em; text-transform: uppercase; }
-  .work ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: baseline; gap: 8px; padding: 6px 10px; border: 1px solid #262626; background: #050505; transition: border-color .2s, background .2s; }
-  .chip:hover, .chip:focus-visible { border-color: var(--acc); background: #0a0f17; }
-  .chip { transition: border-color .3s, background .3s, opacity .3s; }
-  .work.focus .chip:not(.lit) { opacity: .4; }
-  .chip.lit { border-color: rgba(168,200,255,.7); background: #0a0f17; }
-  .c-t { font-size: 14px; color: #e0e0e0; }
-  .c-s { color: #6f6f6f; letter-spacing: .06em; text-transform: uppercase; font-size: 10.5px; }
-  .c-s.s-current { color: var(--acc); }
-  .chip.nx { border-style: dashed; border-color: #3a4a5e; color: var(--acc); text-decoration: none; }
-  .chip.nx .c-t { color: var(--acc); }
+  .l-det { margin: 22px 0 0; padding-left: 22px; min-height: 76px; }
+  .l-d[hidden], .l-det .l-text[hidden] { display: none; }
+  .l-f { margin: 0; color: var(--acc); font-family: var(--mono); font-size: 13px; line-height: 1.5; letter-spacing: 0; }
+  .l-f :global(sub) { font-size: .75em; vertical-align: -0.2em; line-height: 0; }
+  .l-text { margin: 8px 0 0; color: #bdbdbd; font-size: 15px; line-height: 1.45; }
+  .l-th { display: inline-block; margin-left: 10px; color: var(--acc); font-size: 12.5px; }
+  .l-lt { color: #7a7a7a; }
+  .l-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 18px; padding-left: 22px; }
+  .l-method { font-size: 14px; }
+  .l-play { all: unset; cursor: pointer; color: #6a6a6a; font-size: 13px; }
+  .l-play:hover { color: #fff; }
+  .l-play:focus-visible { outline: 1.5px solid #fff; outline-offset: 3px; }
 
-  /* 오른쪽: 뇌 */
-  .viewport { position: relative; aspect-ratio: 16 / 10; border: 1px solid #1c1c1c; background: radial-gradient(70% 70% at 40% 50%, #0a0a0a, #000); touch-action: pan-y; cursor: grab; }
+  /* 오른쪽: 뇌 (틀 없이) */
+  .viewport { position: relative; aspect-ratio: 16 / 10.5; touch-action: pan-y; cursor: grab; }
   .viewport:active { cursor: grabbing; }
   .viewport canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .v-status { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; color: #6a6a6a; white-space: nowrap; pointer-events: none; }
-  .cap { margin: 10px 0 0; color: #5a5a5a; line-height: 1.6; }
-  .cap a { color: #6a6a6a; text-decoration: none; margin-left: 10px; white-space: nowrap; }
+  .v-status { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; color: #5a5a5a; font-size: 13px; white-space: nowrap; pointer-events: none; }
+  .cap { margin: 10px 0 0; color: #555; font-size: 12.5px; line-height: 1.6; }
+  .cap a { color: #6a6a6a; text-decoration: underline; text-decoration-color: #333; text-underline-offset: 3px; margin-left: 10px; white-space: nowrap; }
   .cap a:hover { color: #fff; }
 
+  /* 한 줄 요약: 지금의 질문 (자세한 내용은 창이나 방법 페이지에) */
+  .brief { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 6px 32px; margin: clamp(48px, 6vw, 80px) 0 0; }
+  .brief[hidden] { display: none; }
+  .b-k { grid-column: 1; margin: 0; color: #7a7a7a; font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+  .b-s { color: #4f4f4f; }
+  .b-v { grid-column: 1; margin: 0; color: #fff; max-width: 34ch; font-size: clamp(22px, 2.3vw, 32px); font-weight: 300; line-height: 1.2; letter-spacing: -0.025em; text-wrap: balance; }
+  .b-go { grid-column: 2; grid-row: 1 / 3; align-self: end; margin-bottom: 6px; }
+
+  /* 지금까지 한 일: 날짜 · 한 줄 결과 · 방법 태그. 누르면 상세 창 */
+  .work { margin-top: clamp(56px, 6vw, 88px); display: grid; grid-template-columns: minmax(220px, 0.62fr) minmax(0, 1.9fr); gap: 10px clamp(24px, 3.6vw, 56px); }
+  .w-k { margin: 0; color: #fff; font-size: clamp(20px, 1.8vw, 24px); font-weight: 300; letter-spacing: -0.02em; }
+  .wl { list-style: none; margin: 0; padding: 0; border-top: 1px solid #262626; }
+  .chip { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 128px minmax(0, 1fr) auto; align-items: baseline; gap: 4px 24px; width: 100%; padding: 16px 0; border-bottom: 1px solid #161616; transition: opacity .3s; }
+  .chip:focus-visible { outline: 1.5px solid #fff; outline-offset: 2px; }
+  .w-d { color: #6a6a6a; font-size: 13.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .w-m { display: grid; gap: 5px; min-width: 0; }
+  .c-t { font-size: 17px; color: #fff; letter-spacing: -0.01em; transition: color .2s; }
+  .chip:hover .c-t { text-decoration: underline; text-decoration-color: #555; text-underline-offset: 4px; }
+  .w-o { color: #9a9a9a; font-size: 14.5px; line-height: 1.45; }
+  .w-tags { display: flex; flex-wrap: wrap; gap: 4px 14px; color: #5a5a5a; font-size: 12.5px; }
+  .c-s { color: #5a5a5a; font-size: 13px; white-space: nowrap; }
+  .c-s.s-current { color: var(--acc); }
+  .work.focus .chip:not(.lit) { opacity: .35; }
+  .chip.nx { text-decoration: none; }
+  .chip.nx .w-d, .chip.nx .c-t { color: var(--acc); }
+
   @media (max-width: 960px) {
-    .stage { grid-template-columns: 1fr; gap: 18px; }
+    .stage { grid-template-columns: 1fr; gap: 24px; }
     .side { display: contents; }
     .vcol { order: 1; }
     .loop { order: 2; }
     .viewport { aspect-ratio: 3 / 4; }
+    .work { grid-template-columns: 1fr; }
+    .chip { grid-template-columns: minmax(0, 1fr) auto; }
+    .w-d { grid-column: 1 / -1; }
+    .w-m { grid-column: 1; }
   }
   @media (max-width: 560px) {
-    .tabs button { padding-right: 10px; }
     .t-row { flex-direction: column; gap: 4px; }
     .t-s { font-size: 13px; }
+    .t-k { font-size: 21px; }
+    .t-a { font-size: 13.5px; line-height: 1.35; }
+    .brief { grid-template-columns: 1fr; }
+    .b-go { grid-column: 1; grid-row: auto; justify-self: start; }
   }
   @media (prefers-reduced-motion: reduce) { .l-back, .tabs button::before { transition: none; } }
 </style>
@@ -209,7 +284,7 @@ const work = projects();
     // ── 시점: 시스템마다 고정. cx, cy = 뇌 가운데가 올 화면 위치(비율). 모델 상자 자리를 비워 둬요 ──
     interface ViewDef { az: number; el: number; zoom: number; c: V3; cortex: number; cx: number; cy: number; hud: string }
     const VIEWS: Record<Sys, ViewDef> = {
-      motor: { az: 0.5, el: 0.18, zoom: 1.6, c: [-24, -12, 27], cortex: 0.14, cx: 0.4, cy: 0.5, hud: '' },
+      motor: { az: 0.5, el: 0.18, zoom: 1.6, c: [-24, -12, 31], cortex: 0.14, cx: 0.4, cy: 0.5, hud: '' },
       memory: { az: 0.8, el: 0.2, zoom: 1.7, c: [-18, -6, -6], cortex: 0.18, cx: 0.4, cy: 0.5, hud: '' },
     };
     if (location.search.includes('debug')) (window as any).__sigViews = VIEWS;   // 시점 조정용
@@ -222,7 +297,7 @@ const work = projects();
     const sw = [1, 0, 0, 0, 0];
     const sysW: Record<Sys, number> = { motor: 1, memory: 0 };
 
-    // 측정 신호(도식): 기준선 + 추정 단계가 끝날 때 오른쪽 끝에서 정점에 이르는 β 버스트
+    // 상태 신호(도식): 기준선 + 추정 단계가 끝날 때 오른쪽 끝에서 정점에 이르는 상승
     let tS = 0, lastNow = -1, sB = 4;
     const THR = 0.6;
     const base = (s: number) => 0.4 + 0.06 * Math.sin(s * 2.3) + 0.045 * Math.sin(s * 5.7 + 1) + 0.03 * Math.sin(s * 11.3 + 2);
@@ -271,6 +346,7 @@ const work = projects();
     const norm = (a: number[]): V3 => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
     const cross = (a: number[], b: number[]): V3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
     const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+    const hash = (n: number) => { const v = Math.sin(n * 12.9898) * 43758.5453; return v - Math.floor(v); };
 
     // ── 그리기 도구 ──
     function tag(x: number, y: number, text: string, a: number, align: 'l' | 'r' = 'l', color = 'rgba(255,255,255,0.6)') {
@@ -368,12 +444,15 @@ const work = projects();
     const vy = (v: number, top: number, hh: number) => top + hh - ((v - 0.22) / 0.66) * hh;
     function row(sec: Sec, y: number, num: string, title: string, right: string, on: number, rightColor: string) {
       badge(sec.x + 8, y, num, on);
-      ctx.font = PANEL; ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.fillText(title, sec.x + 24, y);
+      ctx.font = PANEL; ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillStyle = '#fff';
+      const [base, low] = title.split('_');
+      ctx.fillText(base, sec.x + 24, y);
+      if (low) { const bw = ctx.measureText(base).width; ctx.font = `9px ${FONT}`; ctx.fillText(low, sec.x + 24 + bw + 1, y + 4); ctx.font = PANEL; }
       ctx.textAlign = 'right'; ctx.fillStyle = rightColor; ctx.fillText(right, sec.x + sec.w, y);
     }
     // 뇌의 한 점(S) ↔ 모델 상자: 나가는 신호 y(t)는 ②로, 돌아오는 u*는 ③에서
-    function routes(S: V3, lift: number): { out: [P2, P2, P2, P2]; back: [P2, P2, P2, P2] } {
-      const B = panelBox(), Ap: P2 = [S[0] + 6, S[1] - 4], end: P2 = [S[0] + 7, S[1] + 7];
+    function routes(S: V3, lift: number, Sb?: V3): { out: [P2, P2, P2, P2]; back: [P2, P2, P2, P2] } {
+      const B = panelBox(), Ap: P2 = [S[0] + 6, S[1] - 4], end: P2 = Sb ? [Sb[0] + 5, Sb[1] + 3] : [S[0] + 7, S[1] + 7];
       if (B.side) {
         const p2: P2 = [B.px, B.s2.y + 46], p3: P2 = [B.px, B.s3.y + 52];
         return {
@@ -404,8 +483,9 @@ const work = projects();
       ctx.globalAlpha = a * (0.55 + 0.45 * on2);
       const gy = S2.y + 26, gh = B.side ? 40 : 38, ix = S2.x, iw = S2.w;
       if (kind === 'motor') {
+        // 상태 z(t) (도식): 지금의 생리 상태
         const zNow = zAt(tS), hi = zNow > THR;
-        row(S2, S2.y + 13, '2', 'z(t)', hi ? 'β burst' : 'quiet', on2, hi ? `rgb(${ACC})` : '#8a8a8a');
+        row(S2, S2.y + 13, '2', 'z(t)', hi ? 'high' : 'baseline', on2, hi ? `rgb(${ACC})` : '#8a8a8a');
         ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.setLineDash([2, 3]); ctx.lineWidth = 1;
         const ty = vy(THR, gy, gh); ctx.beginPath(); ctx.moveTo(ix, ty); ctx.lineTo(ix + iw, ty); ctx.stroke(); ctx.setLineDash([]);
         ctx.lineWidth = 1.3; ctx.strokeStyle = 'rgba(255,255,255,0.88)';
@@ -418,19 +498,35 @@ const work = projects();
         ctx.stroke();
         ctx.fillStyle = hi ? `rgb(${ACC})` : '#fff'; ctx.beginPath(); ctx.arc(ix + iw, vy(zNow, gy, gh), 3, 0, Math.PI * 2); ctx.fill();
       } else {
-        // 어떤 기억인가: 저장된 후보 패턴 중 하나와 맞추기 (도식)
-        row(S2, S2.y + 13, '2', B.side ? 'Mᵢ · z(t)' : 'Mᵢ', on2 > 0.4 ? 'M₂' : 'which?', on2, on2 > 0.4 ? `rgb(${ACC})` : '#8a8a8a');
-        const pats = [[1, 0, 1, 1, 0, 0, 1, 0], [0, 1, 1, 0, 1, 0, 0, 1], [1, 1, 0, 0, 0, 1, 1, 0]];
-        const cw = (iw - 24) / 3;
-        pats.forEach((pt, k) => {
-          const x0 = ix + k * (cw + 12), hit = k === 1 && on2 > 0.4;
-          pt.forEach((b, j) => {
-            ctx.fillStyle = b ? (hit ? `rgb(${ACC})` : 'rgba(255,255,255,0.7)') : 'rgba(255,255,255,0.12)';
-            ctx.fillRect(x0 + (j % 4) * (cw / 4), gy + 4 + Math.floor(j / 4) * 13, cw / 4 - 3, 10);
-          });
-          ctx.font = PANEL; ctx.textAlign = 'left'; ctx.fillStyle = hit ? `rgb(${ACC})` : '#7d7d7d';
-          ctx.fillText(`M${['₁', '₂', '₃'][k]}`, x0, gy + 38);
+        // 같은 기억, 바뀌는 뉴런: 날마다 활성 세포는 달라도(왼쪽) 집단의 구조는 같은가(오른쪽)? 가설, 데이터 아님
+        const show = step === 1 ? clamp01(((performance.now() - stepStart) / DUR[1]) * 1.6) : 1;
+        row(S2, S2.y + 13, '2', 'z_M', on2 > 0.4 && show >= 1 ? 'invariant?' : 'drifts', on2, on2 > 0.4 && show >= 1 ? `rgb(${ACC})` : '#8a8a8a');
+        const half = iw * 0.52, cw = (half - 16) / 3, days = ['d1', 'd30', 'd90'];
+        days.forEach((d, c) => {
+          const vis = clamp01(show * 3 - c);
+          const x0 = ix + c * (cw + 8);
+          for (let r = 0; r < 3; r++) for (let q = 0; q < 4; q++) {
+            const on = hash(c * 31.7 + r * 7.3 + q * 3.1) > 0.58;
+            ctx.globalAlpha = a * (0.55 + 0.45 * on2) * (0.25 + 0.75 * vis);
+            ctx.fillStyle = on ? '#fff' : 'rgba(255,255,255,0.14)';
+            ctx.fillRect(x0 + q * (cw / 4), gy + 2 + r * 8, cw / 4 - 2, 5);
+          }
+          ctx.font = PANEL; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#7d7d7d';
+          ctx.fillText(d, x0, gy + 34);
         });
+        ctx.globalAlpha = a * (0.55 + 0.45 * on2);
+        ctx.font = PANEL; ctx.fillStyle = `rgb(${ACC})`; ctx.textAlign = 'center';
+        ctx.fillText('→', ix + half + 6, gy + 14);
+        const ex = ix + half + 18 + (iw - half - 18) / 2, ey = gy + 15, rx = (iw - half - 34) / 2, ry = 8;
+        days.forEach((_, c) => {
+          const vis = clamp01(show * 3 - c);
+          if (vis <= 0) return;
+          ctx.strokeStyle = c === 2 && on2 > 0.4 ? `rgb(${ACC})` : `rgba(255,255,255,${(0.3 + 0.2 * c) * vis})`;
+          ctx.lineWidth = c === 2 ? 1.4 : 1;
+          ctx.beginPath(); ctx.ellipse(ex + (c - 1) * 1.5, ey + (c - 1) * 1, rx, ry, -0.35 + c * 0.04, 0, Math.PI * 2); ctx.stroke();
+        });
+        ctx.lineWidth = 1;
+        ctx.fillStyle = '#7d7d7d'; ctx.textAlign = 'center'; ctx.fillText('same shape?', ex, gy + 34);
       }
 
       // ③ 예측 · 선택
@@ -439,7 +535,8 @@ const work = projects();
       const cy0 = S3.y + 26, ch = B.side ? 52 : 40, jx = S3.x, jw = S3.w;
       const prog = step === 2 ? clamp01(((performance.now() - stepStart) / DUR[2]) * 1.7) : 1;
       const picked = prog >= 1 && on3 > 0.3;
-      row(S3, S3.y + 13, '3', 'u*', kind === 'motor' ? (picked ? 'u₂' : B.side ? 'u₁ u₂ u₃' : '') : (picked ? 'now' : 'when?'), on3, picked ? `rgb(${ACC})` : '#8a8a8a');
+      if (kind === 'motor') row(S3, S3.y + 13, '3', 'u*', picked ? 'u₂' : B.side ? 'u₁ u₂ u₃' : '', on3, picked ? `rgb(${ACC})` : '#8a8a8a');
+      else row(S3, S3.y + 13, '3', 'z(t+1)', 'later', on3, '#6f6f6f');
       if (kind === 'motor') {
         ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.setLineDash([2, 3]); ctx.lineWidth = 1;
         const ty = vy(THR, cy0, ch); ctx.beginPath(); ctx.moveTo(jx, ty); ctx.lineTo(jx + jw - 24, ty); ctx.stroke(); ctx.setLineDash([]);
@@ -461,123 +558,94 @@ const work = projects();
           }
         });
       } else {
-        ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1;
-        ctx.beginPath();
-        const N = 50;
-        for (let i = 0; i <= N * prog; i++) {
-          const u = i / N, x = jx + u * jw, v = 0.42 + 0.3 * Math.exp(-(((u - 0.62) / 0.14) ** 2)) + 0.03 * Math.sin(u * 20);
-          i ? ctx.lineTo(x, vy(v, cy0, ch)) : ctx.moveTo(x, vy(v, cy0, ch));
-        }
-        ctx.stroke();
-        if (prog >= 1) {
-          const xs = jx + 0.62 * jw;
-          ctx.strokeStyle = picked ? `rgb(${ACC})` : 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.moveTo(xs, cy0); ctx.lineTo(xs, cy0 + ch); ctx.stroke();
-        }
+        // 다음 단계(나중): 상태가 정의된 뒤에야 자극 반응을 예측해요. 빈 축만 옅게
+        const x0 = jx + 14, x1 = jx + jw - 6, yb = cy0 + ch - 4, yt = cy0 + 2;
+        ctx.globalAlpha = a * 0.35;
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(x0, yt); ctx.lineTo(x0, yb); ctx.lineTo(x1, yb); ctx.stroke(); ctx.setLineDash([]);
+        ctx.font = PANEL; ctx.fillStyle = '#8a8a8a'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('after the state is defined', (x0 + x1) / 2, (yt + yb) / 2);
+        ctx.globalAlpha = a;
       }
 
       // ↺ 업데이트 + 도식 표시
       const on4 = sw[4];
       ctx.globalAlpha = a;
       ctx.strokeStyle = '#1f2630'; ctx.beginPath(); ctx.moveTo(px, B.yu - 2.5); ctx.lineTo(px + PW, B.yu - 2.5); ctx.stroke();
-      ctx.globalAlpha = a * (0.6 + 0.4 * on4);
-      ctx.font = PANEL; ctx.textAlign = 'left'; ctx.fillStyle = on4 > 0.3 ? `rgb(${ACC})` : '#7d7d7d';
-      ctx.fillText('↺ update θᵢ', ix, B.yu + 12);
+      ctx.globalAlpha = a * (kind === 'memory' ? 0.4 : 0.6 + 0.4 * on4);
+      badge(ix + 8, B.yu + 12, '5', on4);
+      ctx.font = PANEL; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = on4 > 0.3 ? `rgb(${ACC})` : '#7d7d7d';
+      ctx.fillText(kind === 'memory' ? '↺ update · later' : '↺ update θᵢ', ix + 24, B.yu + 12);
       ctx.globalAlpha = a; ctx.fillStyle = '#5a5a5a'; ctx.textAlign = 'right'; ctx.fillText('schematic', px + PW - 12, B.yu + 12);
       ctx.restore();
     }
 
-    // ── 운동 회로 ──
+    // ── 운동 회로: 지금 하는 연구 (M1에서 MEP 측정, M1에 a-tbTUS + FES) ──
     function drawMotor(cam: Camera, a: number, t: number) {
       if (a < 0.03 || !data) return;
-      const lm = data.landmarks, Ld = lm.leads.L;
+      const lm = data.landmarks;
       const P = { m1: project(cam, lm.m1.target), stn: project(cam, lm.stn.L), gpi: project(cam, NET.gpi), thal: project(cam, NET.thal) };
-      const edges: [keyof typeof P, keyof typeof P][] = [['stn', 'gpi'], ['gpi', 'thal'], ['thal', 'm1'], ['m1', 'stn']];
+      const edges: [keyof typeof P, keyof typeof P][] = [['m1', 'stn'], ['stn', 'gpi'], ['gpi', 'thal'], ['thal', 'm1']];
       const ph = (performance.now() - stepStart) / DUR[step];
-      const on4 = sw[3];
-      // 회로선
+      const on1 = sw[0], on2 = sw[1], on4 = sw[3], onU = sw[4];
+      // 회로선: M1은 피질–기저핵–시상 고리의 한 마디 (도식)
       ctx.save(); ctx.globalAlpha = a; ctx.lineWidth = 1;
-      ctx.strokeStyle = `rgba(${ACC},${(0.32 + 0.4 * on4).toFixed(3)})`; ctx.setLineDash([3, 4]);
+      ctx.strokeStyle = `rgba(${ACC},${(0.28 + 0.35 * on4).toFixed(3)})`; ctx.setLineDash([3, 4]);
       ctx.beginPath(); for (const [p, q] of edges) { ctx.moveTo(P[p][0], P[p][1]); ctx.lineTo(P[q][0], P[q][1]); } ctx.stroke();
       ctx.setLineDash([]);
-      // 은은하게 흐르는 신호 + 개입 단계에서는 STN에서 시작하는 파동이 하류로
       ctx.fillStyle = `rgb(${ACC})`;
       edges.forEach(([p, q], j) => {
         const u = reduce ? 0.5 : (t * 0.22 + j / edges.length) % 1;
-        ctx.globalAlpha = a * 0.45;
+        ctx.globalAlpha = a * 0.4;
         ctx.beginPath(); ctx.arc(P[p][0] + (P[q][0] - P[p][0]) * u, P[p][1] + (P[q][1] - P[p][1]) * u, 1.8, 0, Math.PI * 2); ctx.fill();
       });
-      if (step === 3 && !reduce) {
-        const wv = clamp01((ph - 0.32) / 0.6) * 3; // 0–3: 세 구간을 차례로
+      // 개입 단계: M1에서 시작한 효과가 회로를 따라 하류로
+      if (step === 3 && !reduce && ph > 0.32) {
+        const wv = clamp01((ph - 0.32) / 0.6) * 3;
         const seg = Math.min(2, Math.floor(wv)), u = wv - seg, [p, q] = edges[seg];
-        if (ph > 0.32) {
-          ctx.globalAlpha = a * on4;
-          ctx.beginPath(); ctx.arc(P[p][0] + (P[q][0] - P[p][0]) * u, P[p][1] + (P[q][1] - P[p][1]) * u, 4, 0, Math.PI * 2); ctx.fill();
-        }
+        ctx.globalAlpha = a * on4;
+        ctx.beginPath(); ctx.arc(P[p][0] + (P[q][0] - P[p][0]) * u, P[p][1] + (P[q][1] - P[p][1]) * u, 4, 0, Math.PI * 2); ctx.fill();
       }
       ctx.restore();
-      // 마디: 새로 그린 곳만 작은 원
-      ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = `rgba(${ACC},0.85)`; ctx.fillStyle = '#000';
-      for (const k of ['gpi', 'thal'] as const) { ctx.beginPath(); ctx.arc(P[k][0], P[k][1], 3.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+      ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = `rgba(${ACC},0.7)`; ctx.fillStyle = '#000';
+      for (const k of ['stn', 'gpi', 'thal'] as const) { ctx.beginPath(); ctx.arc(P[k][0], P[k][1], 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
       ctx.restore();
-      tag(P.gpi[0], P.gpi[1] + 2, 'GPi', a, P.gpi[0] > P.stn[0] ? 'l' : 'r');
-      tag(P.thal[0] + 2, P.thal[1] - 12, 'THALAMUS', a, 'l');
+      tag(P.stn[0] - 4, P.stn[1] + 14, 'STN', a * 0.8, 'r');
+      tag(P.gpi[0], P.gpi[1] + 2, 'GPi', a * 0.8, P.gpi[0] > P.stn[0] ? 'l' : 'r');
+      tag(P.thal[0] + 2, P.thal[1] - 12, 'THALAMUS', a * 0.8, 'l');
 
-      // 지금 하는 연구: M1의 a-tbTUS (변환기 · 빔 · 초점)
+      // a-tbTUS: 두피 위 변환기 · 빔 · M1 초점 (FES는 말초라 뇌 위에는 그리지 않음)
       const n = lm.m1.normal, T = lm.m1.target;
       const face = add(T, n, 16), focus = add(T, n, -3);
       const e1 = norm(cross(n, [0, 0, 1])), e2 = cross(n, e1);
       const ring = Array.from({ length: 24 }, (_, i) => { const th = (i / 24) * Math.PI * 2; return project(cam, add(add(face, e1, 8 * Math.cos(th)), e2, 8 * Math.sin(th))); });
       const F = project(cam, focus), C0 = project(cam, face);
-      ctx.save(); ctx.globalAlpha = a * 0.8;
-      ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.fillStyle = '#000'; ctx.lineWidth = 1;
+      ctx.save(); ctx.globalAlpha = a * 0.85;
+      ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.fillStyle = '#000'; ctx.lineWidth = 1;
       ctx.beginPath(); ring.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]))); ctx.closePath(); ctx.fill(); ctx.stroke();
       const ax = [F[0] - C0[0], F[1] - C0[1]], al = Math.hypot(ax[0], ax[1]) || 1, pp = [-ax[1] / al, ax[0] / al];
       const side = (q: number[]) => (q[0] - C0[0]) * pp[0] + (q[1] - C0[1]) * pp[1];
       const s1 = ring.reduce((m, q) => (side(q) > side(m) ? q : m)), s2 = ring.reduce((m, q) => (side(q) < side(m) ? q : m));
-      ctx.setLineDash([2, 3]); ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+      ctx.fillStyle = `rgba(${ACC},${(0.06 + 0.12 * on4).toFixed(3)})`;
+      ctx.beginPath(); ctx.moveTo(s1[0], s1[1]); ctx.lineTo(F[0], F[1]); ctx.lineTo(s2[0], s2[1]); ctx.closePath(); ctx.fill();
+      ctx.setLineDash([2, 3]); ctx.strokeStyle = 'rgba(255,255,255,0.6)';
       ctx.beginPath(); ctx.moveTo(s1[0], s1[1]); ctx.lineTo(F[0], F[1]); ctx.moveTo(s2[0], s2[1]); ctx.lineTo(F[0], F[1]); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = `rgba(${ACC},0.9)`; ctx.beginPath(); ctx.arc(F[0], F[1], 2.6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(${ACC},0.95)`; ctx.beginPath(); ctx.arc(F[0], F[1], 2.8, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
-      // 이름표는 왼쪽 위 구석에, 가는 선으로 변환기와 이어요 (리드·M1과 겹치지 않게)
-      if (NOWTXT.motor) {
-        ctx.save(); ctx.font = mobile ? SMALL : MONO; const tw = ctx.measureText(NOWTXT.motor).width; ctx.restore();
-        const ly0 = 22, lx1 = 14 + tw + 10;
-        ctx.save(); ctx.globalAlpha = a * 0.75; ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(lx1, ly0); ctx.lineTo(C0[0] - 40, ly0); ctx.lineTo(C0[0] - 8, C0[1] - 4); ctx.stroke(); ctx.restore();
-        ctx.save(); ctx.globalAlpha = a; ctx.font = mobile ? SMALL : MONO; ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-        ctx.fillText(NOWTXT.motor, 14, ly0); ctx.restore();
-      }
 
-      // DBS 리드(지름 1.27 mm, 접점 4개, 실제 크기)
-      const tip = add(Ld.target, Ld.dir, -3.75), out = add(Ld.entry, Ld.dir, 14);
-      const A = project(cam, tip), E = project(cam, Ld.entry), O = project(cam, out);
-      const r = Math.max(1.2, (1.27 / 2) * cam.k);
-      const on1 = sw[0];
-      ctx.save(); ctx.globalAlpha = a;
-      ctx.fillStyle = '#000'; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1;
-      rod(A, E, r); ctx.fill(); ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,255,255,0.35)'; rod(E, O, r); ctx.fill(); ctx.stroke();
-      for (let k = 0; k < 4; k++) {
-        const blink = on1 > 0.3 && !reduce && Math.sin(t * 9 + k * 1.7) > 0.2;
-        ctx.fillStyle = blink ? `rgb(${ACC})` : '#fff';
-        rod(project(cam, add(tip, Ld.dir, k * 2)), project(cam, add(tip, Ld.dir, k * 2 + 1.5)), r); ctx.fill();
-      }
-      ctx.restore();
-      const S = project(cam, Ld.target);
+      // ① 측정(MEP)은 M1으로 들어오는 고리, ④ 개입은 초점에서 퍼지는 고리
+      const S = P.m1;
       rings(S[0], S[1], a * on1, reduce ? 0.3 : (t * 0.6) % 1, true);
-      if (step === 3 && ph > 0.25) rings(S[0], S[1], a * on4, reduce ? 0.3 : (t * 0.8) % 1, false);
-      tag(S[0] - 10, S[1] + 24, 'STN', a, 'r', `rgba(${ACC},0.9)`);
+      if (step === 3 && ph > 0.25) rings(F[0], F[1], a * on4, reduce ? 0.3 : (t * 0.8) % 1, false);
 
-      // 뇌 ↔ 모델 흐름
-      const { out: out1, back } = routes(S, 70);
-      const on2 = sw[1], onU = sw[4];
+      // 뇌 ↔ 모델 흐름: M1의 측정이 모델로, 모델의 선택이 변환기로
+      const { out: out1, back } = routes(S, 60, F);
       flow(out1, a, Math.max(on2, onU), step === 1 ? (ph * 1.4) % 1 : step === 4 ? clamp01(ph * 1.3) : null, 'y(t)', 0.62);
       flow(back, a, on4 * (ph < 0.4 ? 1 : 0.6), step === 3 ? clamp01(ph / 0.32) : null, 'u*', 0.3);
 
-      // ① ④ 표시
       const m = mobile ? 0.6 : 1;
-      marker(S[0] - 8, S[1] + 6, -90 * m, 44 * m, '1', 'RECORD', '', a, on1);
-      marker(S[0] + 6, S[1] + 8, 76 * m, 52 * m, '4', 'STIMULATE', '', a, on4);
+      marker(S[0] - 6, S[1] + 6, -110 * m, 34 * m, '1', 'MEP', '', a, on1);
+      marker(F[0] - 6, F[1] + 4, -110 * m, 84 * m, '4', NOWTXT.motor || 'NEUROMODULATION', '', a, on4);
     }
 
     // ── 기억 회로 ──
@@ -619,16 +687,15 @@ const work = projects();
       ctx.restore();
       const S = P.hpc;
       rings(S[0], S[1], a * on1, reduce ? 0.3 : (t * 0.6) % 1, true);
-      if (step === 3 && ph > 0.25) rings(S[0], S[1], a * on4 * 0.6, reduce ? 0.3 : (t * 0.8) % 1, false);
       tag(S[0] + 10, S[1] + 26, 'HIPPOCAMPUS', a, 'l', `rgba(${ACC},0.9)`);
 
       const { out: out1, back } = routes(S, 80);
       flow(out1, a, Math.max(on2, onU), step === 1 ? (ph * 1.4) % 1 : step === 4 ? clamp01(ph * 1.3) : null, 'y(t)', 0.62);
-      flow(back, a * 0.8, on4 * (ph < 0.4 ? 1 : 0.6), step === 3 ? clamp01(ph / 0.32) : null, 'u*', 0.3);
+      flow(back, a * 0.35, 0, null, 'later', 0.3);
       const mid: P2 = [(A[0] + E[0]) / 2, (A[1] + E[1]) / 2];
       const m = mobile ? 0.55 : 1;
       marker(mid[0], mid[1], 34 * m, 56 * m, '1', 'RECORD', '', a, on1);
-      marker(S[0] + 2, S[1] + 10, 34 * m, 104 * m, '4', mobile ? 'STIMULATE' : 'STIMULATE · CONCEPT', '', a, on4);
+      marker(S[0] + 2, S[1] + 10, 34 * m, 104 * m, '4', mobile ? 'LATER' : 'STIMULATE · LATER', '', a * 0.45, 0);
     }
 
     // ── 방향 · 축척 ──
@@ -645,12 +712,10 @@ const work = projects();
     }
     function hud(cam: Camera) {
       ctx.save(); ctx.font = SMALL; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-      const x = 14, y = h - 34, len = 10 * cam.k;
+      const x = 14, y = h - 18, len = 10 * cam.k;
       ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y); ctx.moveTo(x, y - 3); ctx.lineTo(x, y + 3); ctx.moveTo(x + len, y - 3); ctx.lineTo(x + len, y + 3); ctx.stroke();
-      ctx.fillStyle = '#9a9a9a'; ctx.fillText('10 mm', x + len + 8, y);
-      ctx.fillStyle = '#5f5f5f'; ctx.fillText('HCP S1200 · MNI152 · group average', 14, h - 14);
-      ctx.textAlign = 'right'; ctx.fillText(mobile ? 'schematic' : 'schematic · drag to rotate', w - 14, h - 14);
+      ctx.fillStyle = '#8a8a8a'; ctx.fillText('10 mm', x + len + 8, y);
       ctx.restore();
       gizmo(cam);
     }
@@ -682,7 +747,7 @@ const work = projects();
         { part: 'hpcR', mode: 'accent', gain: A * 0.35 * wH, color: ACCV },
         { part: 'stnL', mode: 'faint', gain: F * 0.5 * (1 - wM) },
         { part: 'stnR', mode: 'faint', gain: F * 0.5 },
-        { part: 'stnL', mode: 'accent', gain: A * 0.7 * wM, color: ACCV, glow: true },
+        { part: 'stnL', mode: 'accent', gain: A * 0.3 * wM, color: ACCV },
       ];
       renderer.draw(cam, passes, mobile ? 0.55 : 1);
       ctx.clearRect(0, 0, w, h);
@@ -691,7 +756,7 @@ const work = projects();
       drawPanel(Math.max(wM, wH), wH > wM ? 'memory' : 'motor');
       hud(cam);
       // 자동 진행
-      if (!paused && running && now - stepStart > DUR[step]) setStep((step + 1) % 5, now);
+      if (!paused && running && now - stepStart > DUR[step]) setStep(sys === 'memory' ? (step >= 1 ? 0 : 1) : (step + 1) % 5, now);
     }
 
     // ── 왼쪽 목록 · 탭 · 재생 ──
@@ -715,6 +780,7 @@ const work = projects();
       step = i; stepStart = now;
       stepBtns.forEach((b, k) => { if (k === i) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); });
       loopEl.classList.toggle('upd', i === 4);
+      root!.querySelectorAll<HTMLElement>('[data-d]').forEach((d) => { d.hidden = d.dataset.d !== String(i); });
       // 이 단계의 방법 페이지와, 이 단계에 속한 프로젝트를 함께 밝혀요
       const btn = stepBtns[i];
       if (btn && methodA) { methodA.href = btn.dataset.href || methodA.href; if (methodL) methodL.textContent = btn.dataset.mlabel || ''; }
@@ -737,6 +803,7 @@ const work = projects();
       tabs.forEach((b) => { const on = b.dataset.sys === k; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
       root!.querySelectorAll<HTMLElement>('[data-for]').forEach((el) => { el.hidden = el.dataset.for !== k; });
       goView(k, performance.now()); sys = k;
+      root!.dataset.active = k;
       setStep(0);
     }
     tabs.forEach((b, i) => {
@@ -764,7 +831,8 @@ const work = projects();
     let rt = 0;
     window.addEventListener('resize', () => { clearTimeout(rt); rt = window.setTimeout(() => { layout(); if (reduce) draw(performance.now()); }, 150); });
     let running = false, visible = false;
-    const frame = (now: number) => { if (!running) return; draw(now); requestAnimationFrame(frame); };
+    const modalOpen = () => !!document.querySelector('dialog[open]');
+    const frame = (now: number) => { if (!running) return; if (!modalOpen()) draw(now); requestAnimationFrame(frame); };
     const start = () => { if (!reduce && visible && data && !running) { running = true; lastNow = -1; stepStart = performance.now(); requestAnimationFrame(frame); } };
     let requested = false;
     async function load() {

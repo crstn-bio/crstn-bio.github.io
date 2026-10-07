@@ -17,16 +17,22 @@ Save, push, and the site rebuilds. To preview on your computer first: `npm insta
 Find the section (`hero:`, `question:`, `why:`, `anatomy:`, `approach:`, `projects:`, `questions:`, `contact:`) and change the text.
 
 - **Hero title and line:** `hero:` → `title:` and `line:`
+  - The hero brain is the real HCP S1200 anatomy (same file as section 01). `hero:` → `targets:` sets the three labels that light up (`id: m1 | stn | hpc`, `name:`, optional `note:` in blue). Delete a line to hide that label.
 - **The big question:** `question:` → `title:`
-- **The loop (the main diagram, under the question):** `question:` → `loop:`
-  - `steps:` one block per circle, clockwise from the top: `name`, `field` (the small symbol), `text`. Add or remove a block and the circles re-space themselves.
-  - `next:` (optional, inside a step) an honest "next step" row with a `label` and a `url`, for a step you haven't done yet.
-  - `center:` the three lines in the middle. `closing:` and `formula:` the line under the loop.
-- **A project:** copy one block under `projects:` and edit it. `piece:` decides which loop step it sits under (the step's `id`: `measure`, `estimate`, `predict`, `perturb`).
-- **Two systems:** `why:` → `cards:` (one per system) and `bridge:` (the line under the cards).
-- **Brain viewer:** `anatomy:` → `title:`, `questions:` (the four short questions) and `targets:` (one per tab).
-- **Method:** `approach:` → `principles:` (the three cards; `page:` is the roadmap file name it opens, e.g. `personalize`) and `method_label:` (row of roadmap buttons; leave empty to hide). The row lists your published roadmap pages automatically. `hero:` → `button_method:` is the second button on the first screen.
-- **Research questions:** `questions:` → `list:` (one question per line, starting with `- `)
+- **Maturity labels:** `maturity:` holds the three small markers (CURRENT / TESTING · NEXT / PROPOSED · LONG-TERM). Use them sparingly.
+- **The loop on the brain (section 01):** `question:` → `formal:` (the one-line formal question under the title), `loop:` → `steps:` (Observe · Infer · Predict · Perturb · Update; `formula:` uses `_t` or `_{t+1}` for subscripts) and `systems:` (one block per tab).
+  - `variability:` the "same stimulation, different responses" figure under the question (title, text, labels). Delete the block to hide it.
+  - `projects:` → `date:`, `outcome:`, `tags:` fill the "Work so far" list (an empty date leaves the date column blank).
+  - Each tab is one disease: `label:` (Parkinson’s disease / Alzheimer’s disease), `approach:` (the line under it), `why:` (one sentence under the tabs, shown for the selected disease).
+  - `later:` lists steps shown dimmed with "later" for that tab (the hippocampus tab starts with Observe → Infer).
+  - `stage:` `current` or `next` puts the maturity label on the tab. `label:` and `stat:` are the tab text.
+  - `steps:` a few words per step for that tab. `thesis:` lists the steps your thesis actually does; they get a small "thesis" mark.
+  - `evidence:` the compact rows under the brain (question, role, analysis, status). Write only what is true; leave a row out rather than guess.
+  - `now:` the label on the perturbation marker in the brain figure.
+- **A project:** copy one block under `projects:` and edit it. `piece:` decides which loop step it lights up with (`observe`, `infer`, `predict`, `perturb`, `update`).
+- **Method (section 02):** `approach:` → `principles:` (three cards; `page:` is the roadmap file it opens), `spine:` (the main line of words above the step buttons) and `spine_groups:` (which roadmap `group:` values sit on that main line; the others are shown below, quieter).
+- **What I want to test next (section 03):** `questions:` → `path:` (the tiny current → next → long-term line), `long:` (the large long-term question), `next:` (the proposed experiment: `question`, `formula`, `terms`, `steps`, `note`), `others_label:` and `list:` (the other open questions).
+- **Other open questions:** `questions:` → `list:` (one question per line, starting with `- `)
 
 Three rules for YAML:
 1. Keep the spaces at the start of each line exactly as they are.
@@ -102,3 +108,7 @@ The error message names the file and the line. It's almost always one of these:
 - a missing space at the start of a line
 - a `:` inside text that isn't in quotes
 - a `status:` that isn't one of the seven allowed words
+
+## Link preview image (LinkedIn, Slack, iMessage)
+
+`public/og.jpg` (1200×627) is rendered from the live first screen. To remake it after changing the hero, start `npx astro preview`, run `python3 tools/og/make-og.py ./`, then save `og-a.png` as `public/og.jpg` (or `og-b.png` for the question version).

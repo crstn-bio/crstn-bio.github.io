@@ -7,19 +7,32 @@ role: Proposal design
 setting: University of Toronto coursework
 summary: A cell-replacement strategy for Parkinson’s disease using the patient’s own iPSC-derived A9 dopaminergic progenitors, delivered in a collagen hydrogel that releases neurotrophins to support graft survival.
 methods:
-  - Therapeutic design
-  - Stem cell technology
-  - Experimental design
+  - Ventral midbrain differentiation
+  - CORIN-based purification
+  - Hydrogel delivery design
+  - Feasibility review of clinical trials
 tools:
   - Research synthesis
 status: complete
+links:
+  - { label: "Proposal (PDF)", href: "/papers/ipsc-parkinsons-proposal.pdf" }
 ---
 
-## Idea
+## Problem
 
-Parkinson’s motor symptoms follow the loss of A9 dopaminergic neurons in the substantia nigra. Replacing them with the patient’s own cells avoids immune rejection; the challenge is getting grafts to survive and integrate.
+Parkinson’s motor symptoms follow the loss of A9 dopaminergic neurons in the substantia nigra pars compacta, the cells that supply dopamine to the striatum. Dopaminergic drugs and deep brain stimulation relieve symptoms but do not replace those cells. Because the deficit is largely one cell type in one circuit, a neuronal graft is a rational replacement.
 
 ## Design
 
-<!-- TODO: 제안서의 핵심 설계(세포 분화 프로토콜, 하이드로겔 조성, 평가 지표 등)를 요약해 주세요. -->
-Autologous iPSCs are differentiated toward an A9 dopaminergic fate, then embedded in a collagen hydrogel loaded with neurotrophic factors to improve survival after transplantation.
+- **Source.** The patient’s own fibroblasts or blood cells, reprogrammed into iPSCs with OCT4, SOX2, KLF4 and c-MYC on non-integrating episomal vectors. An HLA-matched donor line is the fallback.
+- **Differentiation.** Dual SMAD inhibition, then sonic hedgehog and WNT activation toward a floor-plate, ventral midbrain identity. Correctly patterned progenitors express LMX1A, FOXA2 and EN1.
+- **Purification.** Sorting on the floor-plate marker CORIN removes serotonergic cells, which were linked to involuntary movements in earlier fetal-tissue grafts.
+- **Delivery.** An injectable collagen hydrogel that releases GDNF and BDNF, placed in the striatum through a fine cannula in a stereotactic procedure.
+
+## Why this design
+
+Earlier grafts failed in three ways: poor cell survival, immune rejection and contamination by unwanted cell types. The neurotrophin-loaded hydrogel targets survival (in a parkinsonian rat model it markedly improved survival and maturation of iPSC-derived progenitors), the autologous source reduces the need for immunosuppression, and CORIN sorting targets contamination.
+
+## Evidence and limits
+
+Recent phase I and I/II trials of hESC- and iPSC-derived dopaminergic cells reported graft survival, increased dopamine signal on PET and no tumour formation over about two years of follow-up. The approach is restorative, not curative. Open questions remain on long-term graft survival, dyskinesia, manufacturing scale and the risk of overgrowth.

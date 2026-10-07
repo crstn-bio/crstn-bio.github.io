@@ -34,8 +34,15 @@ export interface BrainData {
   dep: Uint8Array;  // 고랑 깊이 ×255 (0 = 이랑 꼭대기)
 }
 
+/** 같은 파일을 두 번 받지 않도록 (첫 화면과 01 섹션이 함께 써요) */
+const cache = new Map<string, Promise<BrainData>>();
+export function loadBrain(url: string): Promise<BrainData> {
+  if (!cache.has(url)) cache.set(url, fetchBrain(url).catch((e) => { cache.delete(url); throw e; }));
+  return cache.get(url)!;
+}
+
 /** 바이너리 파일 읽기: 'HCPB' | JSON 길이 | JSON | 위치 | 법선 | 깊이 */
-export async function loadBrain(url: string): Promise<BrainData> {
+async function fetchBrain(url: string): Promise<BrainData> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`brain data ${res.status}`);
   let buf: ArrayBuffer;
@@ -97,17 +104,20 @@ export interface Pass {
   cutZ?: number;           // 이 높이(mm) 아래는 서서히 사라짐 (뇌간 아래쪽)
 }
 
+// 스캔 효과(첫 화면): reveal 보다 뒤쪽(MNI y가 작은 쪽)만 보이고, 경계에 밝은 띠가 지나가요
+export interface DrawOpts { reveal?: number; band?: number }
+
 export interface Renderer {
   kind: 'webgl' | '2d';
   resize(w: number, h: number, dpr: number): void;
-  draw(cam: Camera, passes: Pass[], lod: number): void;
+  draw(cam: Camera, passes: Pass[], lod: number, opts?: DrawOpts): void;
 }
 
 const VS = `
 attribute vec3 aPos; attribute vec3 aNrm; attribute float aDep;
 uniform vec3 uC, uR, uU, uT;
 uniform vec2 uK, uO;
-uniform float uSize, uMode, uGain, uCut;
+uniform float uSize, uMode, uGain, uCut, uRev, uBand;
 uniform vec2 uNear;
 uniform vec3 uCol;
 varying vec4 vC;
@@ -130,7 +140,10 @@ void main() {
   } else {
     a = 0.3 + 0.7 * (0.5 + 0.5 * f);
   }
-  vC = vec4(uCol, a * uGain);
+  float e = uRev - X.y;
+  float vis = smoothstep(-5.0, 5.0, e);
+  float band = exp(-(e * e) / 24.0);
+  vC = vec4(uCol, a * uGain * vis + band * uBand * uGain);
 }`;
 
 const FS = `
@@ -172,7 +185,7 @@ function webgl(canvas: HTMLCanvasElement, data: BrainData): Renderer | null {
   attr('aDep', data.dep, 1, gl.UNSIGNED_BYTE, true);
 
   const u: Record<string, WebGLUniformLocation | null> = {};
-  for (const n of ['uC', 'uR', 'uU', 'uT', 'uK', 'uO', 'uSize', 'uMode', 'uGain', 'uCut', 'uNear', 'uCol', 'uSoft']) u[n] = gl.getUniformLocation(prog, n);
+  for (const n of ['uC', 'uR', 'uU', 'uT', 'uK', 'uO', 'uSize', 'uMode', 'uGain', 'uCut', 'uNear', 'uCol', 'uSoft', 'uRev', 'uBand']) u[n] = gl.getUniformLocation(prog, n);
   gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
   gl.clearColor(0, 0, 0, 0);
 
@@ -184,8 +197,10 @@ function webgl(canvas: HTMLCanvasElement, data: BrainData): Renderer | null {
       canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
       gl.viewport(0, 0, canvas.width, canvas.height);
     },
-    draw(cam, passes, lod) {
+    draw(cam, passes, lod, opts) {
       gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.uniform1f(u.uRev, opts?.reveal ?? 1e4);
+      gl.uniform1f(u.uBand, opts?.band ?? 0);
       gl.uniform3fv(u.uC, cam.c); gl.uniform3fv(u.uR, cam.R); gl.uniform3fv(u.uU, cam.U); gl.uniform3fv(u.uT, cam.T);
       gl.uniform2f(u.uK, (2 * cam.k) / W, (2 * cam.k) / H);
       gl.uniform2f(u.uO, (2 * cam.cx) / W - 1, 1 - (2 * cam.cy) / H);
@@ -224,8 +239,9 @@ function canvas2d(canvas: HTMLCanvasElement, data: BrainData): Renderer {
       canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     },
-    draw(cam, passes, lod) {
+    draw(cam, passes, lod, opts) {
       ctx.clearRect(0, 0, W, H);
+      const rev = opts?.reveal ?? 1e4;
       ctx.globalCompositeOperation = 'lighter';
       const step = 3;
       for (const p of passes) {
@@ -235,6 +251,7 @@ function canvas2d(canvas: HTMLCanvasElement, data: BrainData): Renderer {
         const col = (p.color ?? WHITE).map((v) => Math.round(v * 255)).join(',');
         for (let i = o; i < o + cnt; i += step) {
           const X = [data.pos[i * 3] * 0.01, data.pos[i * 3 + 1] * 0.01, data.pos[i * 3 + 2] * 0.01];
+          if (X[1] > rev) continue;
           const [sx, sy, d] = project(cam, X);
           const f = (data.nrm[i * 3] * cam.T[0] + data.nrm[i * 3 + 1] * cam.T[1] + data.nrm[i * 3 + 2] * cam.T[2]) / 127;
           let a: number;

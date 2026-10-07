@@ -10,7 +10,7 @@
 # ── Whole site ──
 name: Christine Park
 title: Modelling the individual brain            # browser tab text
-description: "I study whether brain state predicts the response to stimulation, so it can one day be chosen per person. Current work: theta-burst focused ultrasound with FES at the Krembil Brain Institute, UHN. Motor circuits first; memory is the long-term direction."
+description: "I study whether brain state predicts the response to stimulation, so it can one day be chosen per person. Current work: theta-burst focused ultrasound with FES in Dr. Robert Chen’s lab at the Krembil Brain Institute, UHN. Motor circuits first; memory is the long-term direction."
 email: christine.park2@uhn.ca
 cv: /cv.pdf                                      # put the file at public/cv.pdf and a "View CV" button appears
 links:
@@ -20,65 +20,96 @@ links:
 nav:
   - { label: Question, href: "#question" }
   - { label: Method, href: "#approach" }
-  - { label: Questions, href: "#questions" }
+  - { label: Next, href: "#questions" }
   - { label: Contact, href: "#contact" }
 
 # ── First screen (with the brain animation) ──
 hero:
-  eyebrow: My question
   title: Modelling the individual brain.
   line: Learning neural dynamics from limited data to predict and guide individual responses to intervention.
   button: Read the question
-  button_method: See the method →     # second button; opens the first roadmap page (leave empty to hide)
-  caption: Procedural point-cloud model, rendered live in the browser. Illustration only, not patient data.
+  button_method: See the method     # second link; opens the first roadmap page (leave empty to hide)
+  caption: HCP S1200 group-average anatomy, MNI152. Targets at literature coordinates. Not patient data.
+  # The three targets that light up on the brain (id: m1 | stn | hpc). note: optional second line in blue.
+  targets:
+    - { id: m1, name: Motor cortex, note: Now }
+    - { id: stn, name: Subthalamic nucleus }
+    - { id: hpc, name: Hippocampus, note: Next }
+
+# ── Maturity labels: small monospace markers that say what is tested now, proposed, or long-term ──
+maturity:
+  current: Current work
+  next: Proposed next
+  long: Long-term question
 
 # ── 01 · The question + the loop on the brain (the site's main section) ──
 question:
   kicker: 01 / My question
   title: How can we learn enough of one brain to predict what happens when we intervene?
-  text: The same intervention can move different brains, or one brain in different states, in different directions.
-  # The loop. Step names are shared; each system below gives its own line for every step (by id).
+  formal: What is the minimum representation of an individual’s brain state needed to predict the effect of an intervention?
+  # 'Same stimulation, different responses' figure under the question (delete this block to hide it)
+  variability:
+    title: The same stimulation can move different people in different directions.
+    text: Averaged over many people, the effect can look small. The answer is in the individual.
+    labels: { stim: Same stimulation, person: One person, mean: Population average, x: Time after stimulation, y: Response, note: "Schematic, not data" }
+  # The loop. Step names and formulas are shared; each system below gives its own words for every step (by id).
+  # page: the method page (roadmap file name) the "Method →" link opens for that step.
   loop:
     model: [STATE MODEL θᵢ, one person]
-    update: "↺ update θᵢ from prediction error"
     steps:
-      # page: the method page (roadmap file name) the "Method →" link opens for this step
-      - { id: measure, name: Measure, field: y(t), page: measure }
-      - { id: estimate, name: Estimate, field: z(t), page: decode }
-      - { id: predict, name: Predict · select, field: u*, page: predict }
-      - { id: perturb, name: Perturb, field: u, page: control }
+      - { id: observe, name: Observe, formula: "y_t", page: measure }
+      - { id: infer, name: Infer, formula: "p(z_t | y_{1:t}, u_{1:t−1})", page: decode }
+      - { id: predict, name: Predict, formula: "p(z_{t+1} | z_t, u_t, θ_i)", page: predict }
+      - { id: perturb, name: Perturb, formula: "u_t = π(p(z_t | ·))", page: control }
+      - { id: update, name: Update, formula: "p(θ_i | D) ∝ p(y_{t+1} | u_t, θ_i) p(θ_i)", page: personalize }
     closing: Every intervention is both an action and a new observation.
     formula: "predict p(y | z, u, θᵢ) → choose u* → update θᵢ from prediction error"
   # The two tabs over the brain. view: motor | memory picks the fixed camera and what is drawn.
-  # steps: a few words per step (shown in the list beside the brain). now: the label on your current work.
+  # stage: current | next  (shown with the maturity label). steps: a few words per step.
+  # thesis: the steps your thesis actually does (marked "thesis" in the list). now: the label on the brain.
+  # evidence: the compact block under the brain for this tab. Edit freely; nothing here is generated.
   systems:
     - view: motor
-      label: Motor · near-term testbed
-      stat: { number: 25.2M, text: "people with Parkinson’s disease by 2050, more than double 2021" }
+      stage: current
+      label: Parkinson’s disease
+      approach: Motor circuit neuromodulation
+      stat: { number: 25.2M, text: "with Parkinson’s disease by 2050" }
+      # why: one line under the tabs for this disease
+      why: "The intervention already exists and the state is measurable. The open problem is choosing it for each person." 
       steps:
-        measure: LFP from the DBS lead
-        estimate: β-burst state, for this person
-        predict: the best stimulation setting
-        perturb: stimulate through the same lead
-      now: "NOW · a-tbTUS AT M1 (MY THESIS)"
+        observe: MEP / physiological state
+        infer: this person’s current state
+        predict: individual response to stimulation
+        perturb: "neuromodulation: a-tbTUS + FES"
+        update: revise this person’s model from the response
+      thesis: [observe, perturb]
+      now: a-tbTUS + FES
+      # brief: one line under the brain. open: a project id (opens its window); link: a page.
+      brief: { k: Current question, v: "Does a-tbTUS followed by FES raise corticospinal excitability and improve motor function in Parkinson’s, compared with sham?", status: "Thesis, Chen Lab · analysis in progress", open: thesis, button: Details }
     - view: memory
-      label: Memory · long-term frontier
-      stat: { number: 57M, text: "people living with dementia in 2021; Alzheimer’s is 60–70% of cases" }
+      stage: next
+      label: Alzheimer’s disease
+      approach: Hippocampal population dynamics
+      stat: { number: 57M, text: "living with dementia (2021), 60–70% Alzheimer’s" }
+      why: "No circuit intervention is approved yet, and the memory state itself is not yet defined. So the first step is to define it." 
       steps:
-        measure: hippocampal depth electrodes (clinical)
-        estimate: which memory, and what state it is in
-        predict: the best moment to stimulate
-        perturb: state-timed stimulation · concept
-  caption: "Schematic of the method on real group-average anatomy (HCP S1200, MNI152). Not patient data, not a result."
+        observe: the same hippocampal neurons, over long periods
+        infer: what stays invariant while single neurons drift
+        predict: how that state responds to stimulation
+        perturb: state-timed stimulation
+        update: revise the model of this person
+      later: [predict, perturb, update]    # shown dimmed with "later" for this tab
+      brief: { k: Proposed question, v: "When the neurons that carry a memory drift, what stays invariant?", status: "Not yet conducted", link: /how/memory/, button: Method }
+  caption: "Schematic on HCP S1200 group-average anatomy (MNI152). Not patient data, not a result. Drag to rotate."
   sources:
     - label: BMJ 2025 · GBD 2021 projections
       url: https://bmjgroup.com/cases-of-parkinsons-disease-set-to-reach-25-million-worldwide-by-2050/
     - label: WHO · dementia fact sheet
       url: https://www.who.int/news-room/fact-sheets/detail/dementia
   work_label: Work so far
-  work_next: { label: "Next: estimating motor state from LFP features", url: /how/decode/ }
+  work_next: { label: "Estimating motor state from LFP features", url: /how/decode/, piece: infer }
 
-# ── 02 · Two systems ──
+# ── (Not shown on the homepage now; kept for reference) Two systems ──
 why:
   kicker: 02 / Two systems
   title: Two systems. One modelling problem.
@@ -110,7 +141,7 @@ why:
     - label: WHO · dementia fact sheet
       url: https://www.who.int/news-room/fact-sheets/detail/dementia
 
-# ── Interactive brain (view = thesis | pd | ad, fixed camera views; circuit lines are drawn per view) ──
+# ── (Not shown on the homepage now; kept for reference) Interactive brain viewer ──
 anatomy:
   title: The target is a network, not a point.
   meta: Group-average anatomy · HCP S1200 · MNI152 · drag to rotate
@@ -150,19 +181,22 @@ anatomy:
   # Required data acknowledgement for the HCP brain model. Keep it.
   credit: "Brain model: data provided by the Human Connectome Project, WU-Minn Consortium (Principal Investigators: David Van Essen and Kamil Ugurbil; 1U54MH091657) funded by the 16 NIH Institutes and Centers that support the NIH Blueprint for Neuroscience Research; and by the McDonnell Center for Systems Neuroscience at Washington University. HCP-MMP1.0 area 4 (Glasser et al., 2016); STN, pallidum, thalamus, entorhinal and medial prefrontal nodes at approximate literature coordinates; circuit lines are schematic. Built with [tools/brain-data ↗](https://github.com/crstn-bio/crstn-bio.github.io/tree/main/tools/brain-data)"
 
-# ── 03 · Method: three principles + the roadmap buttons ──
+# ── 02 · Method: three principles + the roadmap buttons ──
 approach:
-  kicker: 03 / Method
+  kicker: 02 / Method
   title: Less data. Better models. Minimal interfaces.
   text: Eleven questions, from measurement to restoration. Each one opens its own page.
   principles:                          # each card links to a roadmap page (its file name)
-    - { title: Less data, text: rapid individual adaptation, page: personalize }
-    - { title: Better model, text: predict the response to intervention, page: predict }
-    - { title: Minimal interface, text: sense and perturb only what is necessary, page: minimize }
-  method_label: The method · step by step   # title above the row of roadmap buttons (leave empty to hide the row)
+    - { title: "Less, but sufficient data", text: Find the minimum information needed for reliable individual prediction., page: personalize }
+    - { title: Better model, text: Predict how an individual’s brain responds to intervention., page: predict }
+    - { title: Minimal interface, text: Sense and perturb only what the model actually needs., page: minimize }
+  spine: [Measure, Model, Predict, Intervene, Learn]   # the main line above the step buttons
+  spine_groups: [Build the model, Control]           # roadmap groups shown on the main line; the rest sit below, quieter
+  method_label: The method, step by step   # title above the row of roadmap buttons (leave empty to hide the row)
 
 # ── Projects (listed beside a loop step; click opens the method window) ──
-#   piece:   which loop step it belongs to (measure | estimate | predict | perturb)
+#   piece:   which loop step it belongs to (observe | infer | predict | perturb | update)
+#   date / outcome / tags: shown in the 'Work so far' list (date on the left, one-line result, method tags)
 #   status:  current | done | build | next | question | concept | frontier
 #   diagram: tus | spikes | eeg | adni | imu  (built-in method drawing) or /images/… file
 projects:
@@ -171,43 +205,77 @@ projects:
     title: a-tbTUS + FES
     status: current
     summary: How perturbation changes human motor-system function.
+    date: "Aug 2026 – now"
+    outcome: "Real vs sham a-tbTUS before FES, over four visits; MEP amplitude and MDS-UPDRS Part III. Analysis in progress."
+    tags: [a-tbTUS, FES, TMS–MEP, MDS-UPDRS III]
     category: Measure · intervene
     stage: "01"
     diagram: tus
-    diagram_text: "Thesis method: accelerated theta-burst transcranial ultrasound to primary motor cortex, functional electrical stimulation of the matching muscle in the same session, and the response measured before and after."
+    diagram_text: "Thesis design: real or sham accelerated theta-burst focused ultrasound to both primary motor cortices, three sonications 30 minutes apart, then 45 minutes of functional electrical stimulation of the arm and hand, at each of four visits; outcomes compared between visit 1 and visit 4."
     facts:
-      - { label: Role, text: "Honours thesis student and research assistant, Krembil Brain Institute, UHN" }
-      - { label: Question, text: "Effects of combining a-tbTUS with functional electrical stimulation" }
+      - { label: Question, text: "Does a-tbTUS followed by FES raise corticospinal excitability and improve motor function in Parkinson’s, compared with sham?" }
+      - { label: Design, text: "Randomized and sham-controlled. Real or sham a-tbTUS to both primary motor cortices (three sonications, 30 minutes apart), then 45 minutes of FES to arm and hand muscles on both sides, at each of four intervention visits." }
+      - { label: Outcomes, text: "TMS resting motor threshold and MEP amplitude at the intensity giving about 1 mV; MDS-UPDRS Part III; finger tapping. Assessed at visits 1 and 4." }
+      - { label: Hypothesis, text: "Real a-tbTUS with FES increases MEP amplitude and improves MDS-UPDRS Part III more than sham a-tbTUS with FES." }
+      - { label: Why, text: "a-tbTUS alone increased MEP amplitude in Parkinson’s. In healthy people, one tbTUS session followed by FES gave transient inhibition, suggesting a metaplastic interaction. Multisession a-tbTUS with FES in Parkinson’s is untested." }
+      - { label: Role, text: "Honours thesis student and research assistant in Dr. Robert Chen’s lab, Krembil Brain Institute, UHN. I support study sessions and the analysis of neurophysiological outcomes." }
+      - { label: Status, text: "Thesis research · analysis in progress" }
   - id: mer
-    piece: measure
-    title: Deep-brain microelectrode recordings
+    piece: observe
+    title: DBS signal processing
     status: done
-    status_label: Completed · workshop
     summary: Spikes and spectral features from deep-brain recordings.
+    date: "Oct 2026"
+    outcome: "Spikes and LFP spectra from 115 recordings in four deep nuclei (Vim, STN, SNr, Rt)."
+    tags: [Spike detection, Welch spectra, Public data]
     category: Signal processing
     stage: "02"
     diagram: spikes
     diagram_text: "Method: microelectrode recordings from four deep nuclei (Vim, STN, SNr, Rt), band-pass filtered 300 to 3000 Hz, spikes detected at minus 10 times the median absolute deviation, rasters across 115 recordings, population firing rate with a 10 ms Gaussian kernel, and LFP power spectra with Welch’s method."
     facts:
-      - { label: Setting, text: "NeuroTech coding workshop" }
       - { label: Data, text: "Milosevic lab, Toronto Western Hospital (public) · LFP: Paulk et al." }
       - { label: Next, text: "state → policy → simulated stimulation (not built yet)" }
   - id: eeg
-    piece: measure
-    title: EEG / EMG spectral analysis
+    piece: observe
+    title: EEG / EMG sleep-state analysis
     status: done
-    summary: Spectral features from scalp and muscle signals.
+    summary: Sleep–wake state from mouse EEG and EMG.
+    date: "Oct 2026"
+    outcome: "Identified the sleep–wake state of unknown mouse recordings from EEG band power and NREM-normalized EMG."
+    tags: [FFT band power, EMG normalization, Python]
     category: Signal processing
     stage: "02"
     diagram: eeg
-    diagram_text: "Method: EEG and EMG signals, windowed FFT, and power spectral density summarised as band power."
+    diagram_text: "Method: mouse EEG sampled at 1,024 Hz and EMG; FFT power summed into delta, theta, alpha, beta and gamma bands as a share of total power; EMG expressed as a percentage of each animal’s NREM mean."
     facts:
       - { label: Field, text: "Behavioural neuroscience" }
+      - { label: Data, text: "Mouse EEG (1,024 Hz) and EMG with scored sleep–wake epochs; three trials per unknown recording" }
+      - { label: Methods, text: "FFT band power (delta 0.5–4, theta 4–8, alpha 8–14, beta 14–30, gamma 30–100 Hz) and delta/theta ratio; EMG normalized to the animal’s own NREM mean, chosen over max or z-score normalization" }
+      - { label: Result, text: "Unknown A about 100% of NREM EMG (NREM-like), B 257–370% (wake-like), C about 70%, below NREM, consistent with REM atonia" }
+  - id: imu
+    piece: predict
+    title: Motion-controlled pan–tilt
+    status: build
+    summary: A physical control loop. Not a brain–computer interface.
+    date: "Oct 2026"
+    outcome: "A sense, compute, act loop: IMU tilt drives two servos."
+    tags: [Arduino, IMU, Servo control]
+    category: Control-system engineering
+    stage: "05"
+    diagram: imu
+    diagram_text: "Build: an IMU senses tilt, the angle is mapped to a servo pulse width on an Arduino UNO R3, and two SG90 servos move the pan and tilt axes."
+    facts:
+      - { label: Parts, text: "Arduino UNO R3 · 2 × SG90 servos · IMU · 3D-printed mount" }
+      - { label: Principle, text: "sense a state → compute → act" }
+
   - id: adni
     piece: predict
     title: Plasma biomarkers → amyloid PET
     status: done
     summary: Visit-matched human data and out-of-sample evaluation in Alzheimer’s disease. Not memory decoding.
+    date: "Mar – Jul 2026"
+    outcome: "Adding plasma Aβ42/40 to p-tau217 raised AUC from 0.902 to 0.919 (1,236 participants)."
+    tags: [ADNI, Grouped cross-validation, Cluster bootstrap]
     category: Human data · disease modelling
     stage: "04"
     diagram: adni
@@ -217,49 +285,63 @@ projects:
       - { label: Cohort, text: "1,524 observations · 1,236 participants (ADNI, Mar 2026)" }
       - { label: Result, text: "ΔAUC +0.017 (95% CI 0.010–0.026); larger in CU (+0.027) than CI (+0.012)" }
     link: { label: Full report →, url: /research/plasma-abeta/ }
-  - id: imu
-    piece: predict
-    title: Motion-controlled pan–tilt
-    status: build
-    summary: A physical control loop. Not a brain–computer interface.
-    category: Control-system engineering
-    stage: "05"
-    diagram: imu
-    diagram_text: "Build: an IMU senses tilt, the angle is mapped to a servo pulse width on an Arduino UNO R3, and two SG90 servos move the pan and tilt axes."
+  - id: ipsc
+    piece: perturb
+    title: iPSC cell replacement for Parkinson’s
+    status: done
+    status_label: Proposal
+    summary: A graft design for Parkinson’s disease, from cell source to delivery.
+    date: "Jun 2026"
+    outcome: "Designed an autologous iPSC-derived A9 dopaminergic graft, delivered in a GDNF/BDNF-loaded collagen hydrogel."
+    tags: [Ventral midbrain differentiation, CORIN sorting, Hydrogel delivery]
+    category: Cell therapy design
     facts:
-      - { label: Parts, text: "Arduino UNO R3 · 2 × SG90 servos · IMU · 3D-printed mount" }
-      - { label: Principle, text: "sense a state → compute → act" }
+      - { label: Design, text: "Patient iPSCs, floor-plate ventral midbrain differentiation (LMX1A, FOXA2, EN1), CORIN sorting to remove serotonergic cells, stereotactic striatal delivery in an injectable hydrogel." }
+      - { label: Rationale, text: "Targets the three failures of earlier grafts: poor survival, immune rejection and contamination by unwanted cell types." }
+      - { label: Feasibility, text: "Checked against recent hESC and iPSC clinical trials and preclinical evidence: immune rejection, dyskinesia, manufacturing scale, long-term overgrowth risk." }
+    link: { label: Full proposal →, url: /research/ipsc-parkinsons/ }
 
-# ── 04 · Open questions ──
+# ── 03 · What I want to test next ──
 questions:
-  kicker: 04 / Open questions
+  kicker: 03 / Next
   title: What I want to test next.
-  next:                              # the big highlighted box (delete this block to hide it)
-    label: Long-term question
-    status: frontier
+  # A tiny line from current work to the frontier (delete to hide)
+  path:
+    - { stage: current, k: Now, v: Human motor neuromodulation }
+    - { stage: next, k: Next, v: Hippocampal population dynamics }
+    - { stage: long, k: Long-term, v: Individualized closed-loop memory intervention }
+    - { stage: frontier, k: Frontier, v: Memory restoration }
+  long:                              # the large long-term question (delete this block to hide it)
+    label: Long-term question · closed-loop control
     lines:
       - { tag: state, text: "Can we perturb the correct state," }
       - { tag: time, text: "at the correct time," }
       - { tag: direction, text: "in the correct direction?" }
-    answer: [Closed-loop, state-timed, hippocampal stimulation]
-  list:                              # one question per line; empty list hides the section
+  next:                              # the first executable step toward it
+    question: When the neurons that carry a memory drift, what stays invariant?
+    formula: "y_M(t_1) ≠ y_M(t_2),  but  g(y_M(t_1)) ≈ g(y_M(t_2)) ?"
+    note: Not yet conducted.
+    link: { label: "The plan, step by step", url: /how/memory/ }
+  others_label: Other open questions   # shown folded; click to open
+  list:                              # one question per line; empty list hides the list
     - How little individual data is needed for reliable personalization?
     - Which neural dynamics generalize across people, and which do not?
     - Can deep-brain states be inferred from less-invasive measurements?
     - Can well-chosen perturbations speed up learning one person’s dynamics?
     - Can deep targets be modulated precisely without a chronic implant?
     - Can the same framework extend from motor circuits to hippocampal memory?
+    - Can a tissue-like interface follow the same hippocampal neurons long enough to track one memory?
 
 # ── Contact ──
 contact:
-  kicker: 05 / Collaborate
-  title: Open to building the next step with the right team.
-  who: [University of Toronto, Human neuromodulation · computational neuroscience]
-  text: I want to work with human neural data on computational neuromodulation and closed-loop systems, as a researcher or research engineer.
-  tags: [Research positions, Summer 2027, Collaborations, Computational neuroscience, Neurotechnology]
-  email_button: Discuss a project →
+  kicker: 04 / Collaborate
+  title: Get in touch.
+  who: [University of Toronto, "Chen Lab, Krembil Brain Institute, UHN"]
+  text: I’m open to working on computational neuromodulation and closed-loop systems with human neural data.
+  # tags: [Human neuromodulation, Computational neuroscience]   # optional interest line; remove the # to show it
+  email_button: Discuss a project
   email_subject: Project
-  cv_button: View CV ↗
+  cv_button: View CV
   photo: /profile.jpg
   footer: Built by hand with Astro. Diagrams are drawn in code.
 
