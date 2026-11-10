@@ -85,7 +85,7 @@ question:
       thesis: [observe, perturb]
       now: a-tbTUS + FES
       # brief: one line under the brain. open: a project id (opens its window); link: a page.
-      brief: { status: "Thesis, Chen Lab · analysis in progress", open: thesis, button: Details }
+      brief: { k: Proposed question, v: "motor symptoms in PD patients", status: "Thesis, Chen Lab · analysis in progress", open: thesis, button: Details }
     - view: memory
       stage: next
       label: Alzheimer’s disease
