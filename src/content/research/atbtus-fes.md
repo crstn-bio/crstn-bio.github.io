@@ -3,7 +3,7 @@ title: Effects of a-tbTUS with functional electrical stimulation on corticospina
 short: a-tbTUS with functional electrical stimulation
 period: Aug 2026 – present
 order: 1
-role: Research assistant & thesis student
+role: Thesis student
 setting: Chen Lab, Krembil Brain Institute, UHN
 summary: My honours thesis. A randomized, sham-controlled study of whether multisession accelerated theta-burst focused ultrasound, followed by functional electrical stimulation, raises corticospinal excitability and improves motor function in Parkinson’s disease.
 methods:
@@ -34,4 +34,4 @@ Real a-tbTUS with FES will act synergistically: a larger increase in MEP amplitu
 
 ## My role
 
-I work in Dr. Robert Chen’s lab at the Krembil Brain Institute, Toronto Western Hospital. I support study sessions and the analysis of neurophysiological outcomes as part of my thesis.
+I work in Dr. Robert Chen’s lab at the Krembil Brain Institute, Toronto Western Hospital. 
